@@ -1,119 +1,518 @@
 % chapters/04_fast_weights_memory_and_timescales.tex
+% 第4章：快权重、外部记忆与时间尺度
 \chapter{快权重、外部记忆与时间尺度}
 \label{ch:fastweights}
 
+\epigraph{``Memory is not a single thing. It is a family of mechanisms operating at different
+speeds, capacities, and timescales.''}{}
+
 \section{本章想回答什么问题}
 
-是否存在一种"记忆矩阵"，能够在不调用反向传播的情况下，
-\textbf{纯粹通过前向计算}来存储和检索近期输入的关联信息？
-这就是 Fast Weights（快权重）的核心思想。
+到目前为止我们已经建立了一个基本认知：模型可以在测试时通过梯度下降来适应新数据
+（第 \ref{ch:why_test_time} 章），而元学习给了我们一个训练框架来让这种适应变得高效
+（第 \ref{ch:bilevel} 章）。
 
-\section{最小例子}
+但这里有一个令人不舒服的问题还没有解决：
 
-\begin{toybox}[title=玩具问题 B 实例：键值联想记忆]
-给定三对键值：$(k_1, v_1)$，$(k_2, v_2)$，$(k_3, v_3)$。
-查询 $q \approx k_2$ 时，输出应该接近 $v_2$。
+\begin{quote}
+\textit{每次处理一个测试样本，都要调用一次 \texttt{.backward()}（反向传播），
+这在延迟敏感的场景（实时系统、在线服务）里开销很大。
+有没有更轻量的方式让模型在处理序列时"积累上下文知识"？}
+\end{quote}
 
-朴素方案：用一个查找表。
-但如果键是连续向量，如何在矩阵运算中完成模糊匹配？
+本章的答案是：\textbf{快权重（Fast Weights）}。
+
+快权重是一种介于"激活值（向量）"和"持久参数"之间的第三类存储结构——
+一个\textbf{动态矩阵}，能在纯前向计算中把序列历史压缩成可查询的联想记忆，
+无需任何反向传播。
+
+理解快权重有三个原因很重要：
+\begin{enumerate}
+  \item 它是 Transformer 注意力机制的理论前身（接下来的第 \ref{ch:attention} 章会建立严格等价）；
+  \item 它提供了第一个"无反向传播的测试时记忆更新"机制，是 TTT-Layer 的概念基础；
+  \item 它清晰地划分了"快学"与"慢学"两个时间尺度——这是理解 Titans（第 \ref{ch:titans} 章）的关键。
+\end{enumerate}
+
+\section{最小例子：从查找表到连续向量的模糊检索}
+\label{sec:fastweights_minimal}
+
+\begin{toybox}[title=玩具问题 B：键值联想记忆（Associative Recall）]
+\textbf{场景}：你是一个序列模型，正在逐步处理以下 token 序列：
+
+\[
+  \underbrace{k_1 \to v_1}_{\text{写入对 1}},\quad
+  \underbrace{k_2 \to v_2}_{\text{写入对 2}},\quad
+  \underbrace{k_3 \to v_3}_{\text{写入对 3}},\quad
+  \underbrace{q \approx k_2}_{\text{查询}}
+\]
+
+任务：当看到查询 $q$（与 $k_2$ 相似但不完全一样）时，快速输出 $v_2$。
+
+\textbf{朴素方案一}：维护一个显式字典 $\{k_i \to v_i\}$，查询时做精确匹配。
+\begin{itemize}
+  \item 优点：精确
+  \item 缺点：如果 $q \ne k_2$（模糊查询），失败；且字典大小随历史线性增长。
+\end{itemize}
+
+\textbf{朴素方案二}：标准 RNN（$h_t = f(h_{t-1}, x_t)$），隐状态是向量。
+\begin{itemize}
+  \item 优点：固定维度，在线更新
+  \item 缺点：一个向量要同时记住多对关联，容量有限；"覆盖"问题严重。
+\end{itemize}
+
+\textbf{快权重方案}：维护一个\textbf{矩阵} $\mW_t \in \R^{d \times d}$，
+用外积写入：$\mW_t = \mW_{t-1} + v_t k_t^\top$，
+用矩阵乘法查询：$\hat{v} = \mW_t q$。
+
+内积 $k_t^\top q$ 会给与 $q$ 相似的键更大的权重，天然实现模糊检索。
 \end{toybox}
 
-\section{直觉解释：外积作为记忆写入}
+\subsection*{为什么矩阵比向量好}
 
-将记忆矩阵初始化为零：$\mW_0 = \mathbf{0} \in \R^{d \times d}$。
+一个向量 $h \in \R^d$ 有 $d$ 个自由度，只能在一维的线上"定位"。
+一个矩阵 $\mW \in \R^{d \times d}$ 有 $d^2$ 个自由度，对于每对 $(k, v)$，
+外积 $v k^\top$ 贡献一个 rank-1 矩阵更新。
+如果键向量之间夹角足够大（近似正交），不同的键值对会被"存储"在矩阵的不同"方向"上，
+互相干扰的程度很小。
 
-每遇到一个键值对 $(k_t, v_t)$，用\textbf{外积（outer product）}更新：
+这就是快权重比标准隐藏向量表达力更强的根本原因。
+
+\section{外积更新规则的直觉与推导}
+\label{sec:fastweights_derivation}
+
+\subsection*{Hebb 规则的矩阵版本}
+
+Hebb 规则（神经科学经典）：
+``cells that fire together, wire together'' — 如果 $k$ 和 $v$ 同时被激活，则它们之间的连接增强。
+
+在矩阵语言中，这对应于对权重矩阵做外积加法：
 \begin{equation}
-  \mW_t = \lambda \mW_{t-1} + \eta\, v_t k_t^\top
+  \mW \leftarrow \mW + \eta \cdot v \cdot k^\top
+  \label{eq:hebb}
+\end{equation}
+
+\noindent
+其中 $\eta$ 是写入步长（fast weight learning rate）。
+
+验证检索：
+\begin{align}
+  \mW k &= \left( \sum_s \eta\, v_s k_s^\top \right) k \\
+        &= \eta \sum_s v_s (k_s^\top k) \\
+        &= \eta \sum_s v_s \cdot \langle k_s, k \rangle
+\end{align}
+
+如果 $k = k_2$，且键两两正交（$\langle k_i, k_j \rangle = 0$ 对 $i \ne j$，
+$\langle k_i, k_i \rangle = 1$），则 $\mW k_2 = \eta v_2$。这就是精确检索。
+
+\subsection*{遗忘因子：控制时间尺度}
+
+纯加法（\eqref{eq:hebb}）会无限积累历史，可能被遥远的旧记忆干扰。
+加入指数遗忘因子 $\lambda \in (0, 1]$：
+
+\begin{equation}
+  \boxed{\mW_t = \lambda \mW_{t-1} + \eta\, v_t k_t^\top}
   \label{eq:fastweight_update}
 \end{equation}
 
-查询时，用查询向量 $q$ 左乘记忆矩阵：
+展开后：
+\begin{align}
+  \mW_t &= \eta \sum_{s=1}^{t} \lambda^{t-s} v_s k_s^\top
+  \label{eq:fastweight_expanded}
+\end{align}
+
+查询：
 \begin{equation}
-  \text{output} = \mW_t q = \left(\sum_{s \le t} \lambda^{t-s} v_s k_s^\top \right) q
-  = \sum_{s \le t} \lambda^{t-s} v_s (k_s^\top q)
+  \hat{v} = \mW_t q = \eta \sum_{s=1}^{t} \lambda^{t-s} v_s \underbrace{(k_s^\top q)}_{\text{相似度}}
   \label{eq:fastweight_query}
 \end{equation}
 
-注意：内积 $k_s^\top q$ 对匹配的键给出大值，对不匹配的键给出小值。
-这就实现了模糊键值检索！
+\begin{insight}[时间加权相似度检索]
+式 \eqref{eq:fastweight_query} 的直觉：查询 $q$ 的输出是所有历史值 $v_s$ 的加权和，
+权重 $= \lambda^{t-s} \cdot (k_s^\top q)$。
+\begin{itemize}
+  \item $\lambda^{t-s}$：时间遗忘权重——越近的记忆权重越大。
+  \item $k_s^\top q$：相似度权重——键越相似查询的记忆权重越大。
+\end{itemize}
+两个权重相乘：近期的、相关的记忆最被优先检索。这是一种极其自然的联想记忆机制。
+\end{insight}
 
-\section{数学形式化：时间尺度的层次}
+\section{慢权重 vs. 快权重：两个时间尺度的正式定义}
+\label{sec:slowfast}
 
 \begin{definition}[慢权重与快权重]
+\label{def:slowfast}
+在一个具有快权重机制的系统中，存在两类参数：
+
 \begin{itemize}
-  \item \textbf{慢权重（Slow Weights）$\theta$}：通过大规模训练数据上的梯度下降学习，
-        代表长期知识。在推断时不改变。
-  \item \textbf{快权重（Fast Weights）$\mW_t$}：在推断时由输入动态生成，
-        代表短期关联上下文。每次输入到来时更新，处理完毕后可以丢弃。
+  \item \textbf{慢权重（Slow Weights）$\theta$}：
+    通过在大规模训练集上的反向传播梯度下降学习，代表跨任务、跨序列的通用知识。
+    在推断（inference）时固定不变。学习"如何建立联想"的元知识。
+
+  \item \textbf{快权重（Fast Weights）$\mW_t$}：
+    在推断时由当前序列的输入动态生成，代表当前上下文的短期联想。
+    每个时间步更新一次，序列结束后通常丢弃（不持久化）。
+    存储"这个序列里具体发生了什么关联"。
 \end{itemize}
 \end{definition}
 
-遗忘因子 $\lambda \in (0, 1]$ 控制不同时间尺度：
-$\lambda = 1$：均等记住所有历史；$\lambda < 1$：偏好近期信息。
+这个慢/快分离在后续所有架构中都会以不同形式出现：
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+章节 & 慢权重角色 & 快权重角色 \\
+\midrule
+第 \ref{ch:fastweights} 章（本章） & 投影矩阵 $W_K, W_V, W_Q$ & 记忆矩阵 $\mW_t$ \\
+第 \ref{ch:attention} 章 & 注意力参数 & KV cache / 线性注意力状态 $\mS_t$ \\
+第 \ref{ch:ttt_layers} 章 & 外部参数 $\theta$ & 隐状态权重矩阵 $\mS_t$ \\
+第 \ref{ch:titans} 章 & 主网络参数 & Neural Memory 的 MLP 权重 $\Phi_t$ \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-\section{代表论文}
+\section{快权重写入：一个完整的 Worked Example}
+\label{sec:fastweights_worked}
 
-\paragraph{\citet{ba2016fastweights}}
-提出了"快权重注意器（Fast Weight Attention）"，
-用递归的外积更新来实现情景记忆，证明这种结构能够加速少样本学习。
+\begin{example}[3 键值对的精确检索]
+设 $d = 3$，$\lambda = 1$，$\eta = 1$。定义三个正交单位键向量：
+\[
+  k_1 = \begin{pmatrix} 1 \\ 0 \\ 0 \end{pmatrix},\quad
+  k_2 = \begin{pmatrix} 0 \\ 1 \\ 0 \end{pmatrix},\quad
+  k_3 = \begin{pmatrix} 0 \\ 0 \\ 1 \end{pmatrix}
+\]
+和对应的值：
+\[
+  v_1 = \begin{pmatrix} 1 \\ 2 \end{pmatrix},\quad
+  v_2 = \begin{pmatrix} 3 \\ 4 \end{pmatrix},\quad
+  v_3 = \begin{pmatrix} 5 \\ 6 \end{pmatrix}
+\]
+（注：这里 $v \in \R^2$，实际应用中 $v \in \R^d$，但用不同维度简化展示。）
 
-\paragraph{\citet{ha2016hypernetworks}}
-HyperNetworks 更进一步：用一个\textbf{主网络}动态生成\textbf{另一个网络的权重}。
-快权重从"当前输入决定记忆"演变为"大网络决定小网络"。
-这是"网络即参数生成器"这一思路的早期形式。
+快权重矩阵 $\mW \in \R^{2 \times 3}$（$d_v = 2, d_k = 3$）按顺序写入：
+
+\textbf{写入 $(k_1, v_1)$}：
+\[
+  \mW_1 = \mathbf{0} + v_1 k_1^\top = 
+  \begin{pmatrix} 1 \\ 2 \end{pmatrix} \begin{pmatrix} 1 & 0 & 0 \end{pmatrix} = 
+  \begin{pmatrix} 1 & 0 & 0 \\ 2 & 0 & 0 \end{pmatrix}
+\]
+
+\textbf{写入 $(k_2, v_2)$}：
+\[
+  \mW_2 = \mW_1 + v_2 k_2^\top = 
+  \begin{pmatrix} 1 & 0 & 0 \\ 2 & 0 & 0 \end{pmatrix} + 
+  \begin{pmatrix} 0 & 3 & 0 \\ 0 & 4 & 0 \end{pmatrix} = 
+  \begin{pmatrix} 1 & 3 & 0 \\ 2 & 4 & 0 \end{pmatrix}
+\]
+
+\textbf{写入 $(k_3, v_3)$}：
+\[
+  \mW_3 = 
+  \begin{pmatrix} 1 & 3 & 5 \\ 2 & 4 & 6 \end{pmatrix}
+\]
+
+\textbf{查询 $q = k_2$}：
+\[
+  \hat{v} = \mW_3 k_2 = 
+  \begin{pmatrix} 1 & 3 & 5 \\ 2 & 4 & 6 \end{pmatrix}
+  \begin{pmatrix} 0 \\ 1 \\ 0 \end{pmatrix} = 
+  \begin{pmatrix} 3 \\ 4 \end{pmatrix} = v_2 \checkmark
+\]
+
+精确检索成功！
+
+\textbf{模糊查询 $q = k_2 + 0.1 \cdot k_1$（轻微干扰）}：
+\[
+  \hat{v} = \mW_3 q = 
+  \begin{pmatrix} 1 & 3 & 5 \\ 2 & 4 & 6 \end{pmatrix}
+  \begin{pmatrix} 0.1 \\ 1 \\ 0 \end{pmatrix} = 
+  \begin{pmatrix} 0.1 + 3 \\ 0.2 + 4 \end{pmatrix} = 
+  \begin{pmatrix} 3.1 \\ 4.2 \end{pmatrix}
+\]
+
+结果仍然接近 $v_2 = (3, 4)^\top$，只有 0.1 的干扰——说明快权重对模糊键具有鲁棒性。
+干扰量来自 $k_1$ 方向的内积 $0.1 \cdot k_1^\top k_2 = 0$……不对，$k_1^\top q = 0.1$，
+所以 $v_1$ 分量的贡献是 $0.1 \cdot v_1 = (0.1, 0.2)^\top$。
+观察：当键近似正交时，干扰与查询"对齐程度"成正比，可以被量化控制。
+\end{example}
+
+\section{干扰分析：当键不正交时会发生什么}
+\label{sec:fastweights_interference}
+
+上面的例子用了正交键，真实情况往往不是这样。下面分析干扰的程度。
+
+\begin{proposition}[快权重的干扰界]
+设写入了 $N$ 个键值对 $\{(k_i, v_i)\}_{i=1}^N$，$\lambda = 1$，$\eta = 1$。
+查询 $q = k_j$（其中 $\|k_j\| = 1$）时，输出为：
+\[
+  \hat{v} = \mW_N k_j = v_j + \underbrace{\sum_{i \ne j} v_i (k_i^\top k_j)}_{\text{干扰项}}
+\]
+干扰项的模满足 $\|\text{干扰}\| \le \left( \sum_{i \ne j} \|v_i\| \cdot |k_i^\top k_j| \right)$。
+
+若值向量有界（$\|v_i\| \le V$），且键两两内积有界（$|k_i^\top k_j| \le \rho$ 对 $i \ne j$），则：
+\[
+  \|\text{干扰}\| \le (N-1) V \rho
+\]
+\end{proposition}
+
+\begin{proof}[证明（简化版）]
+直接展开 $\mW_N k_j = \sum_i v_i (k_i^\top k_j)$，分离 $i=j$ 项即可。
+由三角不等式得到上界。
+\end{proof}
+
+\begin{remark}
+这个界说明：如果键向量来自高维随机分布（$d$ 很大），
+则任意两个单位向量的内积期望约为 $O(1/\sqrt{d})$，
+干扰量平均为 $O(N/\sqrt{d})$。
+当 $d \gg N$ 时，干扰可以忽略不计——这正是高维联想记忆工作良好的原因。
+实际 Transformer 中通常 $d \in \{64, 128, 256\}$，这给了联想记忆相当大的"有效容量"。
+\end{remark}
+
+\section{慢权重学习什么：读写参数 $(W_K, W_V, W_Q)$}
+\label{sec:fastweights_projections}
+
+在实际应用中，我们不直接用原始 token 向量作为键值查询，
+而是先通过可学习的投影矩阵变换：
+\begin{align}
+  k_t &= W_K x_t \label{eq:proj_k} \\
+  v_t &= W_V x_t \label{eq:proj_v} \\
+  q   &= W_Q x_\text{query} \label{eq:proj_q}
+\end{align}
+
+这里 $W_K, W_V, W_Q \in \R^{d \times d}$ 是慢权重（通过训练学习），
+$\mW_t$ 是快权重（在推断时动态生成）。
+
+\textbf{慢权重学习什么？}
+
+慢权重学习的是"什么样的投影使得快权重联想记忆最有效"：
+\begin{itemize}
+  \item $W_K$：将原始 token 映射为"作为键应该长什么样"——近似正交的方向
+  \item $W_V$：将原始 token 映射为"被存储的信息"——高信息密度
+  \item $W_Q$：将查询 token 映射为"如何检索"——与相关键的内积大
+\end{itemize}
+
+这个元知识（"如何建立联想"）是从训练数据中通过元学习/常规训练获得的。
+
+\section{Ba et al. (2016) 的快权重注意器}
+\label{sec:ba2016}
+
+\citet{ba2016fastweights} 提出了一个明确的快权重序列模型，
+解决"如何把快权重与神经网络隐状态结合"的问题。
+
+\paragraph{设置}
+在每个时步，除了标准 RNN 隐状态 $h_t$，
+还维护一个快权重矩阵 $A_t \in \R^{d_h \times d_h}$。
+
+\paragraph{写入规则}
+\begin{equation}
+  A_t = \lambda A_{t-1} + \eta\, h_t h_t^\top
+  \label{eq:ba_write}
+\end{equation}
+（注：这里用 $h_t$ 自身的外积写入，一种自关联写入。实际更泛化版本用两个不同的投影。）
+
+\paragraph{快速注意力读取}（Slow-to-fast 交互）
+
+标准 RNN 产生候选隐状态 $h'_t$，用快权重"精炼"它：
+\begin{align}
+  h'_t &= f(W_s h_{t-1} + W_x x_t) \label{eq:ba_slow} \\
+  \tilde{h}_t^{(0)} &= h'_t \\
+  \tilde{h}_t^{(l+1)} &= f\left(h'_t + A_t \tilde{h}_t^{(l)}\right),\quad l = 0, 1, \ldots, L-1 \label{eq:ba_fast_iter} \\
+  h_t &= \tilde{h}_t^{(L)}
+\end{align}
+
+式 \eqref{eq:ba_fast_iter} 是一个简短的迭代精炼过程（通常 $L=1$ 或 $L=2$）：
+在快权重矩阵的"记忆场"中，通过几步迭代让当前状态向相关联的过去记忆靠拢。
+
+\begin{remark}
+式 \eqref{eq:ba_fast_iter} 本质上是在做"快权重引导的最近邻检索"：
+$A_t \tilde{h}^{(l)}$ 产生当前状态在记忆空间中的"相关历史方向"，
+$h'_t + A_t h^{(l)}$ 将候选状态向这个方向拉近。
+\end{remark}
+
+\paragraph{在几步学习（Few-shot Learning）任务上的实验结果}
+
+Ba et al. 在 Omniglot few-shot 分类上验证了快权重注意器：
+对比纯 LSTM（无快权重）vs 快权重 LSTM，快权重版本在 1-shot 和 5-shot 提升显著，
+说明快权重机制成功地帮助模型在测试序列内"学习"新类别。
+
+\section{HyperNetworks：快权重的参数生成推广}
+\label{sec:hypernetworks}
+
+\citet{ha2016hypernetworks} 把快权重的"上下文决定矩阵"思路推广到了更一般的框架：
+一个网络（\textbf{超网络 / HyperNetwork}）的输出是另一个网络的权重矩阵。
+
+\begin{definition}[HyperNetwork]
+设主网络 $f_W$，超网络 $g_\theta$。HyperNetwork 的设置是：
+\[
+  W = g_\theta(z)
+\]
+其中 $z$ 是某个"条件向量"（可以是任务描述、序列 embedding、层编号等），
+$\theta$ 是超网络的参数（慢权重），$W$ 是被生成的主网络权重（快权重的推广）。
+\end{definition}
+
+\paragraph{与快权重的联系}
+快权重 $\mW_t = \sum_s \lambda^{t-s} v_s k_s^\top$ 本质上是"当前上下文 $\to$ 权重矩阵"的映射。
+HyperNetwork 把这个映射参数化为一个神经网络，
+使得生成更复杂的、非线性的权重成为可能。
+
+\paragraph{在本书主线中的位置}
+HyperNetworks 直接启发了"用一个学习好的程序来动态生成序列模型权重"的思路，
+这是 TTT-Layer（第 \ref{ch:ttt_layers} 章）的概念先驱：
+TTT-Layer 中，外部参数 $\theta$ 学习"如何为每个序列生成一个好的内部 MLP 状态"。
+
+\section{连接 Memory-Augmented Neural Networks}
+\label{sec:mann}
+
+\citet{santoro2016mann} 的 Memory-Augmented Neural Networks（MANN）走了一条不同的路：
+把外部记忆实现为一个显式的\textbf{内存矩阵} $M \in \R^{N \times d}$（$N$ 个 $d$ 维记忆槽），
+通过一组可微的读写头进行访问。
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+特性 & 快权重（Fast Weights） & 外部记忆矩阵（MANN） \\
+\midrule
+存储结构 & $d \times d$ 矩阵 & $N \times d$ 矩阵 \\
+写入机制 & 外积（不能精确擦除） & 可寻址写入（可删改） \\
+读取机制 & 矩阵-向量乘法 & 内容寻址（注意力） \\
+容量 & $O(d^2)$，隐式 & $N$ 个显式槽 \\
+梯度 & 可微（外积） & 近似可微（软寻址） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+两者都是在服务同一个目标：让模型能在前向传播中写入和读取序列历史信息，而不依赖梯度更新持久参数。
+它们的区别更多在于工程取舍而非原理上的对立。
 
 \section{和前后章节的关系}
+\label{sec:fastweights_bridges}
 
-快权重在这里出现的原因是：它揭示了一种\textbf{不用反向传播就能更新记忆}的机制。
-下一章将揭示这个机制与 Transformer 注意力之间的数学等价性——
-这是本书最重要的一个洞见。
+\begin{itemize}
+  \item \textbf{来自第 \ref{ch:bilevel} 章}：元学习用内/外循环框架来区分"快学"与"慢学"。
+        本章的慢权重/快权重正是把这个框架嵌入到序列模型的\textbf{架构层面}，
+        而不只是训练算法层面。
 
-\begin{labbox}
-\textbf{Lab 4：手写外积联想记忆}
+  \item \textbf{通向第 \ref{ch:attention} 章}：Transformer 的线性注意力
+        在数学上精确等价于快权重的外积积累 + 矩阵-向量查询（第 \ref{ch:attention} 章将严格推导）。
+        理解了快权重，线性注意力就不是"去掉 softmax 的奇怪变体"，
+        而是"联想记忆的标准实现"。
+
+  \item \textbf{通向第 \ref{ch:ttt_layers} 章}：TTT-Layer 把快权重进一步升级——
+        记忆矩阵不再用外积直接写入，而是通过梯度下降更新，使得记忆更新更"有目的性"。
+\end{itemize}
+
+\begin{labbox}[title=Lab 4：手写外积联想记忆并分析干扰]
+\textbf{目标}：实现快权重联想记忆，验证干扰界，理解容量限制。
 
 \begin{enumerate}
-  \item 生成 3 组随机 $(k_i, v_i) \in \R^{64}$
-  \item 用式 \eqref{eq:fastweight_update} 逐步更新 $\mW$（$\lambda=0.9$）
-  \item 查询：输入 $q = k_2 + 0.1 \cdot \epsilon$（轻微扰动），
-        计算 $\hat{v} = \mW q$，验证 $\hat{v}$ 与 $v_2$ 的余弦相似度
-  \item 分析：当 $d=64$、20 个键值对写入后，干扰项对查询的影响有多大？
+  \item \textbf{生成数据}：随机生成 $N=10$ 个键值对，键 $k_i \in \R^{64}$（标准正态后 L2 归一化），
+        值 $v_i \in \R^{64}$（标准正态）。
+
+  \item \textbf{写入}：用式 \eqref{eq:fastweight_update}（$\lambda=0.9, \eta=1$）
+        按顺序写入所有键值对，每步保存 $\mW_t$。
+
+  \item \textbf{精确查询}：用 $q = k_5$ 查询，计算 $\hat{v} = \mW_{10} q$，
+        度量 $\cos(\hat{v}, v_5)$（余弦相似度）。
+
+  \item \textbf{模糊查询}：用 $q = k_5 + 0.3 \cdot k_1$ 后 L2 归一化，观察结果变化。
+
+  \item \textbf{容量实验}：固定 $d=64$，让 $N$ 从 1 增加到 100，
+        记录精确查询的余弦相似度曲线。在哪个 $N$ 附近出现明显下降？
+
+  \item \textbf{高维救赎}：重复上述实验但用 $d=512$，观察 $N$ 的容忍上限如何变化。
 \end{enumerate}
+
+\textbf{预期结果}：
+\begin{itemize}
+  \item $d=64, N \le 5$：余弦相似度 $> 0.95$，检索基本精确
+  \item $d=64, N = 50$：余弦相似度明显下降（$0.5$--$0.8$）
+  \item $d=512$：相同 $N=50$ 时依然高于 $0.9$
+\end{itemize}
 \end{labbox}
 
 \begin{misconceptionbox}
-\textbf{常见误解}：快权重就是模型中用于存储激活值的隐藏层。
+\textbf{常见误解 1}：快权重就是 RNN 的隐藏状态。
 
-\textbf{纠正}：激活值（$h_t$）是一个向量，随每个词/帧刷新；
-快权重（$\mW_t$）是一个\textbf{矩阵}，能够并行容纳多个关联关系。
-维度是 $d \times d$，大得多，也更丰富。
+\textbf{纠正}：隐藏状态 $h \in \R^d$ 是\textbf{向量}，随时间覆盖更新；
+快权重 $\mW \in \R^{d \times d}$ 是\textbf{矩阵}，通过外积\textbf{积累}更新（不覆盖旧内容，而是叠加）。
+矩阵的容量（$d^2$ 个自由度）远大于向量（$d$ 个自由度），
+可以同时存储多个独立的键值联想。
+\end{misconceptionbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解 2}：快权重是一种"特殊技巧"，在现代网络中已经过时。
+
+\textbf{纠正}：快权重不是种特殊技巧，而是一个\textbf{基本计算原语}。
+现代的 Transformer KV Cache、线性注意力状态矩阵、TTT-Layer 隐状态矩阵、
+Titans 神经记忆，归根结底都是快权重思想的不同实例化。
+理解外积写入和矩阵读取是理解这一切的基础。
+\end{misconceptionbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解 3}：快权重只能存储"近期"输入，无法保留长期历史。
+
+\textbf{纠正}：当 $\lambda = 1$ 时，快权重对所有历史等权保留，理论上无遗忘。
+$\lambda < 1$ 则引入指数遗忘，这是设计选择，不是固有限制。
+Titans（第 \ref{ch:titans} 章）通过门控机制实现了"选择性遗忘"，
+能在超长序列上同时保留关键的遥远记忆。
 \end{misconceptionbox}
 
 \section{练习题}
+\label{sec:fastweights_exercises}
 
 \begin{exercise}
-证明：如果连续写入 $N$ 个键值对，且键两两正交
-（$k_i^\top k_j = 0$ 对 $i \ne j$），
-则查询 $q = k_s$ 的输出精确等于 $v_s$（忽略遗忘因子）。
+\textbf{精确检索条件}：设快权重矩阵为 $\mW = \sum_{i=1}^{N} v_i k_i^\top$，
+查询 $q = k_j$（$\|k_j\| = 1$）。证明当被且仅当所有键两两正交时，
+$\mW k_j = v_j$（精确检索）。如果 $\|k_j\|^2 = c \ne 1$，结果如何？
 \end{exercise}
 
 \begin{exercise}
-当键不正交时，会发生"干扰（interference）"。
-设 $k_1$ 和 $k_2$ 夹角为 $45°$，推导查询 $q=k_1$ 时
-$v_2$ 分量的污染程度。
+\textbf{容量计算}：设键向量由 $d$ 维 Rademacher 随机变量（每维 $\pm 1/\sqrt{d}$）生成。
+两个键的内积期望 $\mathbb{E}[k_i^\top k_j]$（对 $i \ne j$）等于多少？
+方差？据此，用切比雪夫不等式估计：要让 $N$ 个键的所有配对内积都小于 $\epsilon$
+的概率超过 $1 - \delta$，需要 $d$ 满足什么条件？
 \end{exercise}
 
 \begin{exercise}
-HyperNetworks 让一个网络去生成另一个网络的权重。
-这与快权重的"上下文决定记忆矩阵"思路有何共同之处？
-有何本质不同？
+\textbf{写入顺序的影响}：设 $\lambda = 0.9$，按 $k_1, k_2, k_3$（$t=1,2,3$）顺序写入。
+之后查询 $q = k_1$，输出是多少？再查询 $q = k_3$，输出是什么？
+比较两者中"目标值"的权重，说明为什么说快权重"偏好近期记忆"。
+\end{exercise}
+
+\begin{exercise}
+\textbf{与 Gradient Descent 的联系}：设我们想学习一个线性映射 $\hat v = \mW k$，
+使得对所有 $(k_t, v_t)$ 有 $\mW k_t \approx v_t$。
+将外积更新 $\mW_t = \mW_{t-1} + \eta v_t k_t^\top$ 改写为对以下损失函数做一步梯度下降：
+$\ell(\mW) = \frac{1}{2}\|\mW k_t - v_t\|^2$。
+验证两者完全一致，即快权重更新=在线最小二乘的一步梯度下降。
+这一发现在第 \ref{ch:unified} 章中有重要意义。
 \end{exercise}
 
 \section{本章小结}
+\label{sec:fastweights_summary}
 
 \begin{itemize}
-  \item 快权重通过\textbf{外积积累}实现无反向传播的动态记忆写入与读取。
-  \item 遗忘因子 $\lambda$ 控制记忆的时间尺度：$\lambda \to 1$ 等权历史，$\lambda < 1$ 偏重近期。
-  \item HyperNetworks 把这种思路推广为"网络生成网络"，为后续 TTT-Layer 埋下伏笔。
-  \item 下一章的关键发现：线性注意力层\textbf{数学上等同}于一个不断被外积更新的快权重矩阵。
+  \item \textbf{快权重}是介于激活向量和持久参数之间的第三类存储：
+        $d \times d$ 矩阵，在前向传播中通过外积积累，随用随弃。
+
+  \item 外积写入：$\mW_t = \lambda \mW_{t-1} + \eta v_t k_t^\top$；
+        遗忘因子 $\lambda$ 控制时间尺度：$\lambda = 1$ 均等历史，$\lambda < 1$ 偏重近期。
+
+  \item 矩阵查询：$\hat v = \mW_t q = \sum_s \lambda^{t-s} v_s (k_s^\top q)$；
+        相似度加权 + 时间加权的联合检索。
+
+  \item 干扰量 $\le (N-1) V \rho$（非正交键情形），在高维下 $\rho \to 0$，容量问题自然缓解。
+
+  \item 慢权重/快权重的二分法是本书一个核心组织原则，贯穿第 4--9 章。
+
+  \item \textbf{关键预告}：下一章将证明，线性注意力层的前向计算\textbf{数学等价于}快权重的外积积累 + 查询，
+        这使得"注意力 = 联想记忆"不再只是比喻，而是可以写成等式。
+\end{itemize}
+
+\paragraph{读完本章，你应该能够：}
+\begin{itemize}
+  \item 解释为什么快权重矩阵比隐藏向量有更大的存储容量
+  \item 推导外积写入规则（包括遗忘因子）
+  \item 计算简单情况下的联想检索输出，并分析干扰
+  \item 说明慢权重/快权重在序列模型中分别对应什么
+  \item 把快权重更新识别为在线最小二乘的一步梯度步
 \end{itemize}

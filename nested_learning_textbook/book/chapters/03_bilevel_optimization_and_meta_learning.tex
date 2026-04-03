@@ -1,152 +1,484 @@
 % chapters/03_bilevel_optimization_and_meta_learning.tex
-\chapter{双层优化与元学习}
+% 第3章：双层优化与元学习
+\chapter{双层优化与元学习：让参数初始化点"内行"}
 \label{ch:bilevel}
+
+\epigraph{``The goal of meta-learning is not to learn well, but to learn how to learn well.''}{--- 研究社区共识}
 
 \section{本章想回答什么问题}
 
-如果我们知道模型在测试时需要被微调，
-能否在\textbf{训练阶段}就让模型的参数初始化点变得"易于微调"——
-也就是说，只需要少量梯度步就能适应新任务？
+第 \ref{ch:why_test_time} 章告诉我们：当测试时遇到分布偏移，
+我们可以在测试阶段对自监督目标做几步梯度下降来适应新数据。
+这个方案总体可行，但有一个潜在问题：
 
-这正是\textbf{元学习（Meta-Learning）}的核心问题，
-而它的数学基础是\textbf{双层优化（Bilevel Optimization）}：
-外循环控制初始化点，内循环模拟测试时的微调过程。
+\begin{quote}
+\textit{如果模型的参数初始化点 $\theta$ 是由普通的监督学习产生的，
+那么它对"被微调"这件事根本没有做任何准备。
+几步梯度下降可能走错方向，可能步长不合适，可能根本不往有用的地方走。}
+\end{quote}
 
-\section{最小例子}
+本章的问题：\textbf{能否在训练阶段就找到一个初始化点 $\theta$，
+使得对任何新任务，从 $\theta$ 出发做少量梯度步就能快速适应？}
 
-\begin{toybox}[title=正弦波拟合]
-任务集合：$\mathcal{T} = \{y = A_i \sin(\omega_i x + \phi_i)\}$，
-每个任务的振幅 $A_i$、频率 $\omega_i$、相位 $\phi_i$ 随机。
+这是\textbf{元学习（Meta-Learning）}的核心问题，
+其数学形式是\textbf{双层优化（Bilevel Optimization）}。
 
-每个任务只给 $K=5$ 个样本（Support Set），
-要求用这 5 个样本快速拟合该任务的正弦波。
-
-朴素做法：随机初始化，梯度下降，收敛需要数百步。
-
-元学习目标：找一个初始化点 $\theta$，使得对任何新任务，
-从 $\theta$ 出发，\textbf{仅需 1--5 步梯度下降}就能达到良好拟合。
-\end{toybox}
-
-\section{直觉解释}
-
-想象一个厨师（模型）需要学会烹饪数百种菜系。
+元学习的重要性超出 TTT 本身：
 \begin{itemize}
-  \item \textbf{朴素训练}：从零开始学每道菜，互相不借鉴。
-  \item \textbf{元学习}：先学会"学习烹饪的方法"——
-        掌握了通用刀法、火候控制后，遇到新菜系只需几次练习。
+  \item 它提供了这本书全程使用的"内循环/外循环"语言（第 \ref{ch:ttt_bridge}--\ref{ch:ttt_layers} 章将反复用到）
+  \item 它解释了 TTT-Layer 中外部大参数 $\theta$ 和序列内隐状态之间的关系
+  \item 它是理解"training 和 inference 作为嵌套优化"这个统一视角的基础
 \end{itemize}
 
-元学习的目标不是"学好某个任务"，而是"学会如何快速学好任务"。
-这个目标天然地导向双层优化结构：
-外层优化"学习能力"，内层模拟"一次学习过程"。
+\section{什么是元学习：用学习自行车类比}
+\label{sec:bilevel_intuition}
 
-\section{数学形式化}
+考虑两种学自行车的方法：
 
-\subsection*{任务分布与元学习设置}
+\textbf{方法 A（朴素）}：每次遇到新学生，从零开始手把手教所有平衡技巧。
+每个学生平均需要 20 节课。
 
-设任务分布为 $p(\mathcal{T})$。
-每个任务 $\mathcal{T}_i$ 有支撑集 $\mathcal{S}_i = \{(x_j, y_j)\}_{j=1}^K$
-和查询集 $\mathcal{Q}_i = \{(x_j, y_j)\}_{j=1}^M$。
+\textbf{方法 B（元学习）}：先"学会教自行车的方法"——掌握哪些解释方式有效、
+哪些练习游戏有用。新学生只需 3 节课。
 
-\subsection*{MAML：双层优化}
+方法 B 的"学会教方法"对应元学习的外循环：
+它学到了"如何快速学习新任务"的通用知识。
+内循环则是每个学生实际学习的过程（快速适应）。
 
-\citet{finn2017maml} 提出的 MAML 算法定义为：
+\begin{definition}[元学习，非正式定义]
+元学习（learning to learn）的目标是：
+通过在一个\textbf{任务分布} $p(\mathcal{T})$ 上训练，
+使模型获得在新任务上\textbf{快速适应}的能力。
 
-\begin{equation}
-\min_\theta \sum_{\mathcal{T}_i \sim p(\mathcal{T})} \mathcal{L}_{\mathcal{Q}_i}(\phi_i(\theta))
-\label{eq:maml_outer}
-\end{equation}
+关键点：不是在单一任务上训练好，而是学会"适应新任务的方式"。
+\end{definition}
 
-其中内循环参数 $\phi_i(\theta)$ 由 $k$ 步梯度下降定义：
+\section{数学设定：任务分布与情节式学习}
+\label{sec:metalearning_setup}
+
+\subsection*{情节式学习（Episodic Learning）}
+
+元学习的训练过程被组织为一系列"情节"（Episode），每个情节对应一个任务 $\mathcal{T}_i$：
+
+\begin{definition}[情节式学习设定]
+\begin{itemize}
+  \item \textbf{任务分布}：$p(\mathcal{T})$，例如"输入 $d=10$ 正弦波参数"产生的各种正弦拟合任务。
+  \item \textbf{支撑集（Support Set）}：$\mathcal{S}_i = \{(x_j, y_j)\}_{j=1}^K$，
+        K 个训练样本（"K-shot"），用于在该任务内做适应。
+  \item \textbf{查询集（Query Set）}：$\mathcal{Q}_i = \{(x_j, y_j)\}_{j=1}^M$，
+        M 个测试样本，用于评估适应效果。
+  \item 任务训练损失：$\mathcal{L}_{\mathcal{S}_i}(\theta) = \frac{1}{K} \sum_{(x,y) \in \mathcal{S}_i} \ell(f_\theta(x), y)$
+  \item 任务验证损失：$\mathcal{L}_{\mathcal{Q}_i}(\phi) = \frac{1}{M} \sum_{(x,y) \in \mathcal{Q}_i} \ell(f_\phi(x), y)$
+\end{itemize}
+\end{definition}
+
+\begin{toybox}[title=玩具示例：正弦波族 Meta-Learning]
+任务分布：从 $p(\mathcal{T})$ 采样振幅 $A \in [0.1, 5]$、相位 $\phi \in [0, \pi]$，生成任务 $y = A\sin(x + \phi)$。
+
+每个情节：
+\begin{itemize}
+  \item 采样 $K=5$ 个 support 点（$x$ 均匀采样于 $[-5, 5]$，计算对应 $y$）
+  \item 要求模型在这 5 个点上"快速学会"该任务的 $A$ 和 $\phi$
+  \item 用 query 集上的 MSE 衡量适应效果
+\end{itemize}
+
+\textbf{问题}：如果模型是随机初始化的 2 层 MLP，5 个点 + 几步梯度下降效果很差。
+元学习要找一个初始化 $\theta^*$，使得 5 步梯度下降后就能很好地拟合任意正弦波。
+\end{toybox}
+
+\section{双层优化的正式框架}
+\label{sec:bilevel_formal}
+
+\subsection*{什么是双层优化}
+
+\begin{definition}[双层优化，Bilevel Optimization]
+\label{def:bilevel}
+双层优化是一类"目标函数依赖于另一个优化问题之解"的优化问题：
+\begin{align}
+  &\min_\theta \quad F(\theta, \phi^*(\theta)) \label{eq:bilevel_outer} \\
+  &\text{s.t.} \quad \phi^*(\theta) = \arg\min_\phi G(\theta, \phi) \label{eq:bilevel_inner}
+\end{align}
+外层优化（outer-level）优化 $\theta$，目标 $F$ 依赖于内层最优解 $\phi^*(\theta)$；
+内层优化（inner-level）给定 $\theta$ 后求 $\phi^*$。
+\end{definition}
+
+元学习（MAML）是双层优化的一个特例：
+
+\begin{itemize}
+  \item \textbf{外层变量 $\theta$}：模型权重（初始化点）
+  \item \textbf{内层操作}：给定 $\theta$，在 $\mathcal{S}_i$ 上做 $k$ 步梯度下降得到 $\phi_i$
+  \item \textbf{外层目标}：在 $\mathcal{Q}_i$ 上的平均损失（用内循环适应后的 $\phi_i$ 评估）
+\end{itemize}
+
+\section{MAML 算法：优化初始化点}
+\label{sec:maml}
+
+\subsection*{内循环：快速适应}
+
+对于每个任务 $\mathcal{T}_i$，从当前 $\theta$ 出发做 $k$ 步梯度下降：
+
 \begin{align}
   \phi_i^{(0)} &= \theta \\
-  \phi_i^{(t+1)} &= \phi_i^{(t)} - \alpha \nabla_{\phi_i^{(t)}} \mathcal{L}_{\mathcal{S}_i}(\phi_i^{(t)})
+  \phi_i^{(t+1)} &= \phi_i^{(t)} - \alpha \nabla_{\phi_i^{(t)}} \mathcal{L}_{\mathcal{S}_i}(\phi_i^{(t)}), \quad t = 0, \ldots, k-1
+  \label{eq:maml_inner}
 \end{align}
-当 $k=1$ 时，$\phi_i = \theta - \alpha \nabla_\theta \mathcal{L}_{\mathcal{S}_i}(\theta)$。
 
-外循环梯度更新：
+记 $\phi_i \triangleq \phi_i^{(k)}$（$k$ 步后的参数）。
+
+在 $k = 1$（单步近似）时：
 \begin{equation}
-\theta \leftarrow \theta - \beta \nabla_\theta \sum_i \mathcal{L}_{\mathcal{Q}_i}(\phi_i(\theta))
-\label{eq:maml_metaupdate}
+  \phi_i = \theta - \alpha \nabla_\theta \mathcal{L}_{\mathcal{S}_i}(\theta)
+  \label{eq:maml_inner_1step}
 \end{equation}
 
+\subsection*{外循环：元更新}
+
+外循环在 query 集上评估内循环后的表现，并更新 $\theta$：
+
+\begin{equation}
+  \min_\theta \quad \mathcal{L}_\text{meta}(\theta) \triangleq
+  \mathbb{E}_{\mathcal{T}_i \sim p(\mathcal{T})} \left[ \mathcal{L}_{\mathcal{Q}_i}(\phi_i(\theta)) \right]
+  \label{eq:maml_outer}
+\end{equation}
+
+元梯度更新：
+\begin{equation}
+  \theta \leftarrow \theta - \beta \nabla_\theta \mathcal{L}_\text{meta}(\theta)
+  \label{eq:maml_meta_update}
+\end{equation}
+
+\subsection*{完整 MAML 算法}
+
+\begin{algorithm}[H]
+\caption{MAML（简化版，$k=1$）}
+\begin{algorithmic}[1]
+\Require 任务分布 $p(\mathcal{T})$，内循环学习率 $\alpha$，外循环学习率 $\beta$
+\State 随机初始化 $\theta$
+\For{每个元训练步骤}
+  \State 采样一批任务 $\{\mathcal{T}_1, \ldots, \mathcal{T}_B\} \sim p(\mathcal{T})$
+  \For{每个任务 $\mathcal{T}_i$}
+    \State 计算内循环参数：$\phi_i = \theta - \alpha \nabla_\theta \mathcal{L}_{\mathcal{S}_i}(\theta)$
+  \EndFor
+  \State \textbf{外循环更新}：$\theta \leftarrow \theta - \beta \nabla_\theta \sum_{i} \mathcal{L}_{\mathcal{Q}_i}(\phi_i(\theta))$
+\EndFor
+\Return $\theta$（最优初始化点）
+\end{algorithmic}
+\end{algorithm}
+
+\section{二阶导数：Hessian 项的来源与一阶近似}
+\label{sec:maml_hessian}
+
+计算元梯度 $\nabla_\theta \mathcal{L}_{\mathcal{Q}_i}(\phi_i(\theta))$ 涉及链式法则：
+
+\begin{align}
+  \frac{d}{d\theta} \mathcal{L}_{\mathcal{Q}_i}(\phi_i(\theta))
+  &= \nabla_{\phi_i} \mathcal{L}_{\mathcal{Q}_i}(\phi_i) \cdot \frac{d\phi_i}{d\theta}
+  \label{eq:chain_rule}
+\end{align}
+
+对于 $k=1$ 的内循环（式 \eqref{eq:maml_inner_1step}）：
+\begin{align}
+  \frac{d\phi_i}{d\theta}
+  &= \frac{d}{d\theta} \left[ \theta - \alpha \nabla_\theta \mathcal{L}_{\mathcal{S}_i}(\theta) \right] \\
+  &= I - \alpha \underbrace{\nabla^2_\theta \mathcal{L}_{\mathcal{S}_i}(\theta)}_{\text{Hessian}}
+  \label{eq:maml_jacobian}
+\end{align}
+
+因此元梯度为：
+\begin{equation}
+  \nabla_\theta \mathcal{L}_{\mathcal{Q}_i}(\phi_i(\theta)) = 
+  \nabla_{\phi_i} \mathcal{L}_{\mathcal{Q}_i} \cdot \left( I - \alpha H_{\mathcal{S}_i} \right)
+  \label{eq:maml_full_grad}
+\end{equation}
+
+其中 $H_{\mathcal{S}_i} = \nabla^2_\theta \mathcal{L}_{\mathcal{S}_i}(\theta)$ 是 Hessian 矩阵（二阶导数）。
+
+\paragraph{为什么 Hessian 计算昂贵}
+
+对于 $d$ 维参数向量，Hessian 是 $d \times d$ 矩阵。
+一个有 $10^7$ 个参数的网络，Hessian 有 $10^{14}$ 个元素——远超显存容量。
+
+\paragraph{FOMAML：一阶近似（去掉 Hessian 项）}
+
+\begin{equation}
+  \nabla_\theta^{\text{FOMAML}} \mathcal{L}_{\mathcal{Q}_i}(\phi_i(\theta)) \approx 
+  \nabla_{\phi_i} \mathcal{L}_{\mathcal{Q}_i}(\phi_i)
+  \label{eq:fomaml}
+\end{equation}
+
+即：直接用 $\phi_i$（内循环更新后的参数）在查询集上的梯度来估计元梯度，
+忽略了 $\phi_i$ 对 $\theta$ 的依赖。
+
 \begin{remark}
-式 \eqref{eq:maml_metaupdate} 需要计算"梯度的梯度"（二阶导数），
-因为 $\phi_i$ 依赖于 $\theta$ 的梯度。
-实践中常用一阶近似（FOMAML/Reptile）跳过这一计算。
+为什么 FOMAML 在实践中有效？
+因为内循环步长 $\alpha$ 很小时，$H$ 项系数为 $\alpha H$，
+当 $\alpha \ll 1$ 时一阶近似误差 $O(\alpha)$ 很小。
+此外，一阶近似本身提供了一种合理的"元梯度"估计：
+直接优化内循环更新后参数在查询集上的性能，有直观的合理性。
 \end{remark}
 
-\subsection*{内外循环的对应关系}
+\paragraph{Reptile：更简单的一阶近似}
+
+\citet{nichol2018reptile} 提出了更简洁的 Reptile 算法：
+在每个任务上做 $k$ 步梯度下降得到 $\phi_i$，
+直接用 $(\phi_i - \theta)$ 作为元梯度方向（相当于"把 $\theta$ 朝每个任务的解方向拉"）：
+
+\begin{equation}
+  \theta \leftarrow \theta + \beta \cdot \frac{1}{B} \sum_i (\phi_i - \theta)
+  \label{eq:reptile}
+\end{equation}
+
+Reptile 不需要任何二阶导数，实现极简，效果接近 FOMAML，是工程实践中的常用选择。
+
+\section{Worked Example：双层优化的几何直觉}
+\label{sec:bilevel_geometry}
+
+\begin{example}[双层优化的等高线图解]
+
+设两个任务：
+\begin{itemize}
+  \item 任务 1：最小化 $\mathcal{L}_1(\theta) = (\theta - 3)^2$（最优点在 $\theta = 3$）
+  \item 任务 2：最小化 $\mathcal{L}_2(\theta) = (\theta + 3)^2$（最优点在 $\theta = -3$）
+\end{itemize}
+
+\textbf{朴素 MTL（多任务学习）}：直接最小化 $\mathcal{L}_1(\theta) + \mathcal{L}_2(\theta) = (\theta-3)^2 + (\theta+3)^2$，最优点在 $\theta = 0$。
+这个点离两个任务最优点各 3 个单位。
+
+\textbf{元学习（MAML）}：最小化
+$\mathcal{L}_\text{meta}(\theta) = (\underbrace{\theta - \alpha \cdot 2(\theta-3)}_{\phi_1(\theta)} - 3)^2 + (\underbrace{\theta - \alpha \cdot 2(\theta+3)}_{\phi_2(\theta)} + 3)^2$
+
+设 $\alpha = 0.5$：
+$\phi_1(\theta) = \theta - (\theta - 3) = 3$（一步就到最优！）
+$\phi_2(\theta) = \theta - (\theta + 3) = -3$
+
+$\mathcal{L}_\text{meta}(\theta) = (3 - 3)^2 + (-3 + 3)^2 = 0$，对所有 $\theta$ 成立。
+
+\textbf{解读}：在这个线性二次情形下，MAML 初始化点的选择不重要（因为一步就到最优）；
+更实际的情形是一步不够，此时 $\theta$ 的选择至关重要。
+
+为了展示 $\theta$ 的重要性，把任务改为：
+$\mathcal{L}_1(\theta) = (\theta - 3)^2, \mathcal{L}_2(\theta) = (\theta + 3)^2$，内循环只做一步 $\alpha = 0.1$。
+
+$\phi_1(\theta) = \theta - 0.2(\theta - 3) = 0.8\theta + 0.6$
+$\phi_2(\theta) = \theta - 0.2(\theta + 3) = 0.8\theta - 0.6$
+
+$\mathcal{L}_\text{meta}(\theta) = (0.8\theta + 0.6 - 3)^2 + (0.8\theta - 0.6 + 3)^2$
+$= (0.8\theta - 2.4)^2 + (0.8\theta + 2.4)^2$
+$= 2(0.8\theta)^2 + 2(2.4)^2$（展开后 $2 \cdot (0.8\theta)^2 + 2 \cdot 5.76$）
+
+最优 $\theta^* = 0$（元学习确认：两个任务平衡）——从 $0$ 出发一步梯度更新后：
+$\phi_1(0) = 0.6$（距最优 $3$ 差 $2.4$，起点 $\theta=0$ 比 $\theta=1$ 更均衡地靠近两个最优）。
+
+核心直觉：元学习的初始化点是"在少步梯度下降后，同时对多个任务最优"的那个点。
+\end{example}
+
+\section{内外循环语言：全书的统一语法}
+\label{sec:inner_outer_language}
+
+元学习提供了全书最重要的一对词汇：
+
+\begin{definition}[内循环与外循环]
+\begin{itemize}
+  \item \textbf{内循环（Inner Loop）}：在特定数据/任务上执行的、\textbf{快速适应}的优化过程。
+        操作的对象：任务适应参数 $\phi_i$（MAML 中），或隐状态 $s_t$（TTT-Layer 中）。
+        时间尺度：短（几步梯度，或每个 token 一步）。
+  \item \textbf{外循环（Outer Loop）}：跨任务/跨序列的、\textbf{元知识学习}过程。
+        操作的对象：初始化点 $\theta$ 或网络的持久参数。
+        时间尺度：长（跨越大规模训练数据）。
+\end{itemize}
+\end{definition}
+
+后续章节如何使用这对语言：
 
 \begin{center}
-\begin{tabular}{lll}
+\begin{tabular}{p{3cm}p{4.5cm}p{4.5cm}}
 \toprule
-& \textbf{内循环（Inner Loop）} & \textbf{外循环（Outer Loop）} \\
+系统 & 内循环 & 外循环 \\
 \midrule
-优化对象 & 任务适应参数 $\phi_i$ & 初始化参数 $\theta$ \\
-数据 & Support Set $\mathcal{S}_i$ & Query Set $\mathcal{Q}_i$ \\
-损失 & 任务训练损失 & 任务验证损失 \\
-目标 & 快速适应 & 良好初始化 \\
+MAML（第 \ref{ch:bilevel} 章） & 在 $\mathcal{S}_i$ 上 $k$ 步 GD & 在 $\mathcal{Q}_i$ 上更新 $\theta$ \\
+TTT 2020（第 \ref{ch:why_test_time} 章） & 在测试样本上做辅助 GD & 大规模预训练 $\theta$ \\
+TTT-RNN（第 \ref{ch:ttt_bridge} 章） & 隐状态 $\mS_t$ 的梯度步 & 外部参数 $\theta$ 的预训练 \\
+TTT-Layer（第 \ref{ch:ttt_layers} 章） & 每 token 触发的内部 GD & 书写规则的预训练学习 \\
+Titans（第 \ref{ch:titans} 章） & Neural Memory 的逐步更新 & 主网络和门控的训练 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\section{和前后章节的关系}
+理解了"内外循环"这对语言，后面所有章节的架构设计都会变得清晰。
 
-本章的内外循环语言是理解后续所有内容的\textbf{基础词汇}。
+\section{Learned Optimizers：学习优化器本身}
+\label{sec:learned_optim}
+
+\citet{andrychowicz2016l2l} 把元学习推到了更极端的方向：
+不只学习一个好的初始化点，而是学习\textbf{整个内循环优化器}本身。
+
+\paragraph{思路}
+
+传统梯度下降：$\phi_{t+1} = \phi_t - \alpha \nabla \mathcal{L}$（固定规则）
+
+学习的优化器：$\phi_{t+1} = \phi_t + m_\psi(\nabla \mathcal{L}, \phi_t, t)$
+其中 $m_\psi$ 是一个 LSTM，其参数 $\psi$ 通过元学习在任务分布上训练。
+
+\paragraph{元学习目标（双层）}
+\begin{align}
+  \min_\psi &\quad \mathbb{E}_{\mathcal{T}} \left[ \sum_{t=1}^T \mathcal{L}(\phi_t(\psi)) \right] \\
+  \text{其中} &\quad \phi_{t+1}(\psi) = \phi_t(\psi) + m_\psi(\nabla_{\phi_t} \mathcal{L})
+\end{align}
+
+\paragraph{与本书主线的关系}
+
+学习的优化器（Learned Optimizer）是理解以下联系的桥梁：
 \begin{itemize}
-  \item 第 \ref{ch:ttt_bridge} 章将看到：TTT-Layer 中，隐状态的梯度更新
-        对应内循环；大参数 $\theta$ 对应外循环学到的"如何更新"的规则。
-  \item 第 \ref{ch:icl} 章将看到：Transformer 在 ICL 时隐式执行的"等价梯度步"
-        也可以用内外循环的语言来理解。
+  \item 外循环学到的"优化规则"$m_\psi$ 是慢权重
+  \item 内循环每步 $\nabla \mathcal{L}$ 驱动的更新 $m_\psi(\nabla \mathcal{L})$ 是快权重式的动态适应
+  \item 这和 TTT-Layer 的"外部参数 $\theta$ 学习更新规则，内部状态 $\mS$ 根据规则更新"完全对应
 \end{itemize}
 
-\begin{labbox}
-\textbf{Lab 3：MAML 拟合正弦波}（约 100 行 PyTorch）
+\begin{viewpointbox}
+"学习的优化器" 和 "TTT-Layer" 之间的等价是一种深刻的教学视角，
+而不是在论文中明确建立的等价关系。
+本书这里做的是教材层面的概念统一，不应被引用为"某论文的原话证明"。
+\end{viewpointbox}
+
+\section{和前后章节的关系}
+\label{sec:bilevel_bridges}
+
+\begin{itemize}
+  \item \textbf{来自第 \ref{ch:why_test_time} 章}：TTT 2020 让我们接受了"测试时更新参数"的合法性。
+    元学习（本章）解决了"如何在训练时准备好以便被快速微调"的问题，让测试时适应更高效。
+
+  \item \textbf{通向第 \ref{ch:fastweights}--\ref{ch:attention} 章}：快权重可以被视为元学习原理在序列模型架构中的一次实例化——慢权重学习"如何建立联想"（元知识），快权重在推断时做"快速适应"（内循环）。
+
+  \item \textbf{通向第 \ref{ch:ttt_bridge}--\ref{ch:ttt_layers} 章}：TTT-RNN 和 TTT-Layer 的设计就是把 MAML 的内外循环结构\textbf{嵌入到序列模型的前向传播中}，无需调用外部反向传播库。
+
+  \item \textbf{通向第 \ref{ch:nested} 章}：Nested Learning 的"嵌套多级优化"框架直接对应于元学习的双层结构，只是被推广到了更多层级。
+\end{itemize}
+
+\begin{labbox}[title=Lab 3：用 PyTorch 实现 FOMAML，在正弦波族上验证元学习]
+\textbf{目标}：验证元学习初始化点确实比随机初始化需要更少梯度步就能适应新任务。
 
 \begin{enumerate}
-  \item 定义任务分布：随机采样 $(A, \omega, \phi)$，生成 5 个 support 点和 10 个 query 点
-  \item 用 2 层 MLP 实现 $f_\theta$
-  \item 实现 FOMAML：(a) 对 support 集用临时变量手动更新 $\phi = \theta - \alpha \nabla$；
-        (b) 用 $\phi$ 在 query 集上计算损失；(c) 对 $\theta$ 做外循环梯度步
-  \item 与随机初始化的 MLP 对比：在 5 步内循环后，谁的拟合误差更小？
+  \item \textbf{任务生成函数}：
+\begin{lstlisting}[language=Python]
+import numpy as np
+def sample_sinusoid_task():
+    A = np.random.uniform(0.1, 5.0)
+    phi = np.random.uniform(0, np.pi)
+    def task_fn(x): return A * np.sin(x + phi)
+    return task_fn
+\end{lstlisting}
+
+  \item \textbf{模型}：2 层 MLP，输入 $\R^1 \to$ 隐 $\R^{64}$ ReLU $\to$ 输出 $\R^1$。
+
+  \item \textbf{内循环}：对每个任务的 $K=5$ 个 support 点做 1 步手动梯度更新（不用 optimizer）：
+\begin{lstlisting}[language=Python]
+# 手动一步梯度（保留计算图以便外循环求梯度）
+loss_s = mse_loss(model(x_support), y_support)
+grads = torch.autograd.grad(loss_s, model.parameters(), create_graph=True)
+phi = [p - alpha * g for p, g in zip(model.parameters(), grads)]
+\end{lstlisting}
+
+  \item \textbf{外循环}：对 $B=16$ 个任务，用内循环参数 $\phi_i$ 计算 query 损失，平均后更新模型：
+\begin{lstlisting}[language=Python]
+meta_loss = mean([evaluate(phi_i, x_query_i, y_query_i) for each task])
+meta_optimizer.zero_grad()
+meta_loss.backward()
+meta_optimizer.step()
+\end{lstlisting}
+
+  \item \textbf{对比实验}（两条曲线）：
+    \begin{itemize}
+      \item 元学习后的 $\theta^*$：从 $\theta^*$ 出发，在新任务的 5 个 support 点上做 $1, 2, 5, 10$ 步梯度，记录 query 集 MSE。
+      \item 随机初始化的 $\theta_\text{rand}$：做同样步数，记录 MSE。
+    \end{itemize}
+
+  \item \textbf{画图}：x 轴=梯度步数（0--10），y 轴=query MSE。验证元学习曲线下降更快、
+        在 5 步内达到的最终 MSE 更低。
 \end{enumerate}
 \end{labbox}
 
 \begin{misconceptionbox}
-\textbf{常见误解}：元学习只适用于"小样本"设置，大数据场景用不上。
+\textbf{常见误解 1}：元学习 = few-shot learning，只有 $K=1$ 或 $K=5$ 的场景才需要。
 
-\textbf{纠正}：元学习的本质是\textbf{优化初始化点}，使得下游适应更快。
-这在任何需要"快速个性化"的场景都有价值：
-联邦学习中的客户端适应、推荐系统中的用户冷启动、机器人学中的在线适应……
-规模化元学习（如 \citet{nichol2018reptile} 的 Reptile）可以高效地应用于大规模设置。
+\textbf{纠正}：元学习的本质是"优化适应过程"，不局限于 few-shot 场景。
+联邦学习中的个性化（用本地少量数据快速适应）、在线学习中的热启动、
+机器人学习中的快速策略适应，都是元学习思路的应用，$K$ 可以是几百甚至更大。
+\end{misconceptionbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解 2}：MAML 一定需要二阶导数，计算很贵，没有实用价值。
+
+\textbf{纠正}：FOMAML（一阶近似）和 Reptile 完全避开了二阶导数，
+计算开销只比普通梯度下降多一个常数因子（多跑一次内循环），在实践中广泛使用。
+真正的成本更多来自"需要用大量任务来形成有效元训练集"这个数据要求，而不是计算。
 \end{misconceptionbox}
 
 \section{练习题}
+\label{sec:bilevel_exercises}
 
 \begin{exercise}
-MAML 的外循环更新 \eqref{eq:maml_metaupdate} 涉及二阶导数（Hessian）。
-写出当 $k=1$ 时，$\nabla_\theta \mathcal{L}_\mathcal{Q}(\phi(\theta))$ 展开后包含的 Hessian 项。
-然后说明为什么 FOMAML 忽略这一项在实践中仍然有效。
+\textbf{双层优化梯度}：设内循环为 $k=1$ 步梯度，$\phi(\theta) = \theta - \alpha \nabla_\theta \mathcal{L}_\mathcal{S}(\theta)$。
+令 $F(\theta) = \mathcal{L}_\mathcal{Q}(\phi(\theta))$，展开 $\nabla_\theta F$，
+写出包含 Hessian 的完整表达式（式 \eqref{eq:maml_full_grad}）。
+
+然后写出 FOMAML 近似（忽略 Hessian），说明这个近似等价于"用内循环参数 $\phi$ 在 query 集上的普通梯度"。
 \end{exercise}
 
 \begin{exercise}
-"学会学习"的双层优化目标 \eqref{eq:maml_outer}，
-和 TTT 2020 的测试时微调目标 \eqref{eq:ttt_update}，
-它们有什么本质联系？如果把 TTT 的辅助任务视为内循环目标，
-MAML 的外循环应该优化什么？
+\textbf{Reptile 的几何理解}：证明当任务数 $B=2$，$k$ 足够大时，
+Reptile 等价于在两个任务的最优解 $\theta_1^*, \theta_2^*$ 之间做加权平均。
+（提示：$k\to\infty$ 时 $\phi_i \to \theta_i^*$，Reptile 更新 $\theta \leftarrow \theta + \beta/2 \cdot (\theta_1^* + \theta_2^* - 2\theta)$，找到不动点。）
 \end{exercise}
 
 \begin{exercise}
-证明：如果去掉初始化点依赖（即每个任务从随机点独立优化），
-式 \eqref{eq:maml_outer} 退化为什么问题？
+\textbf{内外循环的对应关系}：对 MAML 和 TTT 2020（第 \ref{ch:why_test_time} 章）分别填写下表：
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+角色 & MAML & TTT 2020 \\
+\midrule
+外循环参数（慢权重） & $\theta$ & ? \\
+内循环参数（快适应） & $\phi_i$ & ? \\
+外循环目标 & query 集损失 & ? \\
+内循环目标 & support 集损失 & ? \\
+内循环数据 & support set $\mathcal{S}_i$ & ? \\
+内循环施加场景 & 元测试时 & ? \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{exercise}
+
+\begin{exercise}
+\textbf{连接 Nested Learning}：MAML 是二层嵌套优化（内层 $\phi$，外层 $\theta$）。
+如果我们在 MAML 上再加一层——用另一个元元学习器来优化 MAML 的外循环超参数（如 $\alpha$）——
+这变成了三层嵌套优化。
+这与第 \ref{ch:nested} 章的 Nested Learning 框架有什么关系？
+三层嵌套在实践中面临什么额外困难？
 \end{exercise}
 
 \section{本章小结}
+\label{sec:bilevel_summary}
 
 \begin{itemize}
-  \item \textbf{元学习}的目标：学会一个初始化点 $\theta$，使得对任何新任务，从 $\theta$ 出发做少量梯度步即可。
-  \item \textbf{MAML} 用双层优化形式化这一目标：内循环模拟任务适应，外循环优化初始化。
-  \item 内外循环语言是全书的语法基础——后续所有推断期学习机制都可以用这套语言重新表述。
-  \item 元学习的局限：需要在训练时枚举大量任务；外循环梯度计算昂贵（Hessian）。
+  \item \textbf{元学习目标}：在任务分布 $p(\mathcal{T})$ 上训练，让模型获得"用少量样本/步骤快速适应新任务"的能力。
+
+  \item \textbf{MAML 双层结构}：
+        内循环 $=$ 在 $\mathcal{S}_i$ 上做 $k$ 步梯度下降得到 $\phi_i$；
+        外循环 $=$ 用 $\phi_i$ 在 $\mathcal{Q}_i$ 上的损失来更新初始化点 $\theta$。
+
+  \item \textbf{二阶导数问题}：完整的 MAML 需要计算 Hessian；FOMAML 和 Reptile 用一阶近似绕开，实践中常用。
+
+  \item \textbf{内外循环语言}是全书的统一语法——第 \ref{ch:fastweights}--\ref{ch:nested} 章所有架构设计都可以用这对词汇来组织。
+
+  \item \textbf{Learned Optimizer}（\citeauthor{andrychowicz2016l2l}）把内循环本身（优化器）也变成元学习的对象，与 TTT-Layer 有深刻概念联系。
+\end{itemize}
+
+\paragraph{读完本章，你应该能够：}
+\begin{itemize}
+  \item 用双层优化的语言写出 MAML 的目标函数
+  \item 推导一步内循环后的元梯度（含 Hessian 项）
+  \item 解释 FOMAML 的一阶近似合理性
+  \item 将 MAML 的内/外循环对应到 TTT、快权重、TTT-Layer 的类似结构
+  \item 实现一个最简 FOMAML 并在正弦波上验证
 \end{itemize}

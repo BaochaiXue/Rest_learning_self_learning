@@ -32,8 +32,6 @@
 \newtheorem{exercise}{练习}[chapter]
 \theoremstyle{remark}
 \newtheorem*{remark}{注}
-\newtheorem*{insight}{视角}      % for interpretive claims
-\newtheorem*{openproblem}{开放问题}  % for speculative claims
 
 % ─── Bibliography ────────────────────────────────────────
 \usepackage[
@@ -72,7 +70,9 @@
   frame=single,
   language=Python,
 }
-\usepackage{algorithm,algpseudocode}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
 
 % ─── Hyperlinks ──────────────────────────────────────────
 \usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=teal,urlcolor=teal]{hyperref}
@@ -119,6 +119,19 @@
   colback=purple!3,colframe=purple!40!black,
   fonttitle=\bfseries, breakable, #1
 }
+\newtcolorbox{insightbox}[1][]{
+  title={\textbf{核心洞见}},
+  colback=teal!4,colframe=teal!50!black,
+  fonttitle=\bfseries, breakable, #1
+}
+\newtcolorbox{openproblembox}[1][]{
+  title={\textbf{开放问题}},
+  colback=gray!4,colframe=gray!50!black,
+  fonttitle=\bfseries, breakable, #1
+}
+% Alias: \insight used as environment name in chapters
+\newenvironment{insight}[1][]{\begin{insightbox}[#1]}{\end{insightbox}}
+\newenvironment{openproblem}[1][]{\begin{openproblembox}[#1]}{\end{openproblembox}}
 
 % ─── Chapter/Section Formatting ──────────────────────────
 \usepackage{titlesec}
@@ -129,3 +142,9 @@
 \usepackage{microtype}
 \usepackage{xcolor}
 \usepackage{epigraph}
+\setlength{\epigraphwidth}{0.65\textwidth}
+% Math macros for chapter 3
+\newcommand{\calT}{\mathcal{T}}
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\calS}{\mathcal{S}}
+\newcommand{\calQ}{\mathcal{Q}}

@@ -1,155 +1,465 @@
 % chapters/05_attention_linear_attention_and_recurrence.tex
+% 第5章：Attention、Linear Attention 与递推视角
 \chapter{Attention、Linear Attention 与递推视角}
 \label{ch:attention}
 
+\epigraph{``The attention mechanism is, at its heart, a differentiable key-value store.''}{}
+
 \section{本章想回答什么问题}
 
-Transformer 的自注意力需要 $O(N^2)$ 内存——对于长序列是灾难性的。
-能否将其重写为线性递推，同时保持等价计算结果？
-如果可以，这个递推形式\textbf{精确等价于第 \ref{ch:fastweights} 章的快权重更新}吗？
+上一章建立了快权重联想记忆的数学基础：
+外积写入 $\mW_t \mathrel{+}= v_t k_t^\top$，矩阵乘法读取 $\hat{v} = \mW_t q$。
 
-\section{最小例子：结合律的魔术}
+本章做三件事：
+\begin{enumerate}
+  \item 复习 Transformer 的标准 Softmax 注意力，建立统一符号（\S\ref{sec:attn_standard}）
+  \item 推导线性注意力（去掉 Softmax），证明它可以被写成精确的递推形式（\S\ref{sec:linear_attn}）
+  \item 建立线性注意力与快权重之间的\textbf{严格数学等价}（\S\ref{sec:lineattn_fastweight}）
+\end{enumerate}
 
-\begin{toybox}[title=玩具问题 B：键值检索的三种写法]
-设查询为 $q$，键序列 $k_1, \ldots, k_N$，值序列 $v_1, \ldots, v_N$。
+这三件事放在一起，说明了一个深刻结论：
+\textbf{注意力层的前向计算等价于在线更新的联想记忆}——这不只是比喻，而是可以写成等式。
 
-\textbf{写法 1（标准注意力，$O(N^2)$）}：
-$y = \sum_{j} \text{softmax}_j(q^\top k_j) \cdot v_j$
+理解这个等价是通向第 \ref{ch:icl}--\ref{ch:ttt_layers} 章所有内容的关键。
 
-\textbf{写法 2（线性注意力，去掉 softmax）}：
-$y = \sum_j (\phi(q)^\top \phi(k_j)) \cdot v_j$
+\section{前置概念：内积、核函数与相似度度量}
+\label{sec:attn_prelim}
 
-\textbf{写法 3（矩阵结合律，$O(Nd^2)$递推）}：
-$y = \phi(q)^\top \underbrace{\left[\sum_j \phi(k_j) v_j^\top\right]}_{=\mW}$
+在进入注意力之前，我们先统一一个概念：\textbf{相似度函数}。
 
-第 3 种写法中，括号内的 $\mW$ 可以逐步积累，
-每来一个新的 $(k, v)$，做一次外积：$\mW \mathrel{+}= \phi(k) v^\top$。
-\end{toybox}
-
-\section{直觉解释}
-
-\subsection*{Softmax 的必要性与代价}
-
-标准注意力：$y_i = \text{softmax}(Q K^\top)_i \cdot V$。
-
-Softmax 中的指数归一化使得 $y_i$ 对于不同的 $q_i$ 是\textbf{全局相关的}——
-无法把求和拆分成独立的内积乘积组合。
-这是 $O(N^2)$ 的根源。
-
-\subsection*{线性核分解}
-
-如果用某个特征映射 $\phi: \R^d \to \R^{d'}$ 替代 $e^{q^\top k / \sqrt{d}}$，
-使得 $\text{sim}(q, k) \approx \phi(q)^\top \phi(k)$，
-那么求和即可分解：
-
-\begin{equation}
-  y_i = \frac{\sum_{j \le i} \phi(q_i)^\top \phi(k_j) \cdot v_j}{\sum_{j \le i} \phi(q_i)^\top \phi(k_j)}
-  \approx \phi(q_i)^\top \left[\sum_{j \le i} \phi(k_j) v_j^\top\right] \phi(q_i) / Z_i
-\end{equation}
-
-\section{数学形式化}
-
-\subsection*{线性注意力的递推形式}
-
-定义累积记忆矩阵（忽略归一化）：
-\begin{align}
-  \mS_t &= \mS_{t-1} + \phi(k_t) v_t^\top \label{eq:linear_attn_update} \\
-  y_t   &= \phi(q_t)^\top \mS_t \label{eq:linear_attn_query}
-\end{align}
-
-对比快权重更新式 \eqref{eq:fastweight_update}（$\lambda=1$ 版本）：
-\begin{equation}
-  \mW_t = \mW_{t-1} + v_t k_t^\top
-\end{equation}
-
-两者在形式上完全等同（$\phi(k) = k$, $\mS = \mW^{\top}$ 时即一致）。
-这正是 \citet{schlag2021linear} 的核心发现。
-
-\begin{insight}[线性注意力 = 快权重（机制共识）]
-在使用线性核（去掉 Softmax）的情况下，因果自注意力层在数学上
-\textbf{精确等价于}一个被外积顺序更新的快权重矩阵。
-这是一个形式等价结论，适用于线性近似范围内。
-\end{insight}
-
-\subsection*{Softmax 版本为何不同}
-
-带 Softmax 的注意力：$\text{sim}(q, k_j) = \exp(q^\top k_j / \sqrt{d})$，
-这个相似度函数\textbf{无法写成内积形式}，
-因此无法应用矩阵结合律。
-
-\begin{viewpointbox}
-完整的 Softmax 注意力也可以从"联想记忆"视角理解，
-但需要更复杂的框架（如能量函数视角）。
-这种解读是一种解释视角，并非如线性情况那样的严格等价。
-\end{viewpointbox}
-
-\section{代表论文}
-
-\paragraph{\citet{katharopoulos2020rnn}}
-\textit{Transformers are RNNs} 首次明确推导出线性注意力的递推形式，
-并展示其在长序列上的速度优势。
-
-\paragraph{\citet{schlag2021linear}}
-\textit{Linear Transformers Are Secretly Fast Weight Programmers}
-建立了线性注意力和快权重的严格数学等价关系，
-为后续 TTT-Layer 的设计提供了理论基础。
-
-\section{和前后章节的关系}
-
-本章刚好处于快权重（第 \ref{ch:fastweights} 章）和
-ICL-as-optimization（第 \ref{ch:icl} 章）之间的桥梁位置：
+给定两个向量 $q, k \in \R^d$，常用的相似度函数有：
 \begin{itemize}
-  \item 快权重 $\xrightarrow{\text{等价于}}$ 线性注意力
-  \item 线性注意力 $\xrightarrow{\text{解释为}}$ 隐式执行梯度下降（第 \ref{ch:icl} 章）
+  \item \textbf{内积}：$\langle q, k \rangle = q^\top k$（未归一化，快，但数值随维度增大）
+  \item \textbf{缩放内积}：$q^\top k / \sqrt{d}$（防止 softmax 梯度消失）
+  \item \textbf{核函数}：$\kappa(q, k) \ge 0$，可以分解为 $\phi(q)^\top \phi(k)$（某些核）
 \end{itemize}
 
-\begin{labbox}
-\textbf{Lab 5：线性注意力速度对比}（约 30 行 PyTorch）
+\begin{definition}[正定核与特征映射]
+函数 $\kappa: \R^d \times \R^d \to \R$ 是正定核，如果对任意有限点集，
+对应的 Gram 矩阵是正半定的。
+
+若 $\kappa(q, k) = \phi(q)^\top \phi(k)$，则称 $\phi: \R^d \to \R^{d'}$ 为该核对应的特征映射。
+\end{definition}
+
+\paragraph{关键例子：指数核与线性核}
+\begin{itemize}
+  \item \textbf{指数核}：$\kappa(q, k) = e^{q^\top k / \sqrt{d}}$。
+    这个核不能被有限维 $\phi$ 精确表示（需要无穷维特征空间）。
+    Softmax 注意力用的就是这个核（除了归一化）。
+
+  \item \textbf{线性核}：$\kappa(q, k) = \phi(q)^\top \phi(k)$，其中 $\phi$ 是某个有限维映射。
+    最简单的情形：$\phi = \text{id}$（恒等映射），则 $\kappa(q, k) = q^\top k$。
+    线性注意力用的就是这个核。
+\end{itemize}
+
+\section{标准 Softmax 注意力的推导与理解}
+\label{sec:attn_standard}
+
+\subsection*{问题设置}
+
+给定一个长度为 $N$ 的序列，每个位置有 token 表示 $x_i \in \R^d$（$i = 1, \ldots, N$）。
+自注意力的目标：让位置 $i$ 的输出 $y_i$ 能够"关注"所有（或部分）历史位置的信息。
+
+\subsection*{三线性变换}
+
+首先，用可学习矩阵（慢权重）把每个 $x_i$ 投影为三个角色：
+\begin{align}
+  q_i &= W_Q x_i \in \R^{d_k} \quad &\text{（查询）} \\
+  k_i &= W_K x_i \in \R^{d_k} \quad &\text{（键）}   \\
+  v_i &= W_V x_i \in \R^{d_v} \quad &\text{（值）}
+\end{align}
+
+\subsection*{注意力权重的计算}
+
+位置 $i$ 对位置 $j$ 的未归一化注意力分数：
+\begin{equation}
+  s_{ij} = \frac{q_i^\top k_j}{\sqrt{d_k}}
+  \label{eq:attn_score}
+\end{equation}
+
+\noindent
+除以 $\sqrt{d_k}$ 是为了稳定初始化时的梯度流：
+若 $q_i, k_j$ 的各分量独立 $\mathcal{N}(0,1)$，则 $q_i^\top k_j$ 的方差为 $d_k$；
+除以 $\sqrt{d_k}$ 后方差固定为 1，防止 softmax 进入梯度消失的"尖峰"区域。
+
+Softmax 归一化注意力权重（因果版本，只关注过去 $j \le i$）：
+\begin{equation}
+  \alpha_{ij} = \frac{e^{s_{ij}}}{\sum_{j' \le i} e^{s_{ij'}}}, \quad j \le i
+  \label{eq:softmax}
+\end{equation}
+
+\subsection*{加权聚合输出}
+
+\begin{equation}
+  y_i = \sum_{j=1}^{i} \alpha_{ij} v_j \in \R^{d_v}
+  \label{eq:attn_output}
+\end{equation}
+
+\paragraph{矩阵形式（全序列一次计算）}
+
+令 $Q = [q_1, \ldots, q_N]^\top \in \R^{N \times d_k}$（类似 $K, V$），则：
+
+\begin{equation}
+  Y = \text{Softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}} + M_\text{causal}\right) V
+  \label{eq:attn_matrix}
+\end{equation}
+
+其中 $M_\text{causal}$ 是因果掩码矩阵（$i < j$ 的位置设为 $-\infty$，使其在 softmax 后为 0）。
+计算量：$O(N^2 d_k)$（矩阵乘法 $QK^\top$），内存 $O(N^2)$（存储注意力矩阵）。
+
+\subsection*{为什么 $O(N^2)$ 是问题}
+
+当 $N = 100{,}000$（长文档推断），$N^2 = 10^{10}$——现代 GPU 存不下。
+这驱动了对"避免显式计算 $N \times N$ 注意力矩阵"的需求，即线性注意力。
+
+\section{从 Softmax 到线性注意力：去掉归一化的代价与收益}
+\label{sec:linear_attn}
+
+\subsection*{核心变换}
+
+用一个特征映射 $\phi: \R^{d_k} \to \R^{d'}$（$d'$ 可以等于 $d_k$）
+替代指数相似度：
+
+\begin{equation}
+  \alpha_{ij}^{\text{linear}} \propto \phi(q_i)^\top \phi(k_j)
+  \label{eq:linear_attn_weight}
+\end{equation}
+
+归一化后（暂时不写分母，先关注非归一化版）：
+\begin{equation}
+  y_i^{\text{unnorm}} = \sum_{j \le i} \phi(q_i)^\top \phi(k_j) \cdot v_j
+  \label{eq:linear_attn_unnorm}
+\end{equation}
+
+\subsection*{矩阵结合律：从 $O(N^2)$ 到 $O(Nd^2)$}
+
+关键一步：利用矩阵乘法结合律，改变括号位置：
+
+\begin{align}
+  y_i^{\text{unnorm}}
+  &= \sum_{j \le i} \phi(q_i)^\top \phi(k_j) \cdot v_j \\
+  &= \phi(q_i)^\top \sum_{j \le i} \phi(k_j) v_j^\top \quad (\text{提出 } \phi(q_i)) \\
+  &= \phi(q_i)^\top \underbrace{\left[ \sum_{j \le i} \phi(k_j) v_j^\top \right]}_{\displaystyle \mS_i \in \R^{d' \times d_v}}
+  \label{eq:linear_attn_factored}
+\end{align}
+
+矩阵 $\mS_i$ 可以递推计算：
+\begin{equation}
+  \mS_i = \mS_{i-1} + \phi(k_i) v_i^\top
+  \label{eq:linear_attn_recurrence}
+\end{equation}
+
+输出：
+\begin{equation}
+  \boxed{%
+  \begin{aligned}
+    \mS_i &= \mS_{i-1} + \phi(k_i) v_i^\top \qquad (\text{写入/状态更新}) \\
+    y_i   &= \phi(q_i)^\top \mS_i \qquad\qquad\quad\; (\text{读取/输出})
+  \end{aligned}}
+  \label{eq:linear_attn_final}
+\end{equation}
+
+计算量分析：
+\begin{itemize}
+  \item 每步状态更新：$O(d' d_v)$（外积）
+  \item 每步输出计算：$O(d' d_v)$（向量-矩阵乘法）
+  \item 总计：$O(N d' d_v)$，线性于序列长度！
+  \item 推断时内存：$O(d' d_v)$（只需存 $\mS_t$），不随 $N$ 增长！
+\end{itemize}
+
+\subsection*{常用特征映射 $\phi$ 的选取}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+方法 & $\phi(x)$ | 维度 $d'$ & 特性 \\
+\midrule
+恒等 & $x$ & $d_k$ & 最简单，内积核 \\
+ELU+1 & $\text{ELU}(x) + 1$ & $d_k$ & 非负，近似 softmax \\
+ReLU & $\max(0, x)$ & $d_k$ & 稀疏 \\
+随机特征（RF） & $\cos(Rx + b)$ | $d'$ & 近似高斯核 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+本书大多数场合用 $\phi = \text{id}$ 简化推导。真实系统会根据任务选择保证非负性的映射。
+
+\subsection*{线性注意力失去了什么}
+
+Softmax 归一化有一个重要作用：让注意力权重 $\alpha_{ij}$ 对所有 $j$ 加和为 1。
+这提供了隐式的"注意力集中"效果——模型可以选择只关注少数位置。
+
+线性注意力的输出是所有历史值向量的\textbf{标量加权和}，没有强制稀疏，
+对于需要精确 token 匹配的任务（如 MQAR，多查询联想召回）可能表现较差。
+这是线性注意力与标准注意力主要的\textbf{定性}差异（不只是近似）。
+
+\section{线性注意力 = 快权重：严格的数学等价}
+\label{sec:lineattn_fastweight}
+
+现在我们建立本章最核心的结论。
+
+\begin{theorem}[线性注意力 $\equiv$ 快权重序列模型 --- \citeauthor{schlag2021linear}, 2021]
+\label{thm:lineattn_fastweight}
+
+设线性注意力的参数 $W_K, W_V \in \R^{d \times d}$，特征映射 $\phi = \text{id}$，
+状态更新为式 \eqref{eq:linear_attn_recurrence}，学习率 $\eta = 1$，遗忘因子 $\lambda = 1$。
+
+则：
+
+1. 状态矩阵 $\mS_t = \sum_{j=1}^t k_j v_j^\top$（其中 $k_j = W_K x_j, v_j = W_V x_j$）。
+
+2. 设快权重矩阵为 $\mW_t = \sum_{j=1}^t v_j k_j^\top$（式 \eqref{eq:fastweight_update}，$\lambda=1$）。
+
+则 $\mS_t = \mW_t^\top$——线性注意力的状态矩阵是快权重矩阵的转置。
+
+3. 两者的输出等价：
+\begin{equation}
+  y_i = \mS_i^\top \phi(q_i) = \mW_i q_i = \hat{v}_i
+  \label{eq:equiv}
+\end{equation}
+（输出形式因矩阵转置约定而有所不同，但数学上代表同一计算。）
+\end{theorem}
+
+\begin{proof}
+展开线性注意力状态：$\mS_t = \sum_{j=1}^t k_j v_j^\top$。
+
+展开快权重（$\lambda=1, \eta=1$）：$\mW_t = \sum_{j=1}^t v_j k_j^\top$。
+
+对比：$\mS_t = (\mW_t)^\top$（由于 $(A B^\top)^\top = B A^\top$，代入即得）。
+
+输出：
+线性注意力 $y_i = \phi(q_i)^\top \mS_i = q_i^\top \sum_{j} k_j v_j^\top$，
+快权重 $\hat{v}_i = \mW_i q_i = \left(\sum_j v_j k_j^\top\right) q_i = \sum_j v_j (k_j^\top q_i)$。
+
+两者等价（$q_i^\top \sum_j k_j v_j^\top$ 是行向量，其转置 $= \sum_j v_j (k_j^\top q_i)$）。
+\end{proof}
+
+\begin{remark}
+转置方向的差异源于矩阵乘法的"行/列"约定不同，本质上是同一计算。
+重要的是：\textbf{两者都实现了相似度加权值召回}，区别仅在约定。
+\end{remark}
+
+\subsection*{等价的实际含义}
+
+定理 \ref{thm:lineattn_fastweight} 告诉我们：
+\begin{itemize}
+  \item Transformer 研究者从"注意力"这个词语出发设计的机制，
+        和 Hinton 小组早在 1980--90 年代研究的"快权重联想记忆"，
+        在数学上是同一个东西（在线性核下）。
+  \item 这不是巧合，而是揭示了一个深层结构：\textbf{有效的上下文信息压缩，在某种意义下，必然收敛到外积积累 + 内积检索这种形式}。
+  \item 后续的 TTT-Layer 进一步把外积更新替换为梯度下降更新，
+        这是一个严格的"泛化"方向。
+\end{itemize}
+
+\section{带遗忘因子的线性注意力与衰减位置偏置}
+\label{sec:linear_attn_decay}
+
+在式 \eqref{eq:linear_attn_final} 中加入遗忘因子 $\lambda \in (0, 1)$：
+
+\begin{align}
+  \mS_t &= \lambda \mS_{t-1} + \phi(k_t) v_t^\top \label{eq:linear_attn_decay} \\
+  y_t   &= \phi(q_t)^\top \mS_t
+\end{align}
+
+展开：$\mS_t = \sum_{j \le t} \lambda^{t-j} \phi(k_j) v_j^\top$，所以
+
+\begin{equation}
+  y_t = \sum_{j \le t} \lambda^{t-j} \cdot \phi(q_t)^\top \phi(k_j) \cdot v_j
+  \label{eq:decay_output}
+\end{equation}
+
+这等价于对注意力权重加上了一个\textbf{时间衰减位置偏置} $\lambda^{t-j}$——
+越近的 token 权重越大。
+
+这与 \textbf{RetNet}（Retentive Network，Sun et al.，2023）的设计思路完全对应：
+RetNet 在线性注意力上引入了衰减因子来提升序列建模效果。
+式 \eqref{eq:decay_output} 正是 RetNet 中"保留（Retention）"机制的核心公式。
+
+\section{Worked Example：用线性注意力做 MQAR}
+\label{sec:attn_worked}
+
+\begin{example}[多查询联想召回（MQAR）]
+\textbf{序列}（$d=2$，$\phi = \text{id}$）：
+
+\[
+  (k_1 = e_1, v_1 = a),\quad (k_2 = e_2, v_2 = b),\quad q = e_1
+\]
+
+（$e_1 = (1,0)^\top, e_2 = (0,1)^\top$，$a, b$ 是任意值向量）
+
+\textbf{状态更新}：
+\begin{align}
+  \mS_1 &= e_1 a^\top = \begin{pmatrix} a^\top \\ 0^\top \end{pmatrix} \quad (\text{写入 }(k_1, v_1)) \\
+  \mS_2 &= \mS_1 + e_2 b^\top = \begin{pmatrix} a^\top \\ b^\top \end{pmatrix}
+\end{align}
+
+\textbf{查询 $q = e_1$}：
+\[
+  y = q^\top \mS_2 = e_1^\top \begin{pmatrix} a^\top \\ b^\top \end{pmatrix} = a^\top
+\]
+
+输出精确等于 $a = v_1$！
+
+\textbf{关键}：正交键（$e_1 \perp e_2$）保证了无干扰检索。
+真实应用中键不完全正交，因此有残余干扰。
+\end{example}
+
+\section{标准注意力为什么不能被递推}
+\label{sec:softmax_no_recurrence}
+
+现在我们可以精确回答：为什么去掉 Softmax 才能得到递推？
+
+Softmax 注意力：
+\begin{equation}
+  y_i = \frac{\sum_{j \le i} e^{q_i^\top k_j / \sqrt{d}} v_j}{\sum_{j \le i} e^{q_i^\top k_j / \sqrt{d}}}
+  \label{eq:softmax_expanded}
+\end{equation}
+
+分子 $\sum_j e^{q_i^\top k_j} v_j$ 中的指数项是 $q_i$ 的函数，
+\textbf{不能从}求和中提取出来。即 $e^{q_i^\top k_j} \ne \phi(q_i)^\top \phi(k_j)$
+对任何有限维 $\phi$。
+
+因此，对每个新查询 $q_i$，必须重新对所有 $j \le i$ 计算 $e^{q_i^\top k_j}$——这是 $O(N)$ 操作，总体 $O(N^2)$。
+
+去掉 Softmax 用线性核 $\kappa(q, k) = \phi(q)^\top \phi(k)$，则可以替换矩阵结合律提取 $\phi(q_i)$，把 $\sum_j \phi(k_j) v_j^\top$ 预先计算为状态矩阵，避免重复计算。
+
+\begin{viewpointbox}
+完整 Softmax 注意力也可以从"联想记忆"视角理解——例如通过 Hopfield 网络的能量函数分析，
+或随机特征近似方法。但这些分析是近似的，而不是像线性情形那样的严格等价。
+
+在本书中，凡是说"注意力 = 快权重"的地方，均专指线性注意力（无 Softmax）情形的严格等价。
+对于完整 Softmax 注意力，这是一个富有启发性的类比，但需要额外的近似或框架才能建立形式联系。
+\end{viewpointbox}
+
+\section{代表论文精读指南}
+\label{sec:attn_papers}
+
+\paragraph{\citet{vaswani2017attention} — Attention Is All You Need}
+建立了多头自注意力（Multi-Head Self-Attention）的标准形式，
+并证明纯注意力机制可以取代 RNN 达到 SOTA 翻译效果。
+
+\textit{本教材用处}：提供标准符号和计算方案，是式 \eqref{eq:attn_score}--\eqref{eq:attn_output} 的原始来源。
+
+\paragraph{\citet{katharopoulos2020rnn} — Transformers are RNNs}
+第一次明确推导线性注意力的递推形式（等价于我们的式 \eqref{eq:linear_attn_final}），
+并实验验证其在长序列上的速度优势和性能权衡。
+
+\textit{本教材用处}：证明了递推写入 = 线性注意力，连接了 Transformer 和 RNN 两个社区。
+
+\paragraph{\citet{schlag2021linear} — Linear Transformers Are Secretly Fast Weight Programmers}
+建立了线性注意力与快权重之间的严格数学等价（定理 \ref{thm:lineattn_fastweight}），
+并提出了多种增强线性注意力能力的方案（如引入归一化、负权值等）。
+
+\textit{本教材用处}：本章定理 \ref{thm:lineattn_fastweight} 的主要来源。
+
+\section{和前后章节的关系}
+\label{sec:attn_bridges}
+
+\begin{itemize}
+  \item \textbf{来自第 \ref{ch:fastweights} 章}：快权重提供了数学基础——外积写入 + 矩阵读取。
+        本章证明了线性注意力正是这个基础在神经网络中的自然实现。
+
+  \item \textbf{通向第 \ref{ch:icl} 章}：一旦我们知道线性注意力 = 快权重 = 在线最小二乘梯度步（见练习 4 of Ch.4），
+        就可以问：Transformer 做 ICL 时，是不是在通过注意力计算"运行梯度下降"？
+        这正是第 \ref{ch:icl} 章的主题。
+
+  \item \textbf{通向第 \ref{ch:ttt_layers} 章}：线性注意力的外积写入 $\mS_t \mathrel{+}= k_t v_t^\top$
+        不是唯一的写入方式——如果用梯度步替换，就得到 TTT-Layer 的核心更新规则。
+\end{itemize}
+
+\begin{labbox}[title=Lab 5：实验对比线性注意力的并行实现与递推实现]
+\textbf{目标}：验证等价性，理解递推的推断优势。
 
 \begin{enumerate}
-  \item 生成随机 $Q, K, V \in \R^{N \times d}$（$N=1024, d=64$）
-  \item 实现标准线性注意力（无 Softmax）：\texttt{(Q @ K.T) @ V}
-  \item 实现递推版本：循环更新 $S \mathrel{+}= k_t v_t^\top$，输出 $q_t S$
-  \item 验证两种输出数值相同（绝对误差 $< 10^{-5}$）
-  \item 测量运行时间，展示递推版本在推断阶段的内存优势
+  \item 生成随机序列：$N=256, d=64$ 的 $Q, K, V$ 矩阵（标准正态）
+  \item \textbf{方法 A（并行）}：计算 $Y = (Q K^\top \odot \text{Causal\_Mask}) \cdot V$
+        （不含 softmax，下三角掩码）
+  \item \textbf{方法 B（递推）}：写循环，按时步更新 $\mS_t \mathrel{+}= k_t v_t^\top$，
+        计算 $y_t = q_t^\top \mS_t$
+  \item 验证 $\|Y_A - Y_B\|_\infty < 10^{-5}$（数值等价性）
+  \item 使用 \texttt{time.perf\_counter()} 测量两种方法在 $N=1024, 4096, 16384$ 时的运行时间
+  \item 绘制"序列长度 vs 运行时间"的双对数图，观察两者的增长速率
+  \item 测量 $N=16384$ 时的峰值内存占用（并行版需存 $N^2$ 注意力矩阵，递推版只需 $d\times d$）
 \end{enumerate}
+
+\textbf{预期结果}：
+\begin{itemize}
+  \item 数值等价性：$< 10^{-4}$（浮点误差）
+  \item 时间：并行版 $\propto N^2$，递推版 $\propto N$（斜率不同的直线）
+  \item 内存：并行版在 $N=16384$ 时约 $16384^2 \times 4$ 字节 $\approx$ 1 GB，递推版约 $64 \times 64 \times 4$ 字节 = 16 KB
+\end{itemize}
 \end{labbox}
 
 \begin{misconceptionbox}
-\textbf{常见误解}：线性注意力去掉了 Softmax，所以性能一定远差于标准注意力。
+\textbf{常见误解 1}：线性注意力只是"没有 softmax 的弱化 Transformer"。
 
-\textbf{纠正}：对于\textbf{需要长上下文和快速推断}的应用场景（如语言模型在线部署），
-线性注意力的权衡往往是合理的。
-现代改进（如 RetNet、Mamba 等）在线性注意力框架上进一步引入了门控和选择机制，
-大幅缩小了与标准注意力的性能差距。
+\textbf{纠正}：线性注意力是一套不同的权衡，不是单纯的弱化版本：
+(a) 对于推断效率极为敏感的场景（长序列实时部署、移动端）线性注意力是关键；
+(b) 增加门控、衰减、选择机制后（RetNet、Mamba、xLSTM），与 Softmax 注意力的性能差距可以大幅缩小；
+(c) 对于"需要联想记忆"的任务，线性注意力有时反而是更合适的归纳偏置。
+\end{misconceptionbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解 2}：定理 \ref{thm:lineattn_fastweight} 说明 Softmax 注意力也等价于快权重。
+
+\textbf{纠正}：定理明确说明这只在\textbf{线性核（去掉 Softmax）}下成立。
+Softmax 注意力使用指数核，无法写成有限维内积形式，因此不存在严格的快权重等价。
+这个区别很重要，不能混淆。
 \end{misconceptionbox}
 
 \section{练习题}
+\label{sec:attn_exercises}
 
 \begin{exercise}
-推导：当 $\phi(k) = k$（恒等映射）时，
-递推式 \eqref{eq:linear_attn_update} 和 \eqref{eq:linear_attn_query}
-与外积快权重式 \eqref{eq:fastweight_update}（$\lambda=1, \eta=1$）是否等价？
-给出详细的代数推导，注意矩阵转置的方向。
+\textbf{推导递推}：从式 \eqref{eq:linear_attn_unnorm} 出发，
+利用矩阵结合律，完整地推导出式 \eqref{eq:linear_attn_final}，
+给出每一步的代数理由。特别说明：为什么矩阵乘法结合律能够应用于这里，
+而 Softmax 计算中不能？
 \end{exercise}
 
 \begin{exercise}
-在有因果掩码（causal masking）的情况下，
-式 \eqref{eq:linear_attn_update} 的递推版本和非递推版本在计算量上的差异是什么？
-对于长度为 $N$ 的序列，分别高是 $O(N^2 d)$ 还是 $O(N d^2)$？
+\textbf{等价性验证}：手动计算一个 $d=2$，$N=3$ 的例子（键正交），
+分别用并行公式 $y_i = \sum_{j \le i} q_i^\top k_j \cdot v_j$
+和递推公式 \eqref{eq:linear_attn_final}，验证输出相同。
 \end{exercise}
 
 \begin{exercise}
-引入遗忘因子 $\lambda$，修改递推为：
-$\mS_t = \lambda \mS_{t-1} + \phi(k_t) v_t^\top$。
-这相当于对注意力权重做什么样的加权？这种修改使注意力更加"局部"，还是"全局"？
+\textbf{遗忘因子与位置偏置}：设线性注意力有遗忘因子 $\lambda$，
+展开式 \eqref{eq:decay_output}，说明 token $j$（距当前位置 $t$）的
+有效注意力权重为 $\lambda^{t-j} \cdot q_t^\top k_j$。
+如果把 $\lambda^{t-j}$ 理解为一种"位置偏置"，它与常见的 RoPE（旋转位置编码）
+有何不同？各有什么优缺点？
+\end{exercise}
+
+\begin{exercise}
+\textbf{多头线性注意力}：标准 Transformer 用了多头注意力（Multi-Head Attention，MHA）：
+将 $q, k, v$ 分割为 $H$ 个头，分别计算注意力后连接。
+对线性注意力同样可以用多头版本。设 $H=8, d=512, d_k=d_v=64$，
+每个头独立维护一个 $64 \times 64$ 状态矩阵。
+推断时总的状态内存是多少？与单头 $d=512$ 版本相比如何？
 \end{exercise}
 
 \section{本章小结}
+\label{sec:attn_summary}
 
 \begin{itemize}
-  \item 去掉 Softmax 后，自注意力可以被写成矩阵递推形式，从 $O(N^2)$ 降至 $O(Nd^2)$。
-  \item 这种递推形式与快权重的外积更新\textbf{数学等价}（在线性核下）。
-  \item 这一等价揭示了：注意力不只是"选择性聚焦"，也是"在线更新的联想记忆"。
-  \item 下一章：这种递推记忆更新与梯度下降有多近？ICL 是不是真的在"学习"？
+  \item \textbf{Softmax 注意力}（$O(N^2)$）：相似度 = 指数核，需全序列矩阵乘法，无法递推。
+
+  \item \textbf{线性注意力}（$O(Nd^2)$ 推断）：相似度 = 线性核，可递推：状态矩阵 $\mS_t = \mS_{t-1} + k_t v_t^\top$，输出 $y_t = q_t^\top \mS_t$。
+
+  \item \textbf{等价关系}（定理 \ref{thm:lineattn_fastweight}）：线性注意力状态矩阵 $\mS_t^\top$ = 快权重矩阵 $\mW_t$——在线性核下严格等价，不只是类比。
+
+  \item 引入遗忘因子 $\lambda$ 等价于加时间衰减位置偏置，是 RetNet 的核心设计之一。
+
+  \item 这个等价链（快权重 $\leftrightarrow$ 线性注意力 $\leftrightarrow$ 在线最小二乘梯度步）
+        是第 \ref{ch:icl}--\ref{ch:ttt_layers} 章所有分析的数学基础。
+\end{itemize}
+
+\paragraph{读完本章，你应该能够：}
+\begin{itemize}
+  \item 从头推导线性注意力的递推公式
+  \item 证明线性注意力与快权重的数学等价（不依赖"这只是类比"）
+  \item 解释为什么 Softmax 阻碍了递推，而线性核不阻碍
+  \item 分析线性注意力在 MQAR 任务中的精确检索条件
+  \item 代码实现并验证并行版与递推版的数值等价性
 \end{itemize}
