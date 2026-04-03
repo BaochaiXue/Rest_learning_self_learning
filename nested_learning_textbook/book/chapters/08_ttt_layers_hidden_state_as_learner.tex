@@ -155,6 +155,156 @@ TTT-Layer 的隐状态随序列流重置，这是工程上的人为切分；
 \paragraph{\citet{anonymous2025tttdone} — Test-Time Training Done Right}
 虽然上述愿景完美，在实际硬件中，“为每一步序列做微型反向传播”的实现让现成的 PyTorch 后端和 GPU 利用率在并行化流水线断裂的情况下极其低下。因为反向计算对于每个时间步骤强依赖。这篇重要论文通过对 TTT 的设计架构优化（比如通过重构其多头并行投影计算图）并使用低阶的定制并行前缀和扫面算子与张量重组技术，实现了 $O(\log N)$（甚至是常数感知内）并行时间，从底层突破了“TTT 因为自回归计算极度缓慢”导致无法进行万亿参数级并行预训练的枷锁，这是把理想拉进实用大厂模型的转折之作。
 
+%─────────────────────────────────────────────
+\section{与经典序列模型的系统对比}
+\label{sec:ttt_layers_comparison}
+%─────────────────────────────────────────────
+
+\subsection*{隐状态的容量对比}
+
+不同序列模型的核心差异在于隐状态的结构和容量。
+
+\begin{center}
+\begin{tabular}{p{2.5cm} p{2cm} p{3cm} p{2cm} p{2.5cm}}
+\toprule
+\textbf{模型}
+& \textbf{隐状态}
+& \textbf{更新规则}
+& \textbf{容量}
+& \textbf{可否在线} \\
+\midrule
+GRU
+& $h_t \in \R^d$
+& 门控插值
+& $O(d)$
+& 是 \\
+LSTM
+& $(c_t, h_t)$
+& 遗忘门+输入门
+& $O(d)$
+& 是 \\
+线性注意力
+& $\mS_t \in \R^{d \times d}$
+& 外积累积
+& $O(d^2)$
+& 是 \\
+TTT-Linear
+& $\mS_t \in \R^{d \times d}$
+& 在线 SGD
+& $O(d^2)$
+& 是 \\
+TTT-MLP
+& $W^{(1)}_t, W^{(2)}_t$
+& 非线性反传
+& $O(d'^2)$
+& 是 \\
+Transformer
+& KV cache
+& 追加存储
+& $O(Nd)$
+& 部分 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{关键观察}：
+\begin{itemize}
+  \item GRU/LSTM 的 $O(d)$ 容量瓶颈意味着所有历史信息
+    必须压缩到一个向量中。当 $N \gg d$ 时信息损失不可避免。
+  \item TTT-Linear 和线性注意力都使用 $d \times d$ 矩阵，
+    但更新规则不同（见第~\ref{ch:unified}~章的严格分析）。
+  \item Transformer 的 KV cache 容量线性增长，
+    延迟和内存代价为 $O(N)$。
+\end{itemize}
+
+\subsection*{计算复杂度对比}
+
+\begin{center}
+\begin{tabular}{p{3cm} p{3cm} p{3cm} p{3cm}}
+\toprule
+\textbf{模型}
+& \textbf{每步计算}
+& \textbf{$N$ 步总计}
+& \textbf{可并行} \\
+\midrule
+标准注意力
+& $O(Nd)$
+& $O(N^2 d)$
+& 完全并行 \\
+线性注意力
+& $O(d^2)$
+& $O(Nd^2)$
+& 递推式 \\
+TTT-Linear
+& $O(d^2)$
+& $O(Nd^2)$
+& 递推$^*$ \\
+TTT-MLP
+& $O(d'^2)$
+& $O(Nd'^2)$
+& 递推$^*$ \\
+LSTM / GRU
+& $O(d)$
+& $O(Nd)$
+& 递推式 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+$^*$：通过前缀扫描技术可实现 $O(\log N)$ 并行深度。
+
+\subsection*{伪代码：TTT-Linear 推断流程}
+
+\begin{algorithm}
+\textbf{输入}：序列 $x_1, \ldots, x_T$，
+慢参数 $\theta = \{W_K, W_V, W_Q, \eta\}$ \\
+\textbf{初始化}：$\mS_0 \gets 0_{d \times d}$
+
+\medskip
+\textbf{for} $t = 1$ \textbf{to} $T$ \textbf{do}：
+\begin{enumerate}
+  \item $k_t = W_K x_t,\; v_t = W_V x_t,\; q_t = W_Q x_t$
+  \item $\text{pred}_t = \mS_{t-1} k_t$ \hfill {\small // 当前预测}
+  \item $e_t = \text{pred}_t - v_t$ \hfill {\small // 预测误差}
+  \item $\mS_t = \mS_{t-1} - \eta \cdot e_t k_t^\top$ \hfill {\small // SGD 步}
+  \item $o_t = \mS_t q_t$ \hfill {\small // 读取输出}
+\end{enumerate}
+\textbf{end for}
+\end{algorithm}
+
+\textbf{与线性注意力的区别}在步骤 2--3：
+线性注意力忽略 $\text{pred}_t$，直接执行
+$\mS_t = \mS_{t-1} + v_t k_t^\top$。
+TTT-Linear 保留预测反馈项，避免重复写入。
+
+%─────────────────────────────────────────────
+\section{工程实现：从理论到硬件}
+\label{sec:ttt_layers_engineering}
+%─────────────────────────────────────────────
+
+将 TTT-Layer 从论文变为系统级组件需要解决三个工程挑战：
+
+\begin{enumerate}
+  \item \textbf{串行依赖}：
+    $\mS_t$ 依赖于 $\mS_{t-1}$，天然递推，无法直接并行。
+    解决方案：将更新公式重写为关联运算，
+    使用前缀扫描算法在 $O(\log T)$ 并行深度内完成。
+
+  \item \textbf{内存管理}：
+    TTT-MLP 的内层反向传播需保存中间激活。
+    长序列时 $T$ 个时间步的激活可能超出显存。
+    使用\textbf{梯度检查点}：
+    只保存每隔 $B$ 步的 $\mS_{tB}$，
+    需要时从最近检查点重新前向计算。
+
+  \item \textbf{训练时的双重反传}：
+    预训练 TTT-Layer 需对内层学习过程求外层梯度，
+    即通过展开的 $T$ 步 SGD 反向传播。
+    当 $T$ 大时，梯度可能消失或爆炸。
+    截断反传（truncated BPTT）和
+    stop-gradient 是常用缓解手段。
+\end{enumerate}
+
 \section{和前后章节的关系}
 \label{sec:ttt_layers_bridges}
 

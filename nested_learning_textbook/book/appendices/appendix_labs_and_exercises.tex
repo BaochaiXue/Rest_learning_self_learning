@@ -18,6 +18,7 @@ pip install higher                   # Lab 3 (MAML) 可选
 \toprule
 Lab & 对应章节 & 核心概念 \\
 \midrule
+Lab 1 & 第 \ref{ch:intro} 章 & 静态模型 OOD 脆弱性 \\
 Lab 2 & 第 \ref{ch:why_test_time} 章 & 分布偏移 + TTT 自监督微调 \\
 Lab 3 & 第 \ref{ch:bilevel} 章 & MAML 正弦波 \\
 Lab 4 & 第 \ref{ch:fastweights} 章 & 外积联想记忆 \\
@@ -41,3 +42,222 @@ Lab 11 & 第 \ref{ch:nested} 章 & NL 对应表（开放性思考） \\
   \item 有明确的"预期观察"——学生应该知道自己在验证什么
   \item 失败或非预期结果同样值得分析——Lab 不是黑盒验证工具
 \end{enumerate}
+
+%═════════════════════════════════════════════
+\section{各 Lab 详细指南}
+%═════════════════════════════════════════════
+
+\subsection{Lab 1：静态参数模型的 OOD 脆弱性}
+
+\textbf{章节}：第~\ref{ch:intro}~章 \quad
+\textbf{核心验证}：固定参数模型在分布偏移下的失败
+
+\begin{itemize}
+  \item \textbf{数据}：
+    二维分类，训练在 $[-1, 1]^2$，
+    测试平移至 $[49, 51]^2$。
+
+  \item \textbf{预期结果}：
+    模型在训练域 $>99\%$ 准确率，
+    平移后降至 $\sim 50\%$（接近随机猜测）。
+    1 步 SGD 自适应后恢复至 $>95\%$。
+
+  \item \textbf{预期图表}：
+    柱状图对比三种条件的准确率。
+
+  \item \textbf{常见问题}：
+    如果平移后准确率仍然高，
+    检查是否使用了 BatchNorm（它会自适应均值）。
+
+  \item \textbf{失败意味着什么}：
+    如果 1 步 SGD 没有改善，
+    可能是学习率太大（过冲）或辅助损失选择不当。
+\end{itemize}
+
+\subsection{Lab 2：TTT 2020 自监督旋转预测}
+
+\textbf{章节}：第~\ref{ch:why_test_time}~章 \quad
+\textbf{核心验证}：旋转预测损失能间接改善分类
+
+\begin{itemize}
+  \item \textbf{数据}：
+    CIFAR-10 的子集（100 张），
+    测试图加高斯噪声模拟分布偏移。
+
+  \item \textbf{预期结果}：
+    基线准确率在噪声下降至 $\sim 40\%$，
+    TTT 自适应后恢复至 $\sim 55\text{--}65\%$。
+
+  \item \textbf{注意}：
+    只更新 $\theta_e$（特征提取器），
+    冻结 $\theta_m$（分类头）和 $\theta_s$（旋转头）。
+\end{itemize}
+
+\subsection{Lab 3：MAML 正弦波回归}
+
+\textbf{章节}：第~\ref{ch:bilevel}~章 \quad
+\textbf{核心验证}：MAML 学到的初始化点能在 1--5 步内适应新任务
+
+\begin{itemize}
+  \item \textbf{任务族}：
+    $y = A \sin(x + \phi)$，
+    $A \sim \text{Uniform}(0.1, 5.0)$，
+    $\phi \sim \text{Uniform}(0, \pi)$。
+
+  \item \textbf{预期结果}：
+    随机初始化模型需要 $>50$ 步适应；
+    MAML 初始化后 1--5 步即可拟合新的 $(A, \phi)$。
+
+  \item \textbf{预期图表}：
+    对比 ``pre-adaptation'' 和 ``post-adaptation (1 step)'' 的拟合曲线。
+
+  \item \textbf{常见问题}：
+    如果 MAML 性能不如随机，检查 $\alpha$（内循环学习率）是否太大。
+    推荐 $\alpha = 0.01$，$\beta = 0.001$。
+\end{itemize}
+
+\subsection{Lab 4：外积联想记忆}
+
+\textbf{章节}：第~\ref{ch:fastweights}~章 \quad
+\textbf{核心验证}：外积存储的容量限制和干扰效应
+
+\begin{itemize}
+  \item \textbf{实验}：
+    存储 $M$ 对随机正交键值对到 $\mS = \sum v_i k_i^\top$，
+    变化 $M$ 从 1 到 $2d$。
+
+  \item \textbf{预期结果}：
+    $M \leq d$ 时精确回忆（误差 $< 10^{-6}$）；
+    $M > d$ 时干扰急剧增加。
+
+  \item \textbf{拓展}：
+    用非正交键重复实验，观察 $M \ll d$ 时就出现干扰。
+\end{itemize}
+
+\subsection{Lab 5：线性注意力与 Softmax 注意力对比}
+
+\textbf{章节}：第~\ref{ch:attention}~章 \quad
+\textbf{核心验证}：线性注意力的递推公式与朴素实现一致
+
+\begin{itemize}
+  \item \textbf{实验}：
+    生成随机序列，分别用朴素 $O(N^2)$ 实现
+    和递推 $O(d^2)$ 实现计算线性注意力，
+    验证结果一致（浮点误差 $< 10^{-5}$）。
+
+  \item \textbf{预期图表}：
+    运行时间 vs 序列长度 $N$，
+    朴素版本呈二次增长，递推版本线性增长。
+\end{itemize}
+
+\subsection{Lab 6：ICL 的隐式梯度下降验证}
+
+\textbf{章节}：第~\ref{ch:icl}~章 \quad
+\textbf{核心验证}：一层线性注意力的 ICL 输出与 OLS 结果对比
+
+\begin{itemize}
+  \item \textbf{实验}：
+    构造线性回归任务 $y = W^* x + \epsilon$，
+    提供 $n$ 个上下文示例，
+    比较注意力输出与 OLS 解 $\hat{W} = (X^\top X)^{-1} X^\top Y$。
+
+  \item \textbf{预期结果}：
+    当 $W_K, W_V$ 按定理~\ref{thm:icl_gd} 的构造设定时，
+    注意力输出与一步 GD 结果完全一致。
+
+  \item \textbf{拓展}：
+    用训练过的（而非手工构造的）权重重复，
+    观察行为相似性但非严格等价。
+\end{itemize}
+
+\subsection{Lab 7：TTT-RNN 单元}
+
+\textbf{章节}：第~\ref{ch:ttt_bridge}~章 \quad
+\textbf{核心验证}：用 NumPy 手写一个最简 TTT 更新单元
+
+\begin{itemize}
+  \item \textbf{实验}：
+    实现单步 $\mS_t = \mS_{t-1} - \eta ((\mS_{t-1} k_t - v_t) k_t^\top)$，
+    在合成序列上验证回忆能力。
+
+  \item \textbf{预期结果}：
+    前 $d$ 个正交键值对可被近似回忆。
+\end{itemize}
+
+\subsection{Lab 8：TTT-Linear vs GRU 遗忘对比}
+
+\textbf{章节}：第~\ref{ch:ttt_layers}~章 \quad
+\textbf{核心验证}：TTT-Linear 的 $O(d^2)$ 容量优于 GRU 的 $O(d)$
+
+\begin{itemize}
+  \item \textbf{实验}：
+    序列长 $N=50$，$d=32$。
+    在 $t=10$ 存入特殊键值对，
+    在 $t=50$ 查询。对比 TTT-Linear 和 GRU 的回忆质量。
+
+  \item \textbf{预期结果}：
+    TTT-Linear 在 $t=50$ 仍有可测的回忆，
+    GRU 的回忆因向量压缩而更快衰退。
+
+  \item \textbf{拓展}：
+    加入遗忘因子 $\lambda = 0.98$，观察遗忘曲线变化。
+\end{itemize}
+
+\subsection{Lab 9：Needle-in-Haystack 混合记忆}
+
+\textbf{章节}：第~\ref{ch:titans}~章 \quad
+\textbf{核心验证}：Surprise 门控保护关键信息
+
+\begin{itemize}
+  \item \textbf{实验}：
+    在 $N=1000$ 的序列中，位置 $t=50$ 放置一条高价值信息，
+    其余为噪声。对比有无 Surprise 门控的回忆效果。
+
+  \item \textbf{预期结果}：
+    无门控时，$t=1000$ 处查询无法回忆；
+    有门控时，查询仍能检索到关键信息。
+
+  \item \textbf{预期图表}：
+    ``时间步 vs 回忆 MSE'' 曲线，标注门控开/关。
+\end{itemize}
+
+\subsection{Lab 10：在线 OLS 与 TTT-Linear 对比}
+
+\textbf{章节}：第~\ref{ch:unified}~章 \quad
+\textbf{核心验证}：TTR 框架下两种求解策略的行为差异
+
+\begin{itemize}
+  \item \textbf{实验}：
+    在相同的在线回归序列上，
+    分别运行 RLS（精确解）和 TTT-Linear（一步 SGD 近似），
+    对比每步的 MSE。
+
+  \item \textbf{预期结果}：
+    RLS 永远不劣于 TTT-Linear。
+    差距在键非正交时更明显。
+
+  \item \textbf{拓展}：
+    实现线性注意力（忽略预测反馈），
+    对比三条 MSE 曲线。
+\end{itemize}
+
+\subsection{Lab 11：Nested Learning 对应表}
+
+\textbf{章节}：第~\ref{ch:nested}~章 \quad
+\textbf{性质}：开放性思考实验
+
+\begin{itemize}
+  \item \textbf{任务}：
+    构建三层嵌套优化系统（第 1 层逐步更新，
+    第 2 层每 50 步调整学习率，
+    第 3 层预设投影矩阵）。
+
+  \item \textbf{预期观察}：
+    三层系统在任务切换后恢复快于固定学习率基线。
+
+  \item \textbf{注意}：
+    这是一个概念验证实验，
+    结果的绝对值不重要。
+    重要的是学生能够用代码构建``嵌套优化''
+    并理解每一层的角色。
+\end{itemize}
