@@ -1,156 +1,648 @@
 % chapters/11_nested_learning.tex
-% 第11章：Nested Learning 与架构幻觉
-\chapter{Nested Learning 与架构的幻觉}
+% Version 2.0 — B11-B26 compliant rewrite
+\chapter{Nested Learning：当架构本身就是优化}
 \label{ch:nested}
 
-\epigraph{``There is no architecture. Everything is just learning to learn to learn. Deep learning architectures as we know them are an illusion.''}{--- The Illusion of Deep Learning Architectures}
+\epigraph{``There is no architecture. Everything is just learning to learn to learn.
+Deep learning architectures as we know them are an illusion.''}{--- Behrouz, Zhong \& Mirrokni, 2025}
 
+%─────────────────────────────────────────────
 \section{本章想回答什么问题}
+\label{sec:nested_question}
+%─────────────────────────────────────────────
 
-我们已经走完了从双层元学习到快速联想权重，又到各种形式的自注意力，继而跃迁至把隐含状态变成优化器的宏大旅程（第一到第十章）。在上一章（第 \ref{ch:unified} 章），我们将所有的层与隐状态统一为了\textbf{在线岭回归（Test-Time Regression）}的变种近似。
+我们已经走完了一段完整的推演：
+\begin{itemize}
+  \item 第~\ref{ch:bilevel}~章：双层优化把``训练''分解为内循环（快适应）和外循环（元学习）。
+  \item 第~\ref{ch:fastweights}--\ref{ch:attention}~章：快权重联想记忆与线性注意力在数学上严格等价——
+        它们都在维护一个键-值存储矩阵 $\mS_t$。
+  \item 第~\ref{ch:icl}~章：Transformer 的前向传播可以等价于执行梯度下降。
+  \item 第~\ref{ch:ttt_layers}--\ref{ch:titans}~章：TTT-Layer 和 Titans
+        把隐状态升级为一个可学习的微型网络。
+  \item 第~\ref{ch:unified}~章：Test-Time Regression
+        把上述所有机制统一到一个在线回归目标下。
+\end{itemize}
 
-现在，我们要进行最后一次，也是最为极端的视角跃迁。
-试想：
+现在的问题是：
+
 \begin{quote}
-\textit{既然一层或者一种内部状态的传递可以被完全等效替换为一次局部的基于参数小规模反向传播的在线学习。那么，现代深度学习里那些堆叠了上百层，串并联了包含 Attention，MLP，乃至长序列长短视窗的宏大深邃复杂的\textbf{网络架构}，到底是什么东西？}
+\textit{如果每一个``层''都可以被重新解读为一次在线优化的截断近似，
+那么现代深度网络中那些堆叠了几十甚至上百层的``固定架构''，
+到底是什么东西？它们是我们有意设计出来的结构，
+还只是多层嵌套优化过程在硬件约束下的一种残影？}
 \end{quote}
 
-2024 年底至 2025 年提出了极具野心的 \textbf{Nested Learning (嵌套学习)} 的思想体系。本章将回答：在 Nested Learning 的视角里，这一切究竟是如何被解构为“不同时间尺度嵌套在一起”的学习本身的？为什么说“架构就是算法的幻觉”？
-并且，作为教材的收尾，我们将严肃而清醒地为这个框架设定“机制实证”与“学术议程断言”之间的明确科研边界感，不把它当做盲信的教条，而是当作指路未来的火把。
+\citet{anonymous2025nested} 提出的 \textbf{Nested Learning（嵌套学习）}框架
+试图回答这个问题。本章将：
+\begin{enumerate}
+  \item 给出 Nested Learning 的形式化定义（\S\ref{sec:nested_math}）
+  \item 展示它如何把前面各章的模型统一为特例（\S\ref{sec:nested_unification}）
+  \item 严格区分哪些主张属于``已被验证的数学机制''，
+        哪些属于``极具号召力但尚未完全验证的研究议程''（\S\ref{sec:nested_boundary}）
+\end{enumerate}
 
-\section{最小例子：没有参数只有优化的循环}
+读完本章，你将能够：
+\begin{itemize}
+  \item 写出 $L$ 层嵌套优化的递推公式
+  \item 把线性注意力、TTT-Layer、Titans 各归约为 Nested Learning 的特例
+  \item 清晰区分``机制等价''和``嵌套解释''之间的科学地位差异
+\end{itemize}
+
+%─────────────────────────────────────────────
+\section{最小例子：三层嵌套的回归}
 \label{sec:nested_minimal}
+%─────────────────────────────────────────────
 
-\begin{toybox}[title=玩具问题 G：无限嵌套的回归代理人]
-传统对“三层神经网络推断”的想象是：数据经过 $L_1$、经过激活再穿行 $L_2, L_3$ 层最后出结果。参数早就在那里定死了。
+\begin{toybox}[title=玩具问题 G：三层嵌套的在线回归代理人]
+设想三个代理人 $A$（快）、$B$（中）、$C$（慢），各自维护一个参数矩阵：
+$\mS^{(1)}_t$（$A$ 的状态）、$\mS^{(2)}_t$（$B$ 的状态）、
+$\theta$（$C$ 的参数，在此简化为固定常数）。
 
-在 Nested Learning 中，这是另一种理解图像：
-你不是在向预设工厂输入数据，你是向一个最底层的**快速打工仔 A** 给出了需求。
-打工仔 A 接到需求不知道怎么办，他通过自身运行的一套短差优化法则，瞬间把自己变成了适用你需求的模样（这是内内循环）；
-但是这套短平快优化法则的生成是由 \textbf{工头 B} 依据过往几天任务经验学出指派的；
-更进一步，工头管理的这个车间的规则，是由 \textbf{厂长 C} 在这一年期间用漫长的巨量实验资金训练总结下来的（外循环）。
+\textbf{$A$（最内层，最快时间尺度）}：
+对每个 token $x_t$，$A$ 执行一步在线梯度更新：
+\[
+  \mS^{(1)}_t = \mS^{(1)}_{t-1} - \eta_1 \nabla_{\mS^{(1)}} \ell_1(\mS^{(1)}_{t-1}, k_t, v_t)
+\]
+这正是第~\ref{ch:ttt_layers}~章 TTT-Layer 的更新规则。
 
-表面上这是一套庞大静止的管理机构架构。但实际上这个机构从上至下的所有结构性传导，不过是一级又一级的、嵌套在一起互相向内部下达“目标与优化法则”的\textbf{优化子过程集合}。打工仔、工头和厂长，在计算节点的实质其实没有任何形式的不同！他们都是一套带反馈回归的泛优化法则方程，唯一的区别只是它们用来统计、回退和收敛迭代更新的**时间视窗尺度差距**（毫秒、分钟、数个月）。
-本不存在固定层级的黑盒子堆叠阶梯，只有“学习学习再学习”的尺度嵌套！
+\textbf{$B$（中间层，中等时间尺度）}：
+每隔 $T_2$ 个 token，$B$ 根据 $A$ 在最近 $T_2$ 步中的累积表现，
+调整 $A$ 的学习率 $\eta_1$ 和键值投影矩阵：
+\[
+  \mS^{(2)}_t = \mS^{(2)}_{t-T_2}
+  - \eta_2 \nabla_{\mS^{(2)}} \left[\sum_{i=t-T_2+1}^{t} \ell_2(\mS^{(1)}_i)\right]
+\]
+
+\textbf{$C$（最外层，最慢时间尺度）}：
+$C$ 在整个训练集上学习 $\theta$，
+使得 $B$ 和 $A$ 从 $\theta$ 初始化后能快速适应各种任务。
+这就是标准的预训练。
+
+\textbf{观察}：从外向内看，这是三层嵌套的优化结构。
+每一层的``变量''是下一层的``超参数或初始化点''。
+三个代理人的计算内容在数学上完全相同——
+都是``给定目标函数，执行梯度步''——
+唯一的区别是它们操作的\textbf{时间尺度}不同
+（每 token、每 $T_2$ 个 token、整个训练集）。
 \end{toybox}
 
-\section{直觉解释：“深度架构幻觉论”的真意}
+这个玩具问题揭示了 Nested Learning 的核心主张：
+\textit{深度网络的``层级结构''可以被还原为
+多个时间尺度嵌套在一起的优化过程}。
+
+%─────────────────────────────────────────────
+\section{直觉解释：为什么``架构''可能只是一种截断}
 \label{sec:nested_intuition}
+%─────────────────────────────────────────────
 
-我们常说 ResNet 解决梯度消失，所以它有效；常说 Transformer 的自注意力打破常数距离因为它是图。但在 Nested Learning 这个由下而上反转的重解逻辑里，\textbf{是先有对数据流理应产生的不同尺度层级反演的嵌套需求，才在计算上“显影”出了所谓物理网层的连接架构。}
+考虑一个传统的 $L$ 层前馈网络：
+\[
+  h_0 = x, \quad h_l = \sigma(W_l h_{l-1}), \quad y = h_L
+\]
 
-这个视角主张：深度模型的架构（Architecture）并不是造成智能学习的原因，它是我们为了在一个静态计算硬件系统下并排实行无数规模不同时间序列跨度的嵌套学习操作，而留下的一种\textbf{硬编码的物理痕迹幻像（Illusion）}。只要你能够完美地让学习率与嵌套误差在多时间、多维度里自行交互产生收缩回归，这种固定的设计架构边界随时可以崩解和自我生成！
+在标准理解中，每一层 $l$ 是一个\textbf{固定的参数化变换}：
+参数 $W_l$ 在训练时通过反向传播学习，推断时完全固定。
 
-也就是说，过去我们通过把模型视为静态函数 $f_\theta(x)$ ；现在我们把这全部还原为一个巨大且极深的优化方程 $\arg\min_{W_1} L_1(\dots \arg\min_{W_k} L_n \dots )$。
+Nested Learning 提出一种替代性解读：
+每一层 $l$ 实际上可以被理解为
+对某个\textbf{局部目标函数}进行\textbf{一步优化}的截断近似。
 
-\section{数学形式化：作为广义的递归双层泛化}
-\label{sec:nested_math}
-
-我们还记得在第 \ref{ch:bilevel} 章，MAML 展示了何为双层优化（Bilevel）：
+具体来说，如果第 $l$ 层的``理想行为''是最小化
+\begin{equation}
+  \ell_l(\mS) = \frac{1}{2}\|\mS \cdot \phi(h_{l-1}) - v_l^*\|_2^2
+  \label{eq:nested_local_loss}
+\end{equation}
+其中 $v_l^*$ 是该层应当产出的``理想表示''，
+那么从 $\mS = 0$ 出发做一步梯度下降：
 \begin{align}
-  &\min_\theta \quad F(\theta, \phi^*(\theta)) \\
-  &\text{s.t.} \quad \phi^*(\theta) = \arg\min_\phi G(\theta, \phi)
+  \mS &= 0 - \eta_l \nabla_{\mS} \ell_l(0)
+      = \eta_l \cdot v_l^* \cdot \phi(h_{l-1})^\top
 \end{align}
 
-那么 Nested Learning 的多层次框架其实就是将方程中的参数变量通过递进时间刻度 $T$ 做逐流的多重解套展开：
-如果存在一个深度为 $L$ 层的操作结构，状态为 $\mS^{(L)}$ 到 $\mS^{(1)}$：
-对于第 $l$ 层，其隐循环具有类似更新定义与传递输出映射法则：
-\begin{equation}
-   \mS_t^{(l)} = \text{Opt}^{(l)}(\mS_{t-1}^{(l)} , \ell(\mS_{t-1}^{(l)}, k_t^{(l)}, v_t^{(l)}))
-\end{equation}
-并且重要的是，这些被作为生成条件与优化对象的键、值以及优化控制步长速率，它们全部是更高一层网络传导下的被调配解：
-\begin{equation}
-  (k_t^{(l)}, v_t^{(l)}, \eta^{(l)}) = f( \mS_{t}^{(l+1)} , x_t )
-\end{equation}
+如果把 $\eta_l \cdot v_l^*$ 吸收进一个可学习矩阵 $W_l$，
+这就退化为 $h_l = W_l \cdot \phi(h_{l-1})$——
+\textbf{恰好是标准的全连接层}。
 
-当你把上述关系强行代入，直到把一切用极端的泰勒展开且不容许具有无限回溯状态全数强制截断的时候，它退化展平的面貌就是目前我们所见的正向传播残差全连接堆叠网络！这也给前文（第一章中提出但是并未在当时展开解释的问题：既然深度模型结构复杂，为什么测试下稍作简单微调就会发生有用的局部纠偏能力）做出了彻底终极解释——因为它的深度生成架构\textbf{在数学基因上本质就是一串被固化下来并等待被优化的未完结递归优化串本身}！
-
-\section{共识与解释：必须澄清的学术边界}
-\label{sec:nested_boundary}
-
-\begin{insight}[title=学术判断边界]
-这一节是在整本书末尾极为重要且必须设立的情感防火墙。
-我们承认 Nested Learning 所呈现出的这种对“注意力即联想，且架构即优化截断”的统一解析展示出了前所未有极致的数学工整与理论自洽美学。但这并不是真理颁布！
+\begin{insight}[title=深度层 = 优化截断]
+标准的全连接层可以被视为一个``从零出发、做一步梯度、然后截断''的优化过程的物理实体化。
+``层数''对应``优化步数''，``架构设计''对应``截断策略的选择''。
+这不是在描述一种实现方式，而是在提供一种\textbf{理解框架}。
 \end{insight}
 
+%─────────────────────────────────────────────
+\section{数学形式化：$L$ 层嵌套优化}
+\label{sec:nested_math}
+%─────────────────────────────────────────────
+
+\subsection*{Step 1：递归定义嵌套层级}
+
+\begin{definition}[$L$ 层 Nested Learning 框架]
+\label{def:nested}
+设一个深度为 $L$ 的模型包含 $L$ 层嵌套的在线优化过程。
+第 $l$ 层（$l = 1, \ldots, L$）维护一个状态 $\mS_t^{(l)}$，
+在时间步 $t$ 按如下规则更新：
+\begin{equation}
+  \mS_t^{(l)} = \mathrm{Opt}^{(l)}\!\left(
+    \mS_{t-1}^{(l)},\;
+    \ell^{(l)}\!\left(\mS_{t-1}^{(l)},\, k_t^{(l)},\, v_t^{(l)}\right)
+  \right)
+  \label{eq:nested_update}
+\end{equation}
+其中：
 \begin{itemize}
-    \item \textbf{属于“被严格证实的机制性数学共识”部分：}
-      1. TTT，Linear Attention 和某些类型的隐态 RNN 可以在公式变换上被无缝重读缩写为嵌套在线回归优化的变体（见 Theorem \ref{thm:lineattn_fastweight} ）。
-      2. 双层元学习（Meta-Learning）能够从数值实验上证明架构前向传播的初始化结果具备近似几步实际梯度法结果的能力支持。
-    \item \textbf{属于“极具号召性的解释（视角/议程）”部分：}
-      1. “深度架构只是算法的幻像”是一句强极化哲学口号（Slogan），用以重塑思考直觉。这并不代表你在明天就可以放弃显卡，全靠数学归纳法则写一个无需网络的自我生长程序拿到大模型的能力。
-      2. 将当前极度复杂具有离散特征及涌现生成逻辑的参数耦合，强行完全理解为只有唯一线性层层优化动因生成的结果，是一种理想范式。实际上还存在极大的组合鸿沟无法解释（比如复杂的对抗崩溃和特定多模态长尾数据对齐失效等情况）。
+  \item $\mathrm{Opt}^{(l)}$ 是第 $l$ 层使用的优化算法（如 SGD、Adam 或外积写入）
+  \item $\ell^{(l)}$ 是第 $l$ 层的局部目标函数
+  \item $(k_t^{(l)}, v_t^{(l)})$ 是由\textbf{更高层级}传递下来的键和值
+\end{itemize}
+\end{definition}
+
+\subsection*{Step 2：层间的参数传导}
+
+嵌套结构的关键是\textbf{层间传导}：
+第 $l$ 层的输入（键、值、学习率）由第 $l+1$ 层的状态决定：
+\begin{equation}
+  (k_t^{(l)},\; v_t^{(l)},\; \eta^{(l)})
+  = f^{(l)}(\mS_t^{(l+1)},\; x_t)
+  \label{eq:nested_propagation}
+\end{equation}
+其中 $f^{(l)}$ 是由更高层级的参数化映射。
+
+最高层（第 $L$ 层）的状态 $\mS^{(L)}$ 对应于``慢权重''——
+在标准训练中通过整个数据集上的反向传播学习，推断时固定。
+
+\subsection*{Step 3：时间尺度的分离}
+
+每一层操作在不同的时间尺度 $T^{(l)}$ 上：
+\begin{equation}
+  T^{(1)} \ll T^{(2)} \ll \cdots \ll T^{(L)}
+  \label{eq:nested_timescales}
+\end{equation}
+
+\begin{itemize}
+  \item 第 1 层（最内，最快）：每个 token 更新一次，对应 TTT-Layer 的逐 token 梯度步
+  \item 第 2 层：每 $T^{(2)}$ 个 token 更新一次，对应``调整内层超参数''
+  \item 第 $L$ 层（最外，最慢）：在整个训练集上更新，对应标准预训练
 \end{itemize}
 
-请把它当作是一个\textbf{理论物理级的“大一统场论研究计划（Research Agenda）”}并在之后的发展中尝试证伪或实施；而不是当做\textbf{“已被应用证实一切”的终极定论}。
+\subsection*{Step 4：从嵌套到展平——理解标准网络}
 
-\section{代表论文精读}
-\label{sec:nested_papers}
+如果对每一层都执行\textbf{恰好一步}优化就截断输出，
+并把优化的初始点吸收进可学习的静态参数 $W_l$，那么：
+\begin{equation}
+  \mS_t^{(l)} \approx W_l + \eta_l \cdot \Delta_t^{(l)}
+  \label{eq:nested_truncation}
+\end{equation}
+其中 $\Delta_t^{(l)}$ 是来自局部目标函数的一步更新量。
 
-\paragraph{\citet{anonymous2025nested} — Nested Learning: The Illusion of Deep Learning Architectures}
-本文是对由隐式梯度到 TTT 一线而来的终极哲学性收尾和数学重构大赏。该论文并不是提出一个立马就跑分碾压别人的架构，反而重点利用公式对位展示了“既然一层能够是测试循环内的一个在线网络，那所有的内部结构和表征设计全部可以归一为具有不同步幅和参数截断设置参数的隐马尔可夫式自我循环修正梯次堆叠”。这是未来如果“取消现有神经网络全结构重设计类生命特征级泛型模型”的重要灯塔指南论文。
+当进一步令 $\Delta_t^{(l)} = 0$（忽略动态更新项）时，
+$\mS^{(l)}$ 退化为固定参数 $W_l$——
+这就是标准前馈网络的每一层。
 
-\section{和本教材的最终关联总结}
-\label{sec:nested_bridges}
+\begin{remark}
+这并不意味着标准前馈网络``不好''。
+恰恰相反，标准网络通过
+（a）吸收初始点到参数中、（b）截断为一步、（c）在预训练中内化所有动态调整，
+用\textbf{固定参数有效地模拟了}嵌套优化的行为。
+截断带来的好处是硬件友好性和推断效率；
+代价是失去了测试时动态适应的能力。
+\end{remark}
 
-这本书的旅程从最微小的、应对测试域崩溃而临时补一小步的单次人工补救（第 \ref{ch:why_test_time} 章），
-走到让网络自动懂得去留一个参数微型网络（TTT 第 \ref{ch:ttt_layers} 章），
-直到站在了 Nested Learning 这个巅峰山头俯瞰：
-\textbf{没有任何一次修改是微调，所有的存在即是对不同维度时间的优化更新本身。}
+%─────────────────────────────────────────────
+\section{统一：把前面所有模型归约为 Nested Learning 的特例}
+\label{sec:nested_unification}
+%─────────────────────────────────────────────
 
-在这本书之前，你在测试一环。读完这本书，无论你在干什么，你的脑子里永远是在\textbf{进行一场带有内外循环控制变量的时空连续嵌套推演}。
+本书前面介绍的所有模型都可以被放入 Nested Learning 框架中，
+区别仅在于嵌套深度、优化算法、截断策略和时间尺度的选取。
 
-\begin{labbox}[title=Lab 11: 动手模拟无限嵌套层对梯度截断的依赖性降维打击]
-\textbf{目标：}不使用任何常见库原生结构函数（如 Linear。不具有具体项目价值，仅作机制感受），直接用纯嵌套函数代入测试系统收敛性限制。
+\begin{center}
+\begin{tabular}{p{3cm}p{2.2cm}p{3.5cm}p{3.5cm}}
+\toprule
+\textbf{模型} & \textbf{嵌套深度} & \textbf{内层 $\mathrm{Opt}^{(1)}$}
+  & \textbf{截断/近似策略} \\
+\midrule
+快权重（Ch.~\ref{ch:fastweights}）
+  & $L=2$
+  & 外积写入 $\mS + k v^\top$
+  & 一步、忽略预测反馈 \\
+线性注意力（Ch.~\ref{ch:attention}）
+  & $L=2$
+  & 外积写入 $\mS + k v^\top$
+  & $\equiv$ 快权重 \\
+TTT-Linear（Ch.~\ref{ch:ttt_layers}）
+  & $L=2$
+  & SGD with residual
+  & $\mS_{t-1}k_t$ 项保留 \\
+TTT-MLP（Ch.~\ref{ch:ttt_layers}）
+  & $L=2$
+  & 多层 MLP 的 SGD
+  & 非线性，容量更大 \\
+Titans（Ch.~\ref{ch:titans}）
+  & $L=2$（+STM）
+  & Surprise 门控 SGD
+  & 选择性写入 \\
+标准 Transformer
+  & $L_\text{stack}$
+  & 前向传播即一步截断
+  & 忽略 $\Delta_t$ \\
+\bottomrule
+\end{tabular}
+\end{center}
 
+\begin{example}[从 Nested Learning 推导线性注意力]
+设 $L=2$，最外层参数 $\theta$（学习投影矩阵 $W_K, W_V, W_Q$），
+最内层维护状态 $\mS_t^{(1)} \in \R^{d \times d}$。
+
+局部目标函数：$\ell^{(1)}(\mS, k_t, v_t) = \frac{1}{2}\|\mS k_t - v_t\|_2^2$。
+
+选择 $\mathrm{Opt}^{(1)}$ 为``从 $\mS_{t-1}$ 出发做一步 SGD，
+但忽略预测反馈项 $\mS_{t-1} k_t$''：
+\begin{align}
+  \nabla_{\mS} \ell^{(1)}|_{\mS = 0} &= (0 \cdot k_t - v_t) k_t^\top = -v_t k_t^\top \\
+  \mS_t &= \mS_{t-1} + \eta_1 \cdot v_t k_t^\top
+\end{align}
+
+令 $\eta_1 = 1$，得到 $\mS_t = \mS_{t-1} + v_t k_t^\top$——
+这正是线性注意力 / 快权重的递推公式
+（第~\ref{ch:attention}~章式~\eqref{eq:linear_attn_recurrence}）。
+
+输出 $y_t = q_t^\top \mS_t$ 是标准的线性注意力读取。
+
+\textbf{结论}：线性注意力是 Nested Learning 在
+$L=2$、$\mathrm{Opt}^{(1)} = \text{one-step SGD without prediction feedback}$
+条件下的特例。
+\end{example}
+
+%─────────────────────────────────────────────
+\section{共识与解释：必须澄清的学术边界}
+\label{sec:nested_boundary}
+%─────────────────────────────────────────────
+
+\textbf{这一节是全书最重要的学术界分节}。
+Nested Learning 框架涉及两类性质截然不同的主张，
+必须严格区分。
+
+\subsection*{属于``机制层共识''的主张}
+
+以下内容已被数学证明和/或广泛的实验验证：
 \begin{enumerate}
-    \item 创建三层的循环迭代算子：$F_\text{outer}, F_\text{mid}, F_\text{inner}$。
-    \item \textbf{规则限制}：每一层的变量不允许包含针对全局任何另外一处的状态强复制。只能包含对下层输出目标约束的调整标定步长与输入误差接收值。
-    \item 在执行 1000 个伪随机时间序列步骤的传递时，去手动模拟一次：如果你把一个中间极其短暂周期的内力截断层强行不运行足够步数就出结果（类似于把一层网络压扁为仅仅用一步点积），它会对最上方的结果产生多少量级的误差？
-    \item \textbf{反推观察}：将这强制的“一步截断误差退化”，拿去验证在第二章和第五章所看到的使用朴素矩阵相乘注意力代替深度训练网络之间的那个鸿沟！你将由于这些截断带来的损耗第一次如此清澈地直接看到“为何注意力在强时也这么弱”的真实底牌原因。
+  \item \textbf{线性注意力 $\equiv$ 快权重}（定理~\ref{thm:lineattn_fastweight}）：
+        二者在数学上严格等价（不是近似）。
+  \item \textbf{线性注意力是在线回归的一步截断}
+       （第~\ref{ch:unified}~章）：公式对应关系已被明确推导。
+  \item \textbf{TTT-Layer 的隐状态更新是在线 SGD}
+       （第~\ref{ch:ttt_layers}~章）：构造性证明。
+  \item \textbf{Transformer 的 ICL 可以实现梯度下降}
+       （第~\ref{ch:icl}~章）：在线性回归任务上，
+        构造性证明了一层线性注意力等价于一步梯度步。
 \end{enumerate}
+
+\subsection*{属于``研究议程''的主张}
+
+以下内容是极具启发性的理论视角，
+但\textbf{尚未被充分证明为一般性结论}：
+
+\begin{viewpointbox}
+\textbf{``架构是算法的幻像（Illusion）''}——
+这是 Nested Learning 最核心的口号。
+它主张：深度网络的固定层级结构
+只是多层嵌套优化在硬件约束下的截断残影，
+不是产生智能行为的真正原因。
+
+\textbf{这个主张的科学地位}：
+\begin{itemize}
+  \item 在特定的线性/二次情形下，可以严格证明
+        特定的网络层等价于在线优化的一步截断。
+  \item 但在一般的非线性、有离散操作、有 Softmax 的架构中，
+        这种等价是\textbf{近似的}，而非严格的。
+  \item 它更适合被理解为一种\textbf{统一的分析语言}——
+        一种组织思考的方式——
+        而非一个已被证实的普遍定理。
+\end{itemize}
+
+请把 Nested Learning 当做一个
+\textbf{``大统一场论''级别的研究计划（Research Agenda）}，
+并在后续研究中尝试证实或证伪其各部分主张。
+不要当做``已被应用证实一切''的终极定论。
+\end{viewpointbox}
+
+%─────────────────────────────────────────────
+\section{代表论文}
+\label{sec:nested_papers}
+%─────────────────────────────────────────────
+
+\paragraph{\citet{anonymous2025nested} --- Nested Learning: The Illusion of Deep Learning Architectures}
+这篇论文是对 TTT 一线研究的理论收尾。
+它不提出一个新的跑分架构，而是用形式化的公式对位展示了：
+既然单个层可以被理解为在线学习的一步截断，
+那么所有的层级结构都可以被重写为
+带有不同步长和截断参数的嵌套优化方程。
+文章的贡献在于\textbf{统一语言}——
+为未来设计自适应架构提供了一套统一的数学工具。
+
+%─────────────────────────────────────────────
+\section{神经科学直觉与类比边界}
+\label{sec:nested_neuro}
+%─────────────────────────────────────────────
+
+\begin{neurosciencebox}[title=神经科学直觉：多时间尺度的神经可塑性层级]
+
+\textbf{类比对象}：
+我们把\textbf{大脑中多时间尺度的可塑性层级}视为帮助理解
+Nested Learning 多层嵌套优化结构的一个类比。
+
+在神经科学中，信息的存储和适应发生在多个时间尺度:
+\begin{itemize}
+  \item \textbf{神经放电（Neural Firing）}：毫秒级，
+        代表对当前刺激的即时响应。
+  \item \textbf{短期突触可塑性（STP）}：秒到分钟级，
+        突触传递效率的暂时性变化，
+        支持工作记忆和上下文切换。
+  \item \textbf{长期突触可塑性（LTP/LTD）}：小时到天级，
+        突触权重的持久性改变，
+        支持长期学习。
+  \item \textbf{系统巩固（Systems Consolidation）}：天到年级，
+        信息从海马体向新皮层的缓慢迁移，
+        实现泛化的语义知识。
+\end{itemize}
+
+\textbf{共同之处（算法组织层面）}：
+
+Nested Learning 的多层嵌套优化与上述生物机制在\textbf{算法组织}上相似：
+\begin{center}
+\begin{tabular}{p{4cm} p{4cm}}
+\toprule
+\textbf{神经可塑性层级} & \textbf{Nested Learning} \\
+\midrule
+神经放电（最快） & 第 1 层：逐 token 的梯度更新 \\
+STP（快） & 第 2 层：中等时间窗口的调参 \\
+LTP/LTD（中等） & 中层：块级别的参数适应 \\
+系统巩固（最慢） & 第 $L$ 层：整个训练集的预训练 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{这个类比帮助理解什么}：
+为什么需要多个嵌套的时间尺度？
+因为不同``保质期''的信息需要不同速度的处理通道——
+太快的通道记不住长期知识，太慢的通道来不及适应当前输入。
+大脑通过多层可塑性机制解决了这个矛盾，
+Nested Learning 通过多层优化的时间尺度分离做了类似的事情。
+
+\end{neurosciencebox}
+
+\begin{analogyboundarybox}[title=这个类比在哪里失效]
+
+\textbf{一、更新规则根本不同（实现机制层）}
+
+\begin{tabular}{p{5cm} p{8cm}}
+\textbf{Nested Learning}
+& 每一层的优化使用显式的损失函数和梯度计算，
+  通过端到端的反向传播训练所有层级的参数。
+  优化目标是全局的、可微的。 \\
+\textbf{生物可塑性层级}
+& 各层级使用\textbf{局部的}学习规则：
+  STP 依赖于突触前/后的活动相关性，
+  LTP 依赖于 NMDA 受体和钙离子浓度，
+  系统巩固依赖于离线重放（如睡眠）。
+  没有全局目标函数，没有反向传播。 \\
+\end{tabular}
+
+\medskip\textbf{二、层级之间的耦合方式不同（信息流层）}
+
+在 Nested Learning 中，更高层级显式地通过可微函数向下传递参数
+（式~\eqref{eq:nested_propagation}），这是一种\textbf{自顶向下的参数传导}。
+在生物系统中，不同时间尺度的可塑性之间的耦合
+是通过\textbf{神经调质}（如多巴胺、去甲肾上腺素）和\textbf{离线重放}
+间接实现的，不是通过参数共享或可微传导。
+
+\medskip\textbf{三、``层''在两个系统中的含义不同（表征层）}
+
+Nested Learning 的``层''对应于模型中的计算单元，
+每一层有明确定义的输入、输出、目标函数。
+生物的``时间尺度分离''是一种连续的谱，
+不存在离散的``层 1、层 2、层 3''的划分。
+
+\medskip\textbf{读者不应从这个类比推出}：
+\begin{itemize}
+  \item \textbf{[X]} ``Nested Learning 证明了大脑是嵌套优化''
+  \item \textbf{[X]} ``深度网络的层数对应大脑可塑性的层级数''
+  \item \textbf{[X]} ``模型的全局反向传播等价于神经调质的调控''
+  \item \textbf{[X]} ``取消固定架构就能构建类脑系统''
+\end{itemize}
+
+\medskip
+\textbf{类比成立的层次}：\textit{算法组织上的相似}——
+两者都通过分离不同时间尺度的适应过程来同时处理
+``立即响应''和``长期记忆''的需求。
+\textbf{类比失效的层次}：实现机制、层间耦合方式、
+``层''的离散性均不同。
+
+\end{analogyboundarybox}
+
+%─────────────────────────────────────────────
+\section{和前后章节的关系}
+\label{sec:nested_bridges}
+%─────────────────────────────────────────────
+
+\begin{itemize}
+  \item \textbf{来自第~\ref{ch:unified}~章}：
+    Test-Time Regression 把第~\ref{ch:fastweights}--\ref{ch:titans}~章的所有模型
+    统一到一个在线回归目标下。
+    Nested Learning 在此基础上把``统一''推到了更极端的位置：
+    不仅内层状态更新是优化，
+    连``网络架构本身''也可以被解读为多层优化的截断。
+
+  \item \textbf{来自第~\ref{ch:bilevel}~章}：
+    MAML 建立了二层嵌套优化的最基本形式。
+    Nested Learning 是 MAML 向任意 $L$ 层的推广。
+
+  \item \textbf{全书总结}：
+    这本书的旅程从``测试时做一步梯度更新''（第~\ref{ch:why_test_time}~章的 TTT 2020），
+    走到``隐状态就是一个在线学习器''（第~\ref{ch:ttt_layers}~章的 TTT-Layer），
+    最终到`''所有的架构层级都可以被理解为嵌套的在线优化''。
+    这条主线的一致性说明了：
+    \textbf{训练和推断之间的界限不是黑白分明的，
+    而是一个多时间尺度的连续谱}。
+\end{itemize}
+
+%─────────────────────────────────────────────
+\section{Lab 11：手写三层嵌套优化并测量截断效应}
+\label{sec:nested_lab}
+%─────────────────────────────────────────────
+
+\begin{labbox}[title=Lab 11：三层嵌套优化 vs.\ 固定网络的对比]
+
+\textbf{目标}：构建一个三层嵌套的在线回归系统，
+对比``完整嵌套更新''和``截断为固定网络''时的回归误差。
+
+\textbf{数据}：
+\begin{enumerate}
+  \item 生成 $T = 500$ 步的在线回归序列，$d = 16$。
+  \item 每 100 步切换一次目标函数的参数
+        （模拟分布偏移），共 5 个``任务段''。
+\end{enumerate}
+
+\textbf{三层嵌套系统}：
+\begin{enumerate}
+  \item \textbf{第 1 层（逐步更新）}：维护 $\mS^{(1)} \in \R^{16 \times 16}$，
+        每步做一步 SGD，学习率 $\eta_1$ 由第 2 层提供。
+  \item \textbf{第 2 层（每 50 步更新）}：根据第 1 层最近 50 步的累积损失，
+        调整 $\eta_1$（简单线搜索或梯度步）。
+  \item \textbf{第 3 层（固定）}：投影矩阵 $W_K, W_V$ 预设为随机正交矩阵。
+\end{enumerate}
+
+\textbf{对比基线}：
+\begin{itemize}
+  \item 基线 A：固定 $\eta_1 = 0.01$，无第 2 层
+  \item 基线 B：固定 $\mS^{(1)} = W_\text{pretrained}$，无任何在线更新
+\end{itemize}
+
+\textbf{测量}：
+\begin{itemize}
+  \item 在每个任务段的前 10 步和后 90 步分别记录 MSE
+  \item 绘制``时间步 vs.\ MSE''曲线，标注任务切换点
+\end{itemize}
+
+\textbf{预期观察}：
+三层嵌套系统在任务切换后应该比两个基线更快恢复低误差，
+因为第 2 层能自适应地调整第 1 层的学习速度。
 \end{labbox}
 
-\begin{misconceptionbox}
-\textbf{常见误解 1：既然层和架构只是虚幻的，是不是我们可以写无限甚至不断递归的深层计算就无敌了而不要用参数量了？}
+%─────────────────────────────────────────────
+\section{常见误解}
+\label{sec:nested_misconceptions}
+%─────────────────────────────────────────────
 
-\textbf{纠正：}这恰恰是把“数学视角的等效替代”同等误会了成了“计算复杂性和表达能力的平替”。深度架构用海量的浮点前向替换深层计算，实际上是人类工业针对 GPU 大吞吐和廉价高速缓存器做出的计算最优转移（贸易交换 Trade-off），并不是为了“好看”。无穷无尽的反向内层计算会导致时间墙爆裂式停止（参考混沌效应和极限非稳定），这在计算流和现实硬件层面绝对不可实现。架构在这里幻化，是为了通过降维锁定它来让你获得实质运行的产物。
+\begin{misconceptionbox}
+\textbf{误解 1}：既然层和架构只是优化的幻像，
+那么我们可以抛弃固定架构，用无限深的递归嵌套来获得无限能力。
+
+\textbf{纠正}：
+这把``数学视角的等价性''误等同于``计算资源的可替代性''。
+深度架构之所以采用固定层数和前向传播，
+是因为这在 GPU 上可以高效并行执行。
+无限深的嵌套优化在每一步都需要
+内层完全收敛才能向外层传播梯度——
+这在计算和数值稳定性上完全不可行。
+架构设计是\textbf{工程上必需的截断}，不是``好看的装饰''。
 \end{misconceptionbox}
 
 \begin{misconceptionbox}
-\textbf{常见误解 2：“所有的生成和微调全是一套理论”，所有问题都解决了，序列模型再无理论创新必要。}
+\textbf{误解 2}：Nested Learning 框架证明了我们已经完全理解了
+深度学习的所有涌现行为。
 
-\textbf{纠正：}能够写在纸面上重合为一个系统性推演图并代表你完全破解了它的涌现黑箱。即便嵌套学习将底层结构缩合，它依然没能完整回答基于此系统涌出的超级逻辑思维、对抗欺骗与概念自省这些顶级复合智能属性到底是怎么产生的。“宏大统一”常常只是物理机制上发现的一个“工具奇点”，关于智能的内容构建工程刚刚起飞并没有解决。
+\textbf{纠正}：
+Nested Learning 在\textbf{机制层面}提供了一种统一的
+``优化子过程的嵌套''视角。但``统一了底层运算的数学形式''
+不等于``解释了复杂行为的涌现''。
+这就像理解了蛋白质折叠的物理规则
+不等于理解了意识是如何产生的。
+对抗学习中的崩溃模式、多模态对齐的失效、
+推理能力的涌现等高层现象，
+至今没有被任何统一框架充分解释。
 \end{misconceptionbox}
 
+\begin{misconceptionbox}
+\textbf{误解 3}：``这只是一种视角''意味着 Nested Learning 没有实际价值。
+
+\textbf{纠正}：
+恰恰相反。Nested Learning 的最大价值在于
+它将``序列模型设计''从``搭积木试错''转化为
+``在一个统一目标函数下推导新变体''。
+第~\ref{ch:unified}~章已经展示了这种方式的威力：
+通过修改目标函数的惩罚项和求解策略，
+可以系统地推导出新的模型层。
+这是方法论上的真正进步。
+\end{misconceptionbox}
+
+%─────────────────────────────────────────────
 \section{练习题}
 \label{sec:nested_exercises}
+%─────────────────────────────────────────────
 
 \begin{exercise}
-\textbf{数学重归位思考：}如果用完全倒装的态度面对本书第一到第七个核心演变阶段，并在只有 Nested 结构中挑出它的一阶或者忽略时延特定参数所对应的具体过去哪个理论层级（如退化并无视长程项对应快权重，等价项对应线性），尝试把你脑中现存的所有序列优化缩写进一个带不同变量锁的多重方程里面去？
+\textbf{特例归约}：
+从 Nested Learning 的通用更新公式~\eqref{eq:nested_update} 出发，
+通过指定 $L$、$\mathrm{Opt}^{(l)}$、$\ell^{(l)}$ 和截断策略，
+推导出以下模型的状态更新规则：
+（a）快权重（$L=2$，外积写入）、
+（b）TTT-Linear（$L=2$，SGD with residual）、
+（c）Titans 的长时记忆（$L=2$，Surprise 门控 SGD）。
 \end{exercise}
 
 \begin{exercise}
-\textbf{时间壁垒：}结合 Titans 框架的惊讶值处理与 Nested 体系对于不同周期的工层管理结构描述：试论这为未来使用基于人类皮层微型长短柱列架构这种物理切片理论（而非现流行的层级注意力叠加参数理论）来真正提供低碳超级仿生智能有什么启发与支持？
+\textbf{截断误差分析}：
+设 $\ell(\mS, k, v) = \frac{1}{2}\|\mS k - v\|_2^2$，$\mS_0 = 0$。
+（a）精确求解 $\mS^* = \arg\min_{\mS} \ell(\mS, k, v)$。
+（b）计算一步 SGD 后的 $\mS_1 = -\eta \nabla \ell(0)$。
+（c）计算截断误差 $\|\mS^* - \mS_1\|_F$，
+说明它何时较小（$\eta$ 接近什么值？$k$ 须满足什么条件？）。
 \end{exercise}
 
 \begin{exercise}
-\textbf{诚实政策考核题目：}写出并在课堂上阐述一篇短报告：如果在公司商业演讲或者对外推介你的新框架时，你是应该声张：“基于最新的定理实证，我们的智能体已破解结构限制，本质已经与人无二可以完全基于动态在测试中完全自我变造生长架构了”——还是应该通过如何严谨界定这到底只是一系列不同阶数的逼近优化方程控制边界进行合理表达？如果使用前者会导致怎样的长期恶果？
+\textbf{时间尺度的定量分析}：
+在 Titans（第~\ref{ch:titans}~章）中，STM（窗口注意力）的时间尺度约为 $W$（窗口大小），
+长时记忆的时间尺度约为 $1 / (1-\lambda)$（有效记忆长度），
+持久记忆的时间尺度为 $\infty$（推断时不更新）。
+用 Nested Learning 的语言，把这三者对应到三层嵌套的第 1、2、3 层。
+它们各自的 $T^{(l)}$ 大约是多少？
 \end{exercise}
 
+\begin{exercise}
+\textbf{诚实政策考核}：
+写出一段 200 字以内的研究简报，向非专业同事介绍 Nested Learning。
+要求：必须包含至少一条``已被严格证明的机制等价''
+和至少一条``属于研究议程的视角主张''，
+并明确标注二者的区别。
+\end{exercise}
+
+%─────────────────────────────────────────────
 \section{本章小结}
 \label{sec:nested_summary}
+%─────────────────────────────────────────────
 
 \begin{itemize}
-    \item \textbf{万物归真：}本章是全书最高远的概略整合，它把通过层数与特定模型模块带来的隔离消隐，将训练、推演、微调与结构本身，全部在数学的同构解析下转化为了一本时间尺度大字典。
-    \item \textbf{架构等于算法幻像：}解释了现代广受推崇的各种巨形特定架构（包含残差、层深、跨接关注）实质是针对这个大嵌套公式组在由于不同物理和数据承载约束情况下给出的物理硬编码形式降维近似实体显像。
-    \item \textbf{确立了科研价值观：}我们极为刻意且郑重地声明这种理论上的“宏观同化理论统一”应该当做前行的光塔计划，警惕滥用其为一种证明我们已征服全部白盒机制的终极真理，从而陷入自大的原教旨主义深渊。
-    \item \textbf{旅程结语：}从“利用数据在发推前先改点参数的土方（TTT 2020）”到“一切计算均为内嵌套流式推演的架构大一统（Nested）”，这条横跨五六年波澜壮阔的核心主脉线我们至此走完。这是这一代青年学者对于智能本质机制层面最宝贵的思考轨迹！
+  \item \textbf{Nested Learning 的核心主张}：
+    深度网络的层级结构可以被理解为多时间尺度嵌套优化的截断。
+    ``架构设计'' 等价于``选择每一层的优化算法和截断策略''。
+
+  \item \textbf{形式化}：
+    $L$ 层嵌套优化由递推公式~\eqref{eq:nested_update}
+    和层间传导~\eqref{eq:nested_propagation} 定义。
+    不同层操作在分离的时间尺度上。
+
+  \item \textbf{统一特例}：
+    快权重、线性注意力、TTT-Layer、Titans
+    都可以被归约为 $L=2$ 的 Nested Learning
+    在不同优化算法和截断策略下的特例。
+
+  \item \textbf{学术边界}：
+    机制层的公式等价（线性注意力 $=$ 快权重 $=$ 在线回归一步截断）
+    已被严格证明。
+    ``架构是优化的幻像'' 是一个极具启发性的研究议程，
+    但尚未在一般非线性情形下被完全证明。
+
+  \item \textbf{神经科学类比}：
+    大脑的多时间尺度可塑性层级
+    在\textbf{算法组织层面}与 Nested Learning 的多层时间尺度相似；
+    但实现机制（局部规则 vs.\ 全局梯度）、层间耦合方式、
+    ``层''的离散性均有本质差异。
+
+  \item \textbf{全书回顾}：
+    从 TTT 2020（测试时做一步更新）到 Nested Learning（所有层级都是嵌套的优化），
+    这条主线展示了：训练和推断之间的界限是一个连续谱，
+    不同时间尺度的学习可以在同一个模型内共存。
 \end{itemize}
 
-\paragraph{读完本章并结合全书，你现在应该会：}
+\paragraph{读完本章并结合全书，你现在应该能够：}
 \begin{itemize}
-    \item 在脑内立刻打通从经典元学习在参数外更新到现代网络本身内部层流隐变自更新的整体发展谱系映射全息图。
-    \item 完全不被目前各种学术界繁杂的模型术语包装蒙骗。拿到一篇无论多么新的序列智能研究，能够首先条件反射把它的层或参数方程解构成属于某一个截断或修正补偿后，放置在这个“嵌套演替推断表”中进行分析比较。
-    \item 具有了深厚的理论审美和强韧的独立学科界定抵抗力；明白了工程取舍和机制原理的哲学差异与互相转换成就！
+  \item 用 $L$ 层嵌套优化的语言重新描述任意序列模型架构
+  \item 把快权重、线性注意力、TTT-Layer 分别归约为 Nested Learning 的特例
+  \item 区分``已被严格证明的机制等价''和``尚在研究中的统一视角''
+  \item 用多时间尺度的神经可塑性类比解释 Nested Learning 的设计动机，
+        并\textbf{显式指出类比在哪个层面成立，在哪个层面失效}
+  \item 独立评判一篇新的序列建模论文：
+        它对应 Nested Learning 框架中的哪个参数选择？
+        它是在改进优化算法还是在改变截断策略？
 \end{itemize}

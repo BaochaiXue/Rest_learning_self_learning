@@ -1,154 +1,558 @@
 % chapters/02_why_models_can_learn_at_test_time.tex
-% 第2章：为什么模型能在测试时学习？
+% Version 2.0 — B11-B26 compliant rewrite
 \chapter{为什么模型能在测试时学习？}
 \label{ch:why_test_time}
 
-\epigraph{``There is always a signal, even without the label. If a model can predict its own rotation, it has already aligned its feature space enough to guess the class.''}{--- Test-Time Training with Self-Supervision}
+\epigraph{``There is always a signal, even without the label. If a model can predict its own rotation, it has already aligned its feature space enough to guess the class.''}{--- \citeauthor{sun2020ttt}, 2020}
 
+%─────────────────────────────────────────────
 \section{本章想回答什么问题}
+\label{sec:ttt_question}
+%─────────────────────────────────────────────
 
-上一章我们颠覆了传统的“训测分离”观，确立了要在测试阶段赋予模型继续学习的必要性。但这立刻引发了一个极其现实的技术疑问：
+上一章确立了``训练结束后仍可继续学习''的必要性。
+但这立刻引发了一个核心技术问题：
 
 \begin{quote}
-\textit{在测试阶段，我们根本不知道输入数据的正确标签（Label）。没标签算不出误差，没误差怎么求梯度！模型到底依靠什么信号来调整自己的参数？}
+\textit{在测试阶段，我们没有真实标签。
+没有标签就无法计算监督损失，无法计算梯度。
+那么模型到底依靠什么信号来调整自己的参数？}
 \end{quote}
 
-本章将回到整个 Test-Time Training（TTT）领域的开山鼻祖思想——利用\textbf{自监督学习（Self-Supervision）}生成内部回授信号。我们将看到，如何通过一个看似与核心目标毫不相干的辅助任务，在没有人类提供任何金标准标注的前提下，利用输入数据自身的本体结构产生误差，实现模型参数针对特定新数据的“临阵磨枪校准”。
+\citet{sun2020ttt} 的回答是：用\textbf{自监督学习（Self-Supervised Learning）}
+从输入数据本身构造伪标签，由此产生梯度信号。
+这就是 Test-Time Training（TTT）2020 的核心思想。
 
-理解这一章，是建立“模型能够内部闭环自我更新”这层信心的第一步。虽然我们之后会走向远比外挂反演更高级的架构，但这个基本原点机制是所有动态生成思维的基础锚。
+本章将：
+\begin{enumerate}
+  \item 给出 TTT 2020 的完整算法描述（\S\ref{sec:ttt_math}）
+  \item 严格推导为什么自监督辅助头能间接改善主任务性能（\S\ref{sec:ttt_theory}）
+  \item 讨论这种方法的工程代价和局限性（\S\ref{sec:ttt_limits}），
+        为后续章节引入``架构内化更新''的动机做铺垫
+\end{enumerate}
 
-\section{最小例子：通过纠正被旋转的图片来分类}
+%─────────────────────────────────────────────
+\section{最小例子：旋转预测作为自监督信号}
 \label{sec:ttt_minimal}
+%─────────────────────────────────────────────
 
-\begin{toybox}[title=玩具问题 B：不看标签也能“找着北”的图片域适应]
-假设你在一批非常清晰、端正的动物照片上训练了一个极好的分辨猫狗的神经网络分类器（主任务）。
-但是如果此时到了实机推断部署时，\textbf{所有传过来的监控流动物照片都是严重高斯模糊加上随机且离谱角度（比如翻转了70度）侧歪的（Distribution Shift）。}
+\begin{toybox}[title=玩具问题 B：旋转预测实现域适应]
+\textbf{训练阶段}：
+一个图像分类器在清晰、正放的动物照片上训练。
+训练时同时引入辅助任务：
+把每张图分别旋转 $0^\circ, 90^\circ, 180^\circ, 270^\circ$，
+让网络预测旋转角度（4 分类问题）。
 
-由于这种组合情况太诡异了，原有的分类头提取出来的轮廓特征完全对不上号，它把狗大抵猜成了扫地机器人。这时候我们拿不出正确的真实动物品种标注给它计算分类 Loss。
+\textbf{测试阶段}：
+输入图像变成了模糊、倾斜的监控画面——
+这是一种\textbf{分布偏移（Distribution Shift）}。
+分类头的性能急剧下降。
 
-\textbf{测试时更新法（Test-Time Training）：}
-在部署阶段的每次给出推理之前，我们先在本地对这张歪七扭八的输入照片搞破坏。比如干脆强制把它打散转动成 0, 90, 180, 270 四个死角（我们自己搞的动作我们当然知道正确伪标签是转了几度！）。
-我们强迫网络的一个辅助判定分支，先去把打歪的新图恢复旋转角度。为了恢复这个角度，网络\textbf{不得不顺带把提取骨干的参数权重针对当前那种特殊的“模糊、扭曲”底色重新梳理适应了一翻}。
-然后！我们再把那个被强行拉直扭正状态的图片丢给分类主判断头。此时因为它底盘刚被校准过提取视界了。它奇迹般地把狗重新认了出来！
-这就是无需正确任务级标注的测试时修正的魔力。
+\textbf{TTT 修正}：
+对每张测试图像，先执行 $K$ 步旋转预测的辅助优化：
+\begin{enumerate}
+  \item 对测试图施加 4 种旋转，构造伪标签
+        $\{(R_j(x_\text{test}), j)\}_{j=0}^{3}$
+  \item 以旋转分类损失为目标，对特征提取器 $\theta_e$ 做 $K$ 步梯度更新
+  \item 用更新后的提取器运行主分类头
+\end{enumerate}
+
+\textbf{关键洞见}：
+正确预测旋转角度需要网络理解图像的``上下左右''——
+这迫使特征提取器适应当前图像的分布特性，
+从而间接改善主分类性能。
 \end{toybox}
 
-\section{直觉解释：暗渡陈仓的双头机制}
+%─────────────────────────────────────────────
+\section{直觉解释：双头共享表征架构}
 \label{sec:why_test_time_intuition}
+%─────────────────────────────────────────────
 
-要达成上述效果，我们在计算图里建立了一个双头架构：一个身子，两个脑袋。
+TTT 2020 的架构如下：
 
-一个脑袋叫\textbf{主回归/分类头 (Main Head)}，专门回答人类需要的有监督判断。没有真值标签它就算不出梯度的错。
-另一个脑袋叫\textbf{自监督辅助头 (Auxiliary Self-supervised Head)}，专门用来解决自导自演的问题，比如“推断左半边和右半边的关系”、“判断这张图是否被加了噪”。只要有数据输入自身，我们就可以破坏它然后再让它重组，以此获得无限的免费伪劣自校准监督指引。
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{组件} & \textbf{角色} \\
+\midrule
+$f_{\theta_e}$ & 特征提取器（共享骨干，如 ResNet） \\
+$f_{\theta_m}$ & 主任务头（分类/回归） \\
+$f_{\theta_s}$ & 辅助自监督头（如旋转预测） \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-测试到来时，让输入先走辅助头触发报错纠偏。辅助头带着身子（共享表征提取器）一起动一动（通过梯度下降走一小步修改整体权重）。这一步身子修改，相当于一次针对当下不讲理输入特化做的“专属热身运动环境调试”。接着在主头那里再正常跑推断。
+训练时，三个组件联合训练，使得 $\theta_e$ 同时学习对主任务和辅助任务有用的表征。
 
-\begin{neurosciencebox}[title=神经科学直觉：在线适应与感觉-运动校准]
-\textbf{计算功能类比：}我们可以把这当作神经系统中的在线感觉运动校准（Sensorimotor Calibration）。你可以想象你作为人类本来能够平稳接住一个飞盘（有监督通用任务）。现在如果你突然被戴上了一副会让视觉产生 20 度偏折畸变的三棱镜，虽然你暂时不再知道飞盘确切在哪里（失去任务精准判断主标签），但在最初几秒钟，你会不断通过尝试伸手——虽然接不到，但是凭借“我的手臂位置”和“视觉内物体偏移量”这种自己肢体传回来的辅助感官自监督信号，视觉加工皮层发生了在线适应修正（Online Adaptation）。在这个极短的时空视窗内你的特征提取层就做出了特异化。
-当几秒后这种基础自我身体坐标系对齐完成了（类似自监督辅助 Loss 降下来特征重对准），你再次出手，就能够又神乎其神地接住偏移在畸变位置的飞盘了！
+测试时，\textbf{只更新 $\theta_e$}（通过辅助损失的梯度），
+主任务头 $\theta_m$ 和辅助头 $\theta_s$ 的参数保持冻结。
+
+这个机制之所以有效，是因为一个关键假设：
+\begin{quote}
+\textit{使表征适应辅助任务（旋转预测）所需的特征调整，
+与使表征适应主任务（分类）所需的特征调整，
+共享足够大的子空间。}
+\end{quote}
+
+如果这个假设成立，那么``为了更好地预测旋转''而修正 $\theta_e$，
+会``顺带''改善分类性能。
+
+%─────────────────────────────────────────────
+\section{数学形式化：TTT 2020 算法}
+\label{sec:ttt_math}
+%─────────────────────────────────────────────
+
+\subsection{预训练阶段}
+
+在训练集 $\{(x_i, y_i)\}_{i=1}^N$ 上联合优化：
+\begin{equation}
+  \min_{\theta_e, \theta_m, \theta_s} \;
+  \frac{1}{N} \sum_{i=1}^{N} \Big[
+    \mathcal{L}_\text{main}\!\left(f_{\theta_m}(f_{\theta_e}(x_i)),\, y_i\right)
+    + \alpha \cdot \mathcal{L}_\text{ss}\!\left(
+      f_{\theta_s}(f_{\theta_e}(\hat{x}_i)),\, \hat{y}_i
+    \right)
+  \Big]
+  \label{eq:ttt_pretrain}
+\end{equation}
+其中：
+\begin{itemize}
+  \item $\mathcal{L}_\text{main}$ 是主任务损失（如交叉熵）
+  \item $\mathcal{L}_\text{ss}$ 是自监督辅助损失
+  \item $\hat{x}_i = P(x_i)$ 是对输入施加的自监督变换
+        （旋转、遮盖、打乱等）
+  \item $\hat{y}_i$ 是变换的伪标签
+        （在旋转预测中即旋转角度的类别索引）
+  \item $\alpha > 0$ 是平衡主损失和辅助损失的超参数
+\end{itemize}
+
+\subsection{测试时适应阶段}
+
+对每一个测试样本 $x_\text{test}$，执行以下步骤：
+
+\textbf{Step 1：保存参数快照}
+\begin{equation}
+  \theta_e^{(0)} \leftarrow \theta_e^*
+  \qquad (\text{从预训练得到的参数开始})
+\end{equation}
+
+\textbf{Step 2：构造自监督信号}
+
+施加变换族 $\{P_j\}_{j=1}^{J}$，得到 $J$ 组伪标记数据：
+\begin{equation}
+  \{(P_j(x_\text{test}),\, j)\}_{j=1}^{J}
+\end{equation}
+
+\textbf{Step 3：$K$ 步梯度更新（仅更新 $\theta_e$）}
+\begin{equation}
+  \theta_e^{(k)} = \theta_e^{(k-1)}
+  - \eta \nabla_{\theta_e} \mathcal{L}_\text{ss}\!\left(
+    f_{\theta_s^*}\!(f_{\theta_e^{(k-1)}}(P_j(x_\text{test}))),\, j
+  \right), \quad k = 1, \ldots, K
+  \label{eq:ttt_update}
+\end{equation}
+
+\textbf{Step 4：用适应后的参数进行推断}
+\begin{equation}
+  \hat{y} = f_{\theta_m^*}\!(f_{\theta_e^{(K)}}(x_\text{test}))
+  \label{eq:ttt_inference}
+\end{equation}
+
+\textbf{Step 5：参数重置}
+\begin{equation}
+  \theta_e \leftarrow \theta_e^* \qquad (\text{恢复为预训练参数})
+  \label{eq:ttt_reset}
+\end{equation}
+
+\begin{remark}[参数重置的必要性]
+步骤 5 至关重要。如果不重置 $\theta_e$，
+对第 $n$ 个测试样本的适应会``污染''对第 $n+1$ 个样本的推断。
+由于相邻测试样本可能来自不同的分布偏移模式，
+累积的参数漂移会迅速导致性能崩溃。
+\end{remark}
+
+%─────────────────────────────────────────────
+\section{为什么辅助任务能帮助主任务？}
+\label{sec:ttt_theory}
+%─────────────────────────────────────────────
+
+直觉上，辅助任务与主任务之间存在``表征共享''关系。
+我们可以用以下定理给出一个形式化的条件。
+
+\begin{theorem}[辅助损失的间接改善条件]
+\label{thm:ttt_indirect}
+设 $\theta_e^*$ 是预训练后的特征提取器参数，
+$\Delta = -\eta \nabla_{\theta_e} \mathcal{L}_\text{ss}$
+是自监督损失的一步更新。
+
+如果主任务损失的梯度与辅助损失的梯度之间满足
+\textbf{正相关条件}：
+\begin{equation}
+  \langle
+    \nabla_{\theta_e} \mathcal{L}_\text{main}(\theta_e^*),\;
+    \nabla_{\theta_e} \mathcal{L}_\text{ss}(\theta_e^*)
+  \rangle > 0
+  \label{eq:gradient_alignment}
+\end{equation}
+则辅助更新 $\theta_e^* + \Delta$ 在一阶近似下也会减少主任务损失：
+\begin{equation}
+  \mathcal{L}_\text{main}(\theta_e^* + \Delta)
+  \approx \mathcal{L}_\text{main}(\theta_e^*)
+  - \eta \langle
+    \nabla \mathcal{L}_\text{main},\, \nabla \mathcal{L}_\text{ss}
+  \rangle < \mathcal{L}_\text{main}(\theta_e^*)
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+一阶 Taylor 展开：
+$\mathcal{L}_\text{main}(\theta_e^* + \Delta)
+\approx \mathcal{L}_\text{main}(\theta_e^*)
++ \langle \nabla \mathcal{L}_\text{main}, \Delta \rangle$。
+代入 $\Delta = -\eta \nabla \mathcal{L}_\text{ss}$
+即得 $\approx \mathcal{L}_\text{main}(\theta_e^*)
+- \eta \langle \nabla \mathcal{L}_\text{main},
+\nabla \mathcal{L}_\text{ss} \rangle$。
+由条件~\eqref{eq:gradient_alignment}，
+括号内的内积 $> 0$，因此主损失下降。
+\end{proof}
+
+\begin{remark}
+条件~\eqref{eq:gradient_alignment} 并不总是成立。
+当辅助任务与主任务之间的特征共享不足时
+（例如用``颜色直方图匹配''辅助任务来帮助``语义分割''），
+梯度可能正交甚至反向，
+导致测试时适应反而损害主任务性能。
+这是 TTT 方法的核心风险。
+\end{remark}
+
+%─────────────────────────────────────────────
+\section{计算代价分析与工程局限}
+\label{sec:ttt_limits}
+%─────────────────────────────────────────────
+
+TTT 2020 的主要工程问题在于测试时的\textbf{计算开销}。
+
+\begin{center}
+\begin{tabular}{p{3.5cm} p{4.5cm} p{4.5cm}}
+\toprule
+& \textbf{标准推断} & \textbf{TTT 推断} \\
+\midrule
+每样本计算量 & 1 次前向传播 & $K \times J$ 次前向 + $K$ 次反向 \\
+GPU 内存 & 仅存激活值 & 需存梯度计算图 \\
+延迟 & $\sim$1ms & $\sim$50--500ms (取决于 $K$) \\
+参数管理 & 无 & 需保存/恢复 $\theta_e^*$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+对于\textbf{逐 token 的序列模型}（如语言模型），
+TTT 2020 的``全局反向传播 + 参数重置''范式完全不可行：
+每生成一个 token 就要对整个网络反向传播一次。
+
+\begin{insight}[title=从外部微调到架构内化]
+TTT 2020 的核心贡献是证明了
+``测试时学习''的\textbf{可行性}——模型确实可以利用自监督信号适应。
+但它的工程瓶颈指向了后续研究的方向：
+\textbf{能否把``测试时的参数更新''
+内化到网络架构本身中}——
+不是在外部跑反向传播，
+而是设计一种层结构，
+其前向传播天然等价于执行参数更新？
+这正是第~\ref{ch:bilevel}--\ref{ch:ttt_layers}~章的主题。
+\end{insight}
+
+%─────────────────────────────────────────────
+\section{神经科学直觉与类比边界}
+\label{sec:ttt_neuro}
+%─────────────────────────────────────────────
+
+\begin{neurosciencebox}[title=神经科学直觉：感觉-运动的在线校准]
+
+\textbf{类比对象}：
+人类的\textbf{棱镜适应（Prism Adaptation）}现象
+可以帮助理解 TTT 的核心机制。
+
+当受试者佩戴会使视觉偏移 $20^\circ$ 的棱镜时，
+初始的手眼协调完全失准（类似分布偏移后模型性能下降）。
+但仅需数次伸手抓握尝试，受试者就能重新校准——
+\textbf{即使没有人告诉他``正确的手臂位置在哪里''}。
+校准依赖的是\textbf{自身的本体感觉反馈}
+（手臂的运动感知信号），而非外部标签。
+
+\textbf{共同之处（算法层面）}：
+\begin{center}
+\begin{tabular}{p{5cm} p{5cm}}
+\toprule
+\textbf{棱镜适应} & \textbf{TTT 2020} \\
+\midrule
+视觉偏移 = 分布偏移 & 测试图像来自新分布 \\
+本体感觉反馈 = 自监督信号 & 旋转预测提供伪标签 \\
+小脑校准视觉-运动映射 & 梯度更新特征提取器 \\
+摘除棱镜后需重新适应 & 参数重置避免跨样本污染 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
 \end{neurosciencebox}
 
-\begin{analogyboundarybox}[title=这并不是说“模型就是大脑”]
-虽然“用自我相关活动执行修正”的观念高度仿生，但切勿迷失于此而忽视以下致命的不同：
+\begin{analogyboundarybox}[title=这个类比在哪里失效]
+
+\textbf{一、更新规则不同（实现机制层）}
+
+\begin{tabular}{p{5cm} p{8cm}}
+\textbf{TTT 2020}
+& 通过显式的全局反向传播计算梯度，
+  沿着整个计算图将误差传播到 $\theta_e$ 的每个参数。
+  需要存储完整的计算图。 \\
+\textbf{棱镜适应}
+& 小脑的误差校正依赖于\textbf{局部的}
+  攀缘纤维信号和 Purkinje 细胞的突触可塑性，
+  是一种逐层局部的适应，不存在全局误差反传。 \\
+\end{tabular}
+
+\medskip\textbf{二、适应范围不同（表征层）}
+
+TTT 更新的是神经网络中\textbf{所有共享层}的参数——
+这是一种全局性的表征调整。
+生物的棱镜适应主要局限于
+\textbf{小脑-顶叶}回路的特定连接，
+不会改写整个视觉皮层的表征。
+
+\medskip\textbf{读者不应从这个类比推出}：
 \begin{itemize}
-    \item \textbf{更新规则的实现截然不同：}在这个经典 TTT 算法过程里，辅助头的反馈纠偏需要顺着计算图实施极长、对每一层矩阵元进行连座惩罚的全局精确反向传播，并需要用到在推断上原本不开放的高开销求导链保存！这显然违背了生物系统更偏向多路分布式的、且高度无梯度中心主控协调的物理约束现实。这也是为什么普通基于反相图重拉的 TTT 终究被视作笨重的临时土方而无法作为长久之计推行。
-    \item 同样，“单帧数据的重新校准”是极其不稳定且易被恶意对抗样本摧毁的特质情况，人类的适应包含多模交互补充校验。单纯在单数据分支强打伪造旋转监督的做法极有过度投机的局限性。
+  \item \textbf{[X]} ``TTT 2020 实现了类脑的在线适应''
+  \item \textbf{[X]} ``反向传播等价于小脑的误差校正''
+  \item \textbf{[X]} ``参数重置等价于摘除棱镜后的重新适应''
 \end{itemize}
+
+\medskip
+\textbf{类比成立的层次}：
+\textit{算法层面}——两者都使用非任务本身的辅助信号
+来间接校准任务相关的表征。
+
+\textbf{类比失效的层次}：
+实现机制（全局反向传播 vs.\ 局部突触可塑性）、
+更新范围（所有共享层 vs.\ 特定回路）均不同。
+
 \end{analogyboundarybox}
 
-\section{数学形式化：自监督辅助损失的微调}
-\label{sec:why_test_time_math}
-
-我们通过方程组严格复现这套经典的动作，这奠定了所有利用损失来进行推断间优化的雏形范本。
-
-\subsection{预训练共建期间（在广袤数据和集群机组上）}
-设有特征提取主躯干网络 $\theta_e$，主分类头网络参数 $\theta_m$，辅助自监督预测头 $\theta_s$。
-普通训练使用联合极小化的损失去让躯干适应：
-\begin{equation}
-   \theta_e^*, \theta_m^*, \theta_s^* = \arg\min_{\theta_e, \theta_m, \theta_s} \sum_{i=1}^N \Big( \mathcal{L}_m(f_{\theta_m}( f_{\theta_e}(x_i) ), y_i) \ + \ \alpha \mathcal{L}_s(f_{\theta_s}( f_{\theta_e}(P(x_i)) ), P_y) \Big)
-\end{equation}
-这个方程定义了：即使在预阶段，主从多头一起把共同表征空间拉出了一个即抗干扰又做好了分辨准备的样子。（其中 $P$ 为干扰与掩码操作函数，$P_y$ 即对应伪监督标签）。
-
-\subsection{部署与测试期现场（单次新推测任务请求时）}
-此时我们冻结毫无头绪的 $\theta_m$ 参数头。让来临的一个带有巨大位移新领域的测试样本 $x_{test}$ 进来。由于没主用真标签，我们用被预演过的固定干扰变换 $P$ 去作用 $x_{test}$ 得到一个可以做无监督检查的畸变体，计算它的辅助项重组损失！
-然后再通过反向一步到多步的梯度步骤！请注意仅仅修改公用身干参数 $\theta_e^*$ 获取临时参数 $\hat{\theta}_{e}$（在这个时点它就是针对这单一样本强特化的短局权态）。
-
-\begin{equation}
-   \hat{\theta}_{e} = \theta_e^* - \eta \nabla_{\theta_e} \mathcal{L}_s(f_{\theta_s^*}( f_{\theta_e}(P(x_{test})) ), P_y)
-\end{equation}
-
-完成纠正以后，将这个带着修正特化残余量的参数投入真正的主干预测管道计算。
-\begin{equation}
-    P(y | x_{test}) = f_{\theta_m^*}( f_{\hat{\theta}_{e}}(x_{test}) )
-\end{equation}
-
-在完成这次惊险的精准解题后，$\hat{\theta}_{e}$ 的使命结束。网络再次恢复初始值状态，清理掉由于纠正遗留的历史痕迹（防止针对某张偏图的优化积累破坏对另一种域畸变的常规判断力）。并准备接收下一张请求再次开启重算。
-
+%─────────────────────────────────────────────
 \section{代表论文精读}
 \label{sec:why_test_time_papers}
+%─────────────────────────────────────────────
 
 \paragraph{\citet{sun2020ttt} — Test-Time Training with Self-Supervision for Generalization under Distribution Shifts}
-这是此篇范式立足之基石理论研究。这是业界首度大规模通过利用自监督循环作为预测试代理的方式硬生生地将测试分布域外的不可读盲点转换成了无需人力标签的自我强特化过程的绝妙创造。虽然它的操作极度臃肿（要求把推理的每个 Batch 切过去都先进行求导耗用等同甚至超出正常训练的反向成本），但它实证明确了一种在推理中获得泛化的绝对出路可行性存在证明。
+这是 TTT 范式的奠基论文。
+核心贡献：证明了旋转预测作为自监督辅助任务，
+能够有效改善分布偏移下的分类性能。
+在 CIFAR-10-C、ImageNet-C 等基准上，
+TTT 显著优于不做任何适应的基线。
+更重要的是，该论文建立了``测试时利用自监督信号''
+这一范式的可行性证明（existence proof）——
+为后续所有测试时学习研究奠定了基础。
 
+\textit{本教材用处}：证明无标签条件下的测试时适应是可行的。
+本章的整个框架（双头架构、辅助损失、参数重置）
+直接来源于这篇论文。
+
+\paragraph{\citet{krause2018dynamiceval} — Dynamic Evaluation of Neural Sequence Models}
+在语言模型领域，Dynamic Evaluation 是一种更早期的测试时适应策略：
+在部署时持续用语言模型的自回归损失（下一个 token 预测）
+对模型参数进行在线微调。
+这可以被理解为一种不需要额外辅助头的 TTT 方案，
+因为语言模型的主任务本身就是自监督的。
+
+\textit{本教材用处}：说明 TTT 思想在 NLP 领域的自然对应物，
+并为后续的 TTT-Layer（第~\ref{ch:ttt_layers}~章）提供额外动机。
+
+%─────────────────────────────────────────────
 \section{和前后章节的关系}
 \label{sec:why_test_time_bridges}
+%─────────────────────────────────────────────
 
 \begin{itemize}
-    \item \textbf{对第 \ref{ch:intro} 章的落地执行：}本章提供了一个极易下咽的最平铺直白且无抽象的案例去实现前言中所说的在参数层直接对测试阶段的在线纠正理论机制构建。
-    \item \textbf{通往第 \ref{ch:bilevel} 与 第 \ref{ch:fastweights} 章的跳板：}如果每次对新数据的微调都如我们上面方程写的，要拉起整个反向图重走一圈微积分对全局几千万参数开刀耗电且拖沓；这催生了随后的强问：我们能否通过设计把这类“微调能力本身”也变成被系统自动优化的对象（双循环元学习）？能不能不要直接改几十兆全局死重而专门在它身上挂载一块特定小且更灵敏局域关联的特殊记忆件去解决这一切？（引出快权重理念发展）。
+  \item \textbf{来自第~\ref{ch:intro}~章}：
+    上一章确立了``测试阶段学习''的必要性。
+    本章给出了最简单的实现方案——
+    外部挂载自监督辅助头 + 反向传播。
+
+  \item \textbf{通向第~\ref{ch:bilevel}~章}：
+    TTT 2020 的``预训练阶段学习辅助头''和``测试阶段用辅助头微调''
+    天然形成了一个双层优化结构：
+    外循环（预训练）学习``如何设定辅助任务的参数''，
+    内循环（测试时）用辅助任务微调特征提取器。
+    这正是 MAML 等元学习方法的核心框架。
+
+  \item \textbf{通向第~\ref{ch:fastweights}--\ref{ch:ttt_layers}~章}：
+    本章揭示的工程瓶颈——
+    ``每次推断都需要全局反向传播''——
+    驱动了后续研究的核心目标：
+    把测试时更新\textbf{内化到网络层中}，
+    使前向传播本身就执行参数适应，
+    无需外部反向传播。
 \end{itemize}
 
-\begin{labbox}[title=Lab 2: 用 PyTorch实现旋转自监督测试时网络微调]
-\textbf{目标：}亲手在一个具有严重光照和角度变换混扰的图片流验证集中复刻出 TTT 算法带来准确度起死回升的惊人实验再现与开销体感。
+%─────────────────────────────────────────────
+\section{实验}
+\label{sec:ttt_lab}
+%─────────────────────────────────────────────
+
+\begin{labbox}[title=Lab 2：旋转自监督 TTT 的完整实现]
+\textbf{目标}：在 CIFAR-10 上实现 TTT 2020，
+并测量适应效果和计算开销。
 
 \begin{enumerate}
-    \item \textbf{搭建基础骨干：}选用 ResNet-18（截去末层成为只吐出中间池化态特征的 $\theta_e$ 身干模块），末尾接出具有 10 路真实分类类别数的大分叉头，以及另一旁分支带 4 个节点（分别代表推测旋转 0、90、180、270 度的判定分类任务的小分类头结构）。
-    \item 预阶段把多分支一起采用联合公式损失加入正常图片混合梯度中去猛练，使得骨干具有能够完美分别被剥离进行区分任务的能力。
-    \item 截断并置入测试运行：在正常执行 \texttt{output = model(img)} 之前，实施一个自定义函数 \texttt{calibrate(img)}，把当前图片自行通过 Python 库转四下角度丢进对应自监督辅助头后建立 Loss。
-    \item 调用一次 \texttt{optimizer.step()} 让梯度返回至身体段更改，但必须在 \texttt{no\_grad} 判定关闭的条件下开启，并且需要极为小心控制不要污染和重拉整个梯度的原始基准参数体使得它跨任务被覆盖摧毁（注意深浅拷贝以及针对特定层放权的张量使用操作特性！）
-    \item 对比时间差耗与精确表现率挽回，观察计算硬件执行它时相比静推翻升了多少倍负荷来获得这“测试时学习强力”。
+  \item \textbf{构建双头网络}：
+    使用 ResNet-18 作为特征提取器 $\theta_e$，
+    接一个 10 类分类头 $\theta_m$ 和一个 4 类旋转预测头 $\theta_s$。
+
+  \item \textbf{联合预训练}：
+    在 CIFAR-10 训练集上用式~\eqref{eq:ttt_pretrain} 联合训练，
+    $\alpha = 0.5$。记录收敛后的测试准确率（无分布偏移）。
+
+  \item \textbf{制造分布偏移}：
+    对 CIFAR-10 测试集施加高斯模糊 + 随机旋转（非 $90^\circ$ 倍数），
+    记录不做 TTT 时的准确率下降。
+
+  \item \textbf{实施 TTT}：
+    对每张测试图执行式 \eqref{eq:ttt_update}，$K=1,3,10$。
+    记录准确率恢复情况。
+
+  \item \textbf{测量计算开销}：
+    比较``标准推断''和``TTT 推断''的每张图延迟和 GPU 内存占用。
+
+  \item \textbf{不重置实验（对照组）}：
+    去掉式~\eqref{eq:ttt_reset} 的参数重置，
+    观察在处理 100 张连续测试图后的性能衰退曲线。
 \end{enumerate}
+
+\textbf{预期结果}：
+\begin{itemize}
+  \item TTT ($K=3$) 应将准确率恢复 5--15\%
+  \item 不重置参数会导致准确率在约 50 张图后开始下降
+  \item TTT 每张图的延迟约为标准推断的 10--50 倍
+\end{itemize}
 \end{labbox}
 
-\begin{misconceptionbox}
-\textbf{常见误解 1：只要随便从网络截出一条分支给它设定一个随便啥自导自演的监督任务它就能把我的主输出准确率扶上前去。}
+%─────────────────────────────────────────────
+\section{常见误解}
+\label{sec:ttt_misconceptions}
+%─────────────────────────────────────────────
 
-\textbf{纠正：}这极度取决于辅助自监督判断与你所要求的类别区分之间底层所依赖抽取图像流特征“共享共用域”的深度纠缠性。比如对于鉴别物品分类，通过纠正图像旋转恰好可以让特征重新捕获形状的高层轮廓从而帮到了大忙！但是对于极度看重局域频色的鉴频甚至特定纹理材质项目，强制做此纠正可能根本是缘木求鱼、牛头马嘴。构建有意义对齐的先验是门玄学与手艺组合艺术品。
+\begin{misconceptionbox}
+\textbf{误解 1}：只要设计任意一个自监督辅助任务，
+TTT 就能改善主任务性能。
+
+\textbf{纠正}：
+只有当辅助任务的梯度与主任务的梯度之间
+满足正相关条件~\eqref{eq:gradient_alignment} 时，
+辅助更新才能帮助主任务。
+如果辅助任务所需的特征调整与主任务正交或冲突，
+TTT 不仅无效，还可能有害。
+选择合适的辅助任务是 TTT 方法的核心设计难点。
 \end{misconceptionbox}
 
 \begin{misconceptionbox}
-\textbf{常见误解 2：我们现在推演大型文本模型只要在本地给它装载这种外接梯度再计算机制我们就能把推断变成训练闭环了所以架构改动毫无必要。}
+\textbf{误解 2}：既然我们已经有了 TTT 2020，
+为什么还需要设计特殊的网络层（TTT-Layer 等）？
+直接给任何模型挂一个辅助头不就行了？
 
-\textbf{纠正：}恰恰相反，这一原初级的外部反向推行策略由于需要在每一层对整个深度模型的全部张量参数去调集与维系巨大数量的反传误差流从而重拉动修改那浩瀚主字典的架构，是极其具有排他性质且慢得惊人的。正是它的极端低效与工程背离硬件现实（特别是对于字切自回归超百万步长任务来说更是灾难级别无法容忍单步更新耗损的），逼出了后续需要用“更高级物理固定结构内循环的层内隐优化”的终极解决方案。
+\textbf{纠正}：
+TTT 2020 对每个测试样本都需要执行\textbf{完整的反向传播}，
+计算开销远超正常推断。对于序列模型（每个 token 都需要适应），
+这种开销是灾难性的。后续章节的核心动机正是：
+把``测试时更新''从外部的反向传播
+\textbf{内化}为前向传播层的固有行为，
+使推断效率与普通层相当。
+这是架构层面的革命，不是算法层面的修补。
 \end{misconceptionbox}
 
+%─────────────────────────────────────────────
 \section{练习题}
 \label{sec:why_test_time_exercises}
+%─────────────────────────────────────────────
 
 \begin{exercise}
-\textbf{参数污染推演：}如果在上面方程所规范的处理每一次特定单样本畸变测试推演修正工作做完给出了好结果后。我们在程序里完全没有还原（恢复深拷贝清理等操作）就把这次这组在特异环境下被改变过的网络接着拿去推算下一张又变成了极度高清明媚情况的样本图，且此样本图我们采用纯直推。分析此时网络反而预测彻底崩溃失衡的主数学分布导向原因。
+\textbf{参数污染分析}：
+如果在式~\eqref{eq:ttt_update} 的 $K$ 步更新后
+不执行参数重置（式~\eqref{eq:ttt_reset}），
+而是直接用 $\theta_e^{(K)}$ 处理下一张测试图。
+假设第二张测试图来自与第一张完全不同的分布偏移，
+用一阶 Taylor 展开分析为什么 $\theta_e^{(K)}$
+对第二张图的主任务损失可能比 $\theta_e^*$ 更差。
 \end{exercise}
 
 \begin{exercise}
-\textbf{从 CV 到 NLP 的迁移构架困难思考：}请设计构思哪怕一条对于一串句子流推演的时候，你人为能强塞给自监督辅助去在线强迫系统做的无标签修正检验任务？（比方利用句子的前后错位排序掩码），并且论述为何语言时序强依赖和断续不平整这种属性较之单一规整大图片方阵来做类似硬性切分更困难和脆弱难以提取联合鲁棒结构修正基面？
+\textbf{梯度对齐条件}：
+设主任务是 CIFAR-10 物体分类，考虑以下三种辅助任务：
+（a）旋转预测、（b）颜色通道排列预测、（c）图像拼图重组。
+分析每种辅助任务在``含高斯模糊''和``含几何变形''
+两种分布偏移下，梯度对齐条件~\eqref{eq:gradient_alignment}
+是否可能被满足，并说明理由。
 \end{exercise}
 
 \begin{exercise}
-\textbf{学习与遗忘的控制点：}写出一个能防止在遇到极端对抗数据恶意拉扯辅助监督任务导致模型基干被一次性破坏过大的步长调节器或者是正则强归一修饰惩罚函数补充方式。
+\textbf{从 CV 到 NLP}：
+为基于 Transformer 的语言模型设计一种自监督辅助任务，
+使其能在测试时适应领域偏移
+（例如从学术论文切换到社交媒体文本）。
+你的设计需要说明：
+（a）辅助任务的具体定义、
+（b）伪标签如何构造、
+（c）最可能满足的梯度对齐条件。
 \end{exercise}
 
+\begin{exercise}
+\textbf{步数 $K$ 的权衡}：
+分析 TTT 更新步数 $K$ 的增加对以下指标的影响：
+（a）测试时计算开销、
+（b）辅助任务损失 $\mathcal{L}_\text{ss}$、
+（c）主任务性能。
+说明为什么存在一个最优的 $K^*$，
+超过该步数后主任务性能可能反而下降（过拟合于单样本）。
+\end{exercise}
+
+%─────────────────────────────────────────────
 \section{本章小结}
 \label{sec:why_test_time_summary}
+%─────────────────────────────────────────────
 
 \begin{itemize}
-    \item \textbf{自监督为梯：}利用对推算输入数据自身可构造性（如切分错配遮盖等手段）人工搭建伪真实标签建立评价系统，在理论和实机层面解除了只有人工重标方能修正偏斜系统的无路死局。
-    \item \textbf{局部与专属适配：}真正意义上针对特殊样本完成极短视窗环境的瞬时、非长效影响干扰情况的专位拉扯校对。将学习范例拆切进最微细任务细胞层面完成。
-    \item \textbf{原始思想但是背负物理镣铐：}奠定了使用微调改善分布失真适应的前言理论基石并在非时序图景表现优异但也指出了强迫开启整体大树全盘反向所背负之算能桎梏之痛极。需要呼唤新一代将这种更新局地化并前馈化的隐性架构时代进行革命拯救！
+  \item \textbf{TTT 2020 的核心思想}：
+    通过自监督辅助任务（如旋转预测），
+    在测试时为模型提供无需真实标签的梯度信号。
+    辅助更新调整共享特征提取器，间接改善主任务性能。
+
+  \item \textbf{有效性条件}：
+    辅助损失与主损失的梯度之间必须满足正相关条件
+    （定理~\ref{thm:ttt_indirect}），
+    否则 TTT 可能无效甚至有害。
+
+  \item \textbf{工程代价}：
+    每个测试样本需要 $K$ 次完整的反向传播，
+    计算开销远超标准推断。
+    参数重置是必要的，否则会导致跨样本污染。
+
+  \item \textbf{通向后续章节的桥梁}：
+    TTT 2020 的工程瓶颈
+    （全局反向传播、高延迟、参数管理复杂）
+    直接驱动了``把测试时更新内化到网络架构中''的研究方向——
+    这正是从第~\ref{ch:bilevel}~章开始的主线。
+
+  \item \textbf{历史地位}：
+    TTT 2020 是``测试时学习''的\textbf{可行性证明}——
+    它证明了这条路走得通。
+    后续的快权重、TTT-Layer、Titans 等是
+    ``如何高效走这条路''的进化。
 \end{itemize}
 
 \paragraph{读完本章，你应该能够：}
 \begin{itemize}
-    \item 对“自监督可以产生伪装反馈以支持无真值的测试修整”这一概念有具象且严格计算分流和联合主观掌控认知和搭建设计能力。
-    \item 清晰界限这种外部反算带来的好处代价极差和可能由于跨样本未能还原参数带来的连续累积崩溃性污染及防治思路。
-    \item 从最根本物理实像和生物学概念下理解短暂“感觉-校准”由于什么导致不能作为模型常备通用策略的限制原理。
+  \item 写出 TTT 2020 的完整算法（预训练 + 测试时更新 + 推断 + 重置）
+  \item 用一阶 Taylor 展开论证辅助梯度何时帮助/何时损害主任务
+  \item 解释为什么参数重置是必要的
+  \item 量化 TTT 的计算开销，理解其对序列模型不可行的原因
+  \item 阐述为什么 TTT 2020 的工程瓶颈
+        引出了``内化更新到网络层''的后续研究方向
 \end{itemize}
