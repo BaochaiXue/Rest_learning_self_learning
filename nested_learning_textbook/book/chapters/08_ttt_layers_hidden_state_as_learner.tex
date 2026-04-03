@@ -1,107 +1,166 @@
 % chapters/08_ttt_layers_hidden_state_as_learner.tex
+% 第8章：TTT Layers：隐藏状态就是学习器
 \chapter{TTT Layers：隐藏状态就是学习器}
 \label{ch:ttt_layers}
 
+\epigraph{``Do not compress history into a vector. Compress it into the weights of a neural network layer. Let the hidden state be a learner.''}{--- RNN 架构的现代觉醒}
+
 \section{本章想回答什么问题}
 
-第 \ref{ch:ttt_bridge} 章奠定了理론：把隐状态当作学习器的权重来更新。
-现在的工程问题是：如何让这套机制在现代 GPU 上\textbf{高效并行}地运行，
-同时保持$O(1)$的推断端内存（不随序列长度增长）？
+通过第 \ref{ch:ttt_bridge} 章的学习，我们已经理解了核心理念：与其用庞大且缓慢的 Transformer 通过上下文硬背（把所有信息全挂在注意力的缓存里），不如将这部分信息提纯后作为局部修正，用在推断流程内部微调一个随时间更新的网络层（Inner Learner）。
 
-\section{最小例子}
+这正是现代 TTT-Layer（Test-Time Training 序列预测架构）的核心主张。那么，既然这也是一种带有隐状态随序列流式变迁的架构：
+\begin{quote}
+\textit{为什么不直接叫它普通 RNN 呢？TTT 层和经典的 LSTM 或 GRU 有什么本质的区别？到底是怎么把整个隐状态变成一个完整的模型的？以及它背后的计算是如何在硬件资源限制下真正“做对”（Done Right）的？}
+\end{quote}
 
-\begin{toybox}[title=TTT-Linear：线性模型作为隐状态]
-定义隐藏状态为线性层参数 $\mS_t \in \R^{d_k \times d_v}$。
+本章的主旨是展示如何从理论模型正式向具备工业潜力的主流高极算力算法设计迈入。我们将通过明确区分隐状态为“参数堆”而非“特征集”带来的容量雪崩式增长，以及从 TTT-Linear 到 TTT-MLP 的演进，来真正解答 TTT-Layer 是如何革新序列学习体系的。
 
-每个 token $x_t$ 做如下操作：
-\begin{align}
-  \vk_t &= W_K x_t,\quad \hat\vv_t = W_V x_t \quad (\text{投影出键和目标值}) \\
-  \ell_t &= \tfrac{1}{2}\|\mS_{t-1} \vk_t - \hat\vv_t\|^2 \quad (\text{自监督损失}) \\
-  \mS_t &= \mS_{t-1} - \eta\, (\mS_{t-1}\vk_t - \hat\vv_t)\vk_t^\top \quad (\text{一步梯度}) \\
-  y_t &= \mS_t W_Q x_t \quad (\text{前向查询输出})
-\end{align}
+\section{最小例子：需要不断刷新规则的过滤筛选}
+\label{sec:ttt_layers_minimal}
 
-推断：每个时步只需 3 次矩阵-向量乘积 + 1 次外积，内存 $O(d^2)$ 恒定。
+\begin{toybox}[title=玩具问题 E：隐态参数容量的极限测试]
+假设你是一个审核助手，你正在阅读一本 1000 万字不断改变时空规则的架空日记。
+在第 1章，规则是：“红色石头代表有毒，绿色石头代表大补。”
+但在第 30章突然一句话说：“由于世界线变动，从现在起，绿石头有毒，红色是解药。但是蓝石头对火系法师有增益且带弱毒性附加……”（这是一系列非常复杂的高阶条件嵌套规则）
+
+\textbf{传统 LSTM 模型：}它的内部状态是一个有限长度的 $d$ 维向量。即使经过精巧的遗忘门和记忆门。把一套复杂的非线性逻辑挤压进一个线性表示极度吃力，它的表示必定趋向于最近频繁出现的统计平均。
+
+\textbf{TTT-Layer：}它的内部状态不再是向量。它可能直接是一层由 $d \times d$ 元素组成的权重矩阵，有的更甚至是一个深度特征分离的双层网络 $W_1$ 和 $W_2$ 及中间的非线性激活。
+当遇到新的规则描述时，模型前向利用类似损失梯度的调整方程对这些 $W_1$ 进行写入操作。
+在这个过程中，TTT 层内保留的是一个“小型网络”，能够容纳足够切分不同特征空间（如分辨是说火法的还是水法的）的高阶非线性信息，这就是所谓隐态扩容。
 \end{toybox}
 
-\section{TTT-MLP：更强的表达力}
+\section{直觉解释：为什么是“就是学习器”}
+\label{sec:ttt_layers_intuition}
 
-将 $\mS_t$ 从一个线性层升级为两层 MLP：
-\[
-  g_{\mS_t}(\vk) = W_2 \sigma(W_1 \vk + b_1) + b_2
-\]
-其中 $\mS_t = (W_1, b_1, W_2, b_2)$。
-更新规则同样是梯度步骤，只是现在对所有 MLP 参数同时更新。
+在经典的深度学习语境中：
+- \textbf{参数（Parameters/Weights）}指的是经过长训练定格，带有跨序列、普适性世界规则的静止记忆体。
+- \textbf{激活与隐藏层（Activations/Hidden States）}指的是输入数据和静止参数进行乘法激荡后产生的临时流动信息集。
 
-这使得隐状态的"表达能力"从线性提升到非线性！
-实验表明 TTT-MLP 在长序列任务上显著优于 TTT-Linear。
+TTT-Layer 打破了这两者的物理隔离。
+它认为：对于一个足够长的序列片段而言，这段独立子空间内同样有着高度自洽和需深度处理的映射函数结构需要被保持。它将传统层间的流转的隐藏状态 $h_t$ 形式上升级成了带有容量存储性质的网络权重形态 $\mW_t$。在这个子微粒环境内：
+- 隐藏状态 $\mW_{t}$ 对特定输入的映射充当了前向层产生表征作用。
+- 对每个新的局部语料产生新梯度用来调整 $\mW_{t}$ 就是它自带的学习吸收消化系统。
 
-\section{数学形式化：并行扫描加速}
+所以，“隐藏状态就是学习器”是在说，不要只把输出带下去，把处理输出的算法参数块本身带着在时间序列里一步一步往前走！
 
-推断时按时序执行梯度步是 $O(N)$ 的。
-但\textbf{训练阶段}需要在 $N$ 个位置上计算所有梯度，
-这是否可以并行化？
+\section{数学形式化：从 TTT-Linear 到 TTT-MLP}
+\label{sec:ttt_layers_math}
 
-\begin{insight}[Parallel Scan 视角]
-TTT-Linear 的时序更新具有"线性递推"结构：
-$\mS_t = A_t \mS_{t-1} + B_t$，其中 $A_t$ 和 $B_t$ 依赖于 $x_t$。
-这种结构可以用\textbf{Parallel Prefix Scan}（并行前缀扫描）算法在 $O(\log N)$ 深度内完成，
-实现高效训练。
+\subsection{TTT-Linear 的规范方程}
+设定外部全局参数包含一系列慢权重用来投影：将输入的信号转换出查询（$q_t$），键（$k_t$）和值（$v_t$）。
+隐状态设定为具有同等维度的线性变换矩阵 $\mS_{t} \in \R^{d \times d}$。
+
+在此时刻，隐状态学习器的目标被定义为重建或映射误差：
+\begin{equation}
+   \ell_{t} = \frac{1}{2} \| \mS_{t-1} k_t - v_t \|^2
+\end{equation}
+
+隐状态由该时刻数据的负梯度更新，加上固定遗忘因子与规范化：
+\begin{align}
+   \nabla_{\mS} \ell_t &= (\mS_{t-1} k_t - v_t) k_t^\top \label{eq:ttt_linear_grad} \\
+   \mS_{t} &= \mS_{t-1} - \eta \nabla_{\mS} \ell_t
+\end{align}
+
+对当前输入的处理并输出则是：
+\begin{equation}
+   o_t = \mS_{t} q_t
+\end{equation}
+
+这基本复刻和加强了第 \ref{ch:fastweights} 章所介绍由于外积导致写入和查询一致性关联的原则，但将更新动机正式包裹在损失梯度的定义内，而不仅仅是一个粗略的 Hebb 法则。
+
+\subsection{向高容量跃迁：TTT-MLP}
+因为线性映射的容量天花板是显而易见的（哪怕你增加 $d$，只能拟合高度线性的关联）。\citet{sun2024learning} 提出了极具理论野心的变体：如果 $\mS$ 不仅仅是个大矩阵，如果隐状态是一个包含了两级独立变换，和非线性 $\sigma(\cdot)$ 乃至层归一化等更为复杂的隐性超微型神经网络子模块呢？
+此时内部参数为两个独立权重集合：$\mathbf{W}^{(1)}, \mathbf{W}^{(2)}$
+内部损失变为对微型网络的非线性反向传播：
+\begin{equation}
+   \ell_t = \frac{1}{2} \| \mathbf{W}^{(2)}_{t-1} \sigma(\mathbf{W}^{(1)}_{t-1} k_t) - v_t \|^2
+\end{equation}
+更新时，利用经典的链式反向传播原理：
+\begin{equation}
+   \mathbf{W}^{(i)}_{t} = \mathbf{W}^{(i)}_{t-1} - \eta \nabla_{\mathbf{W}^{(i)}} \ell_t \quad \text{for } i \in \{1, 2\}
+\end{equation}
+
+至此，TTT-Layer 的形态达成了完全进化：它在测试数据流面前推断推进的过程中，实实在在地于图节点级拉起并运行了一个包含多网络和独立反向链式的训练操作，这等同于把一套完全功能的深度神经网络装入进了隐态的包裹中！
+
+\begin{insight}[表达力突破与 TTT-MLP]
+普通的线性关注能够记忆 $O(d)$ 个正交键。这在长程语料中几乎不能支撑大规模检索任务。引入多层和非线性处理的意义，是在没有将维度指数放大的前提下，指数放大了所能折叠区分的局部特征几何空间，在不使用 Attention 的条件下，真正达到和超越了无限注意力能产生的映射极值。
 \end{insight}
 
-\paragraph{\citet{sun2024ttt_done_right}} 进一步研究了如何将 TTT 层
-用更高效的 Kernel Fusion 方式实现在现代 GPU 上，以及
-如何利用小批量（mini-batch gradient）代替单点梯度步来稳定训练。
+\section{代表论文精读与发展}
+\label{sec:ttt_layers_papers}
 
-\section{代表论文}
+\paragraph{\citet{sun2024learning} — Learning to (Learn at Test Time): RNNs with Expressive Hidden States}
+这篇长文通过细致地消融实验论述了既然可以利用隐性优化，为什么使用简单的特征更新不足以取代自注意力机制的根源（因为容量局限）。这篇论文正式介绍了 TTT-Linear 到 TTT-MLP 的过渡结构，并定义了这个架构为何被称为广义 RNN 的一种究极演变。
 
-\paragraph{\citet{sun2024ttt}} \textit{RNNs with Expressive Hidden States}：
-TTT-Linear 和 TTT-MLP 的正式提出，系统评估了语言建模性能。
+\paragraph{\citet{anonymous2025tttdone} — Test-Time Training Done Right}
+虽然上述愿景完美，在实际硬件中，“为每一步序列做微型反向传播”的实现让现成的 PyTorch 后端和 GPU 利用率在并行化流水线断裂的情况下极其低下。因为反向计算对于每个时间步骤强依赖。这篇重要论文通过对 TTT 的设计架构优化（比如通过重构其多头并行投影计算图）并使用低阶的定制并行前缀和扫面算子与张量重组技术，实现了 $O(\log N)$（甚至是常数感知内）并行时间，从底层突破了“TTT 因为自回归计算极度缓慢”导致无法进行万亿参数级并行预训练的枷锁，这是把理想拉进实用大厂模型的转折之作。
 
-\paragraph{\citet{sun2025ttt_right}} \textit{Test-Time Training Done Right}：
-工程化改进，解决了朴素 TTT 的训练稳定性、并行化和速度瓶颈。
+\section{和前后章节的关系}
+\label{sec:ttt_layers_bridges}
 
-\begin{labbox}
-\textbf{Lab 8}：实现一个最简 TTT-Linear 层（$d_k = d_v = 64$），
-和一个相同参数量的标准 GRU 层，
-在一个合成的长序列"记住第 N 步前的一个词"任务上对比性能。
+\begin{itemize}
+    \item \textbf{相对第 \ref{ch:ttt_bridge} 章}：第 7 章提供为什么这样设计的架构元学习观念。本章着眼于物理计算结构的严谨公式以及容量的跃迁（MLP结构取代普通线性投影矩阵）。
+    \item \textbf{对立与继承于经典 RNN}：在形式上，它们依然维护时间切片的状态。但这个状态不再是传递信息的桥梁，而是处理信息的功能模块本身。
+    \item \textbf{引出下一章的矛盾（第 \ref{ch:titans} 章 Titans）}：不管这个随时间步连续更新的网络层（Inner Learner）容量做多大，它仍然面临一个时间跨度带来的客观现实——它只有\textbf{一个整体记忆系统}。随着梯度在时间轴上无限向前跑去，无论多么抗干扰的设计，百万序列后仍会存在“覆盖与遗忘（catastrophic forgetting）”的危机。所以接下来，必须将记忆进行短视窗和长远时间的切割体系。
+\end{itemize}
+
+\begin{labbox}[title=Lab 8: TTT-Linear 一级矩阵手动更新与序列遗忘追踪]
+\textbf{目标：}手动编写一层具有一步负梯度在线纠偏更新能力的简化层，并探究它的遗忘表现。
+
+\begin{enumerate}
+    \item \textbf{数据初始化}：选取序列长 $N=50$，隐层 $d=32$。
+    \item 在早期输入 $k_{10}, v_{10}$，并观察在这之后不再投入类似特征。
+    \item 结合标准梯度迭代，每有一轮新数据经过，就针对 $\mS_t$ 以恒定的步长更新。
+    \item 到了最后第 50 步，向系统中发出 $q = k_{10}$ 作为查询输入；观察输出预测值与当初所存 $v_{10}$ 之间的关联衰退情况。
+    \item 尝试加入遗忘乘法因子 $\lambda=0.98$ 来调整矩阵更新方式。
+\end{enumerate}
+
+通过实验能够深刻意识到“虽然矩阵容量很高，可以被更新修正并给出高拟合分数；但连续使用无选择的梯度擦写带来的信号不可逆覆盖是亟需管理的大问题。”
 \end{labbox}
 
 \begin{misconceptionbox}
-\textbf{常见误解}：TTT-MLP 里的"MLP 当隐状态"意味着每次前向传播都要训练一个 MLP，开销巨大。
+\textbf{常见误解 1：因为有“MLP 层被反向传播修改权重去了”，这就一定会耗尽主存空间，并且时间也需要翻番再循环。}
 
-\textbf{纠正}：这个 MLP 很小（通常 $d=64$，很浅），
-它的"训练"就是一步梯度步（若干次矩阵-向量乘法和外积），
-总共不超过传统 RNN 的 $O(d^2)$ 计算量。
-开销来自矩阵尺寸，而非"训练"本身的反复迭代。
+\textbf{纠正：}这与外层网络使用全局海量节点的数据分布式反向传播不是一回事。隐藏态微模型的容量往往只有几 K 到最高几十 K 参数规模，它的优化是在局部单一算子栈内并发瞬间结算完毕的。尤其采用 TTT Done Right 思想将其与预编译的多重计算分离后，并不阻碍全网络的宏观显存和总体 throughput 速度。
+\end{misconceptionbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解 2：TTT-Layer 取代了整个预训练基础。也就是说可以直接通过这个机制，不用任何长达几个月的语料处理也能进行逻辑推演。}
+
+\textbf{纠正：}绝对不能。驱动微模型参数修改的核心素材——$q_t, k_t, v_t$ 本身是极度浓缩的高度结构化语义表示。这些高质量语义张量的生成，全部由固定在外部的主 Transformer 特征抽离模块主理并给出。没有外层浩瀚语料进行几十轮甚至更久的强逻辑元知识提取，“内部学习器”只会拿到完全无意义的噪声并瞎乱更新自己，彻底崩溃。这再度回到“外循环产生学习表示方法，内循环解决新适配”的本质。
 \end{misconceptionbox}
 
 \section{练习题}
+\label{sec:ttt_layers_exercises}
 
 \begin{exercise}
-对比 TTT-Linear 和标准线性注意力（第 \ref{ch:attention} 章）的更新规则。
-当 TTT-Linear 的自监督目标恰好为 $\hat\vv_t = k_t$（键即值目标）时，
-两者的递推是否完全等价？写出推导。
+\textbf{计算复杂度比较：}设上下文长度为 $N$，特征维度为 $d$。对于标准的全局自我注意力机制框架，它的前向推断关于序列长度耗时是什么量级？对比于具有内部线性更新态的单层的 TTT-Linear 模型（在不需要回溯更新历史只执行推演的前提下），其执行消耗量级是什么样的？两者差距对于 $N > 10^5$意味着什么？
 \end{exercise}
 
 \begin{exercise}
-TTT-MLP 的隐状态维度随网络深度和宽度增长，
-对推断内存和延迟有什么影响？
-设计一个取舍矩阵（行=任务类型，列=性能/速度/内存），
-填写你的定性预测。
+\textbf{MLP与梯度的关系：}如果隐式优化模块是带有简单 ReLU的 $\mathbf{W}^{(2)}\max(0, \mathbf{W}^{(1)} k_t)$，写出根据链式求偏导后产生的参数梯度项公式要素，并说明为了获取这个要素，外部大计算系统在预训练规划这个架构时，计算图需要留存多少个跨步特征作为基础导数链支持以维持整个模型的预微调不报错（即使在最后使用特定并行内核代替常规调用）？
 \end{exercise}
 
 \begin{exercise}
-如果去掉 stop-gradient（$\text{sg}$），
-TTT 自监督目标会退化成什么优化问题？可能导致什么数值问题？
+\textbf{过早吸收：}假定外部学习到了一条“不好的提取规则”，导致在处理语句时产生了一个噪声峰值键和值对被投喂给 TTT-MLP，根据学习规则这一噪声会被大幅度地消化写入状态本身，从而由于权重的持续保留从而污染之后几千词的判断。为了反制这种情况（相比于自注意力机制因为没有固定写死能够更加灵活改变关注点分配的优势），TTT框架需要在慢网络（外层投影层）学得额外的什么强能力设计以过滤或防止高误信传播？你能联想到基于此引发的哪些改进思路（如阈值拦截等）？
 \end{exercise}
 
 \section{本章小结}
+\label{sec:ttt_layers_summary}
 
 \begin{itemize}
-  \item TTT-Linear：线性微型学习器作为隐状态；三次矩阵操作 + 外积；$O(d^2)$ 内存。
-  \item TTT-MLP：MLP 作为隐状态，表达力更强，在长序列任务有显著提升。
-  \item 训练时用 Parallel Scan 实现高效并行；推断时天然因果递推。
-  \item 剩下的问题：如果序列极长（$>10^6$ token），$\mS_t$ 会因不断覆盖而"遗忘"早期内容。
-        这一问题由第 \ref{ch:titans} 章的 Titans 解决。
+    \item \textbf{重铸隐状态：}摒弃传统状态的有限单级压缩特质，让每个状态位本质上升格为微型的参数库，它是用来承担并解决长上下文中无尽特定知识关联适配的关键模块结构。
+    \item \textbf{公式级集成：}建立起了具有特定损失规范和反向学习迭代更新支持功能的内置状态机数学准则： $\ell_t$ 及随之而来的 $\nabla \ell_t$ 实证了架构中实施全微观模型实时部署的可能性。
+    \item \textbf{MLP的指数破局：}简单的二次扩展并不能真正具备和无限计算抗衡的高度，真正让能力产生变现的跨度是要让具有包含非线性的层结构被允许内置为学习更新单元，以此让子空间中实现真正的强聚类记忆化特征保持和隔离提取。
+    \item \textbf{实施障碍解套：}硬件约束始终是核心矛盾，只有借助于前沿的流计算处理（扫描式快速核运算与矩阵前置处理分割等“Done Right”式的解法）才真正意义上让全时动态学习具有并跑甚超越常规注意力的经济及实际实施价值。
+\end{itemize}
+
+\paragraph{读完本章，你应该能够：}
+\begin{itemize}
+    \item 准确辨识使用常规注意力、线性注意力和本章使用 TTT 参数层所维护的具体推进行为与内存持有形态上的主要代际差异。
+    \item 理解把线性提取公式延伸为具两级复合神经深度的内部优化层这一演化的核心理论动力（表达与容量边界的跨越）。
+    \item 用双层框架解释为什么外部固定全局参数的存在不能被舍弃而是前提。
+    \item 熟知伴随全局持续性参数推移所固生附带不可避免的过载失控或严重遗忘关联趋势（这将直接催生多周期门控设计的登场）。
 \end{itemize}

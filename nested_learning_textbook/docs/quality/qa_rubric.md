@@ -126,7 +126,24 @@ For each of the 11 chapters, the following must be present:
 
 ---
 
+## Dimension 11: Textbook Teaching Quality
+
+| Check | Pass Criteria | Tool |
+|---|---|---|
+| Self-containedness | Readers understand mechanisms without reading papers. No "details omitted" cop-outs. | `check_chapter_depth.py` + Manual |
+| Explanatory sufficiency | Concepts are actually explained, not just namedropping. Prose is dense and explanatory. | `check_chapter_depth.py` + Manual |
+| Prerequisite leakage | No assuming reader knows advanced topics secretly. Definitions provided when needed. | Manual |
+| Notation hygiene | Every symbol is explained upon first usage. | Manual |
+| Worked-example completeness | Every key equation has a numeric or geometric example. | `check_chapter_completeness.py` |
+| Derivation sufficiency | Equations have clear intuitions/derivations, not just dumped. | Manual |
+| Cross-chapter continuity | Clear structural bridges ("Why this chapter exists" and "Where it leads"). | `check_chapter_completeness.py` |
+| Consensus vs interpretation discipline | Strict boundaries between mechanism consensus and interpretive agendas. | Manual |
+| Chapter depth | Prose word count > 2500/3500 depending on importance. Not an outline. | `check_chapter_depth.py` |
+| Appendix support | Math/opt appendices cover linear algebra, gradients, RLS, MAML basics. | Manual |
+
+---
+
 ## Overall Pass/Fail
 
 **Minimum to call a phase "done"**: All ✅ checks in dimensions 1–5 must pass.  
-**To call book "draft complete"**: All dimensions 1–10 must pass.
+**To call book "draft complete"**: All dimensions 1–11 must pass mechanically.

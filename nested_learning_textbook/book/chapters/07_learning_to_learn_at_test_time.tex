@@ -1,144 +1,176 @@
 % chapters/07_learning_to_learn_at_test_time.tex
-\chapter{Learning to (Learn at Test Time)：关键桥章}
+% 第7章：Learning to (Learn at Test Time)
+\chapter{Learning to (Learn at Test Time)：通过架构学习微调}
 \label{ch:ttt_bridge}
+
+\epigraph{``The architecture itself is an instantiation of the inner learning algorithm. Instead of running Python code to update parameters, we pass tokens through a neural network layer whose math is isomorphic to gradient descent.''}{--- 架构等同于优化算法}
 
 \section{本章想回答什么问题}
 
-前三章（4--6 章）揭示了注意力层的前向计算隐式实现了梯度下降。
-这条洞察能否被\emph{设计进架构本身}——
-不是让注意力偶然模拟梯度下降，
-而是\textbf{明确地把模型隐藏状态定义为一个学习器的参数，
-让每个 token 触发一次显式的内部梯度步骤}？
+上一章（第 \ref{ch:icl} 章）带来了一个令人着迷的视角：\textbf{Transformer 实际上是在前向传播中运行了隐式的梯度下降}。
 
-\section{最小例子}
+但是，这立刻引出了一个关键的工程局限：为了让隐式梯度下降发挥作用，
+所有的"用于梯度的历史样本"（KV cache）都必须保存在显存中！
+Transformer 无法把学习到的历史真正的"融合"进某个小型状态里，它只能被动地持有整个序列（$O(N^2)$ 计算瓶颈）。为了处理极长上下文的上下文学习，这种显存暴涨是不可接受的。
 
-\begin{toybox}[title=玩具问题 A：隐状态即权重矩阵]
-传统 RNN：$h_t = \tanh(W_h h_{t-1} + W_x x_t)$，
-$h_t$ 是一个向量（$d$ 维），随数据流更新。
+本章探讨桥梁性的问题：
+\begin{quote}
+\textit{如果我们既然已经在进行"测试时的内部循环学习"（Test-Time Training/Learning），
+为什么不明确地把它固化或者设计为一种\textbf{具备常数级大容量内部参数}的网络层？
+能否通过"Learning to (Learn at Test Time)"这个明确目标，设计一种网络结构，其隐藏状态本身就是在测试时更新的学习参数？}
+\end{quote}
 
-TTT-RNN 思路（\citeauthor{sun2023ttt}，2023）：
-将 $h_t$ 替换为一个\textbf{权重矩阵} $\mS_t \in \R^{d \times d}$，
-定义更新规则：
-\[
-  \mS_t = \mS_{t-1} - \eta \nabla_{\mS} \ell(\mS_{t-1}; x_t)
-\]
-其中 $\ell$ 是一个自监督损失（如重建损失）。
-输出：$y_t = f(\mS_t, x_t)$。
+本章将介绍这一重要转化。我们将讲解如何把原本需要数以万计甚至几十万个 token 外挂驻留的显存瓶颈，转化为用一个\textbf{动态学习网络}来完成任务；这将为下一章真正的 TTT Layers（从 RNN 的扩展发展而来）提供核心逻辑基础。
 
-关键：这个梯度步骤完全\emph{在前向计算内}完成，不需要外部反向传播！
+\section{最小例子：在序列中背诵密码}
+\label{sec:l2l_minimal}
+
+\begin{toybox}[title=玩具问题 D：长序列中的隐性规则修改]
+设想一个超长文档（例如一篇百万字的小说），其中零星地提到：
+“顺便提一句，房间的门密码是 [4927]”。
+然后在 10 万个 token 之后，文章突然问：“要进入该房间输入的密码是？”
+
+如果模型依靠传统 Transformer：
+- 它必须保留这 10 万个 token 的全部键值对（KV cache）。
+- 因为它只能通过“查找”前文来提取 [4927]。
+
+如果依靠本章讨论的自适应参数系统结构：
+- 当模型读到“密码是 [4927]”时，它的前向层（隐性具有梯度调节功能）触发了一次对\textbf{内部状态参数的写入}（把它内化成权重连接的一小步偏移）。
+- 此后 10 万个 token，哪怕它不再关注那句话的内存向量，这把隐藏参数的变化已经伴随整个模型的前向结构一直保留了下来。
+- 最终提问时，模型不再是通过海量搜索来寻找，而是直接由带有此偏差的“微型模型”通过常数运算提取出 [4927]。
 \end{toybox}
 
-\section{直觉解释：把架构理解为 Learn-to-Learn}
+这个玩具问题区分了两种截然不同的序列处理范式：提取式搜索 vs 状态吸收式学习。
 
-\citet{sun2023ttt} 的核心重构：
-传统监督学习的"训练 + 推断"两阶段，
-可以被重新理解为\textbf{嵌套循环}：
+\section{直觉解释：模型内部的俄罗斯套娃}
+\label{sec:l2l_intuition}
+
+在经典的监督学习中，我们可以把它当做是在做双层嵌套优化（见 MAML，第 \ref{ch:bilevel} 章）。外层处理整体数据，内层处理每个样本或任务。
+“Learning to (Learn at Test Time)”这个思想就是要把这个嵌套过程\textbf{压缩到一个时序过程内部}。
+
+设想有一个主模型（相当于人脑的主网络），在流式接收文本时，主网络旁边挂着一本\textbf{可以反复被擦写的小记事本}（隐状态）。
+每读一个字，主网络不仅仅是要输出下一个字，它同时还要决定：
+1. 本字里的什么要素值得被记录？
+2. 向小记事本（以矩阵更新或内层前向反向步计算形式）写入多大程度的知识？
+3. 在未来的生成中，如何从记事本中读出关键信息作为补充依据？
+
+这个小记事本，它本身就可以被理解为一个\textbf{具有自我更新能力的小型学习器（Inner Learner）}。
+在测试阶段，大模型的全局权重被冻结（不会有梯度发到主网络从而占用海量 GPU 集群运算量），但大模型在前向推演时，发出了对“子网络参数”（记事本矩阵）的步进优化指令。
+
+因此，原本庞大的注意力 KV Cache 操作，就被置换为了对于一个小得多的独立优化器（或隐状态参数）的动态累积操作。
+
+\section{数学形式化：把隐状态作为学习器参数}
+\label{sec:l2l_math}
+
+我们从文献 \citet{sun2023learning} 和后续发展出发，把 RNN 的状态视为参数来构建理论等价。
+
+\subsection{标准序列结构的隐藏层}
+在传统 RNN 中，状态更新极为简单：
+\begin{equation}
+  h_t = f(W h_{t-1} + U x_t)
+\end{equation}
+这里的 $h_t \in \R^d$ 是一个向量，其表达能力随时间序列暴增会迅速枯竭。这是为什么我们有了 LSTM，也有了最终摒弃 RNN 而走向 Transformer 的过去。
+
+\subsection{隐状态升级为一个微型模型 $\mS_t$}
+在第 \ref{ch:attention} 线性注意力的推导中我们已经知道：去 softmax 后的状态矩阵实质上是：
+\begin{equation}
+  \mS_t = \lambda \mS_{t-1} + k_t v_t^\top \in \R^{d \times d}
+\end{equation}
+
+现在我们在理论层面上彻底打破限制，把状态升级为一个多层微型参数网络，例如它包含了一个线性映射算子（甚至是多层 MLP！）的权重，我们记作 $W_t^\text{inner}$。
+在前向推断过程（即测试时应用）到达时刻 $t$ 时：
+
+我们定义内部模型的输出预测机制为：
+\begin{equation}
+  \hat{y}_t = W_{t-1}^\text{inner} x_t
+\end{equation}
+
+内部状态学习的目标则是要最小化历史信息导致的内部误差：
+\begin{equation}
+ \innerloop(W^\text{inner}) = \frac{1}{2}\norm{W_{t-1}^\text{inner} x_t - v_t}^2
+\end{equation}
+
+那么通过微网络计算一次或多次的一步隐式随机梯度下降更新，状态转移变成了：
+\begin{equation}
+  W_t^\text{inner} = W_{t-1}^\text{inner} - \eta \nabla_{W} \innerloop(W_{t-1}^\text{inner})
+\end{equation}
+\begin{equation}
+  = W_{t-1}^\text{inner} - \eta (W_{t-1}^\text{inner} x_t - v_t)x_t^\top
+\end{equation}
+
+\begin{insight}[双重参数界限]
+注意这之中的奇妙区别：
+$\eta, x_t, v_t$ 都是如何生成的？它们是由\textbf{全局慢参数（Slow Weights，大模型的投影矩阵等，在此处冻结）}经过预训练决定和输出的！
+而 $W_t^\text{inner}$ 是\textbf{快参数（Fast Weights，或叫隐状态参数）}，在每输入一个 token 的同时，由外围慢参数所输出的“梯度指令”自动进行了实时的更新！
+\end{insight}
+
+\section{代表论文精读}
+\label{sec:l2l_papers}
+
+\paragraph{\citet{sun2023learning} — Learning to (Learn at Test Time)}
+本文是重新唤醒现代研究者关注“大网络结构自身就是优化算法”的代表性文章之一。由于在海量序列建模场景下无法承担自注意力的平方式代价，文章重新梳理了内部循环（如何构造小模型的测试时间更新目标）和外部循环（如何预训练那些能生成内部所需变量特征的全局网络权重）。文章不仅统一了对上下文能力和泛化的追求，并实际上宣告了一种可无限扩展的深度状态重构 RNN（或状态机）的架构范式。
+
+\paragraph{RNNs with Expressive Hidden States (2024)}
+后续研究认为，既然内循环被确定为了一个独立的测试时多级优化任务，那么我们为什么要限制它的规模？如果只用简单的一层线性网络当作 $W^\text{inner}$ 并不具有高容量记忆，如果我们\textbf{直接用一个前馈神经网络层（MLP）作为隐状态去被执行在线学习}，那么模型的记忆容量和表达能力能随其 MLP 宽度指数增长——这是通向下一章（TTT Layers）的关键概念奠基。
+
+\section{和前后章节的关系}
+\label{sec:l2l_bridges}
+
 \begin{itemize}
-  \item \textbf{外循环（Outer Loop）}：大参数 $\theta$（投影矩阵等）
-        通过大规模预训练学习"如何更新隐状态"的方式。
-  \item \textbf{内循环（Inner Loop）}：在推断序列上，
-        隐状态 $\mS_t$ 根据当前 token 的自监督信号进行一步梯度更新。
+    \item \textbf{来自第 \ref{ch:fastweights} 章和第 \ref{ch:icl} 章}：我们分别推导出了外积写入作为记忆矩阵与隐藏于 Transformer 的梯度下降过程。本章则通过确立“Learning to Learn”的工程原则，解释了如何将上述理念融合进一种脱离了固定序列缓存结构（KV Cache）的“测试态在流学习”网络中。
+    \item \textbf{通向第 \ref{ch:ttt_layers} 章}：本章指明了：内部隐状态可以而且应当是一个可经由内部损失函数定义、用梯度在运行状态中迭代的“微型子模型”。下一章我们就将直接详细拆解它的终极实现形态：“基于实际可微网络的 TTT-Layers”，去了解隐状态是如何最终脱胎换骨的。
 \end{itemize}
 
-这与第 \ref{ch:bilevel} 章的 MAML 结构完全同构！
-区别在于：MAML 的内循环在测试时是\emph{离线执行}的（需要多个样本和反向传播），
-而 TTT-RNN 的内循环是\emph{在前向传播中内嵌实时执行}的。
+\begin{labbox}[title=Lab 7: 通过定义内部损失反推网络状态更新层]
+\textbf{目标：}手动证明基于规则更新的状态机，可以重构并实现成内部损失下的一步梯度层。
 
-\section{数学形式化}
-
-\subsection*{内循环自监督目标}
-
-设输入 $x_t$ 被分為两部分：键输入 $\vx_t$（用于生成自监督目标）
-和查询输入 $\vq_t$（用于最终预测）。
-
-自监督损失（以最小二乘重建为例）：
-\begin{equation}
-  \ell(\mS; x_t) = \| \mS \vx_t - \text{sg}(\hat{v}_t) \|^2
-\end{equation}
-其中 $\hat{v}_t$ 是目标（可以是某种投影后的 $x_t$），$\text{sg}$ 是 stop-gradient。
-
-\subsection*{内循环更新规则}
-
-\begin{equation}
-  \mS_t = \mS_{t-1} - \eta \nabla_{\mS_{t-1}} \ell(\mS_{t-1}; x_t)
-  = \mS_{t-1} - \eta (\mS_{t-1} \vx_t - \hat{v}_t) \vx_t^\top
-  \label{eq:ttt_hidden_update}
-\end{equation}
-
-注意：这个更新恰好是\textbf{外积形式}——与第 \ref{ch:fastweights} 章的快权重更新一致！
-
-\subsection*{外循环（预训练）目标}
-
-\begin{equation}
-  \min_\theta \E_{x_{1:T}} \left[ \sum_{t=1}^T \mathcal{L}_\text{main}(g_\theta(\mS_t, \vq_t)) \right]
-\end{equation}
-
-$\theta$ 包含所有投影矩阵和外部网络参数；
-$\mS_t$ 依赖于 $\theta$ 的方式由内循环规则 \eqref{eq:ttt_hidden_update} 决定。
-
-\section{和 Attention 机制的联系}
-
-回顾第 \ref{ch:attention} 章：线性注意力实现了 $\mS_t = \mS_{t-1} + k_t v_t^\top$。
-式 \eqref{eq:ttt_hidden_update} 形如 $\mS_t = \mS_{t-1} - \eta (e_t k_t^\top)$，
-其中误差项 $e_t = \mS_{t-1} \vx_t - \hat{v}_t$。
-
-两者的结构完全一致——TTT 更新相当于带有\textbf{误差项修正}的注意力记忆写入。
-这使得"注意力、快权重、TTT 内循环"三者形成了一个连续的理论家族。
-
-\section{代表论文}
-
-\paragraph{\citet{sun2023ttt}} \textit{Learning to (Learn at Test Time)} (2023)：
-首次将序列模型重构为显式的内/外循环系统。
-
-\begin{labbox}
-\textbf{Lab 7}：在 NumPy/PyTorch 中实现一个极简 TTT-RNN 单元，
-用式 \eqref{eq:ttt_hidden_update} 更新 $\mS$，
-在在线线性回归序列（玩具问题 A）上与线性注意力的行为进行对比和可视化。
+\begin{enumerate}
+    \item 使用 numpy 进行操作。设输入数据为一个维度是 $d=8$ 的序列。
+    \item \textbf{外部参数部分：}生成一个固定的 $8\times8$ 慢参数投影矩阵，将当前的输入序列转换出当前拟要被记忆的样本和拟用于驱动误差的目标。
+    \item \textbf{内部优化循环：}定义 $\ell = \text{MSE}(S h_{\text{proj}} , v_{\text{target}})$。使用 \texttt{loss.backward()} 手动实施一次基于负梯度的状态 $S$ （内部模型）累积相加修改。
+    \item 把它和之前手动拼凑并写死的 Hebb 规则进行数值比较。
+    \item \textbf{反思：}在实际的 GPU 上，为了这\textbf{哪怕仅仅一步小的模型学习}都要拉起完整的后向优化算法图会导致怎样极高的同步开销与资源消耗？引发出后续提出 TTT Done Right 论文的工程优化缘由所在。
+\end{enumerate}
 \end{labbox}
 
 \begin{misconceptionbox}
-\textbf{常见误解}：内循环的梯度步骤需要调用反向传播，因此很慢。
+\textbf{常见误解 1：这里所谓的 Test-Time Training 就是本书第一二章里用自监督学习在遇到分布外数据时的整体测试修正框架。}
 
-\textbf{纠正}：式 \eqref{eq:ttt_hidden_update} 的梯度可以\textbf{解析计算}（闭式外积形式），
-无需反向传播框架。
-整个更新只是矩阵乘法和外积运算（详见第 \ref{ch:ttt_layers} 章）。
+\textbf{纠正：}尽管精神一致，但实现层面有天壤之别！第一二章的普通 TTT 是一种算法技巧，依赖 PyTorch 中实际构建出的大型反向传播后计算图并调用真实硬件里的 Optimizer 修正模型全局参数 $\theta$。而本章（和以后的 TTT 架构系列），是把这一过程物理化缩小为由前向连接构成的信息累加，且直接嵌在一个或每一个网络层内部，作为原生的“隐状态修正方式”，这是架构层面的革命！它是硬件友好的推断态执行，并且不需要额外调出梯度反算功能（或者说是把特定形式内嵌固化为了不需要图结构的特殊运算而已）。
+\end{misconceptionbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解 2：内部模型越复杂，外网络对它的把控力和实际表现肯定就等比例越来越好。}
+
+\textbf{纠正：}这面临极大的优化脆弱期。作为内层目标的梯度如果在训练初中期稍有不适当（例如外层因为对数步长参数分配不均等给出了太剧烈的目标驱动梯度要求），内部模型的更新会迅速失控并输出爆炸级的特征，导致灾难性的崩溃。因此内循环的学习结构在当前极力追求工程稳定（限制参数复杂性、强加规范化）。
 \end{misconceptionbox}
 
 \section{练习题}
+\label{sec:l2l_exercises}
 
 \begin{exercise}
-将式 \eqref{eq:ttt_hidden_update} 与快权重更新 \eqref{eq:fastweight_update}（$\lambda=1$）
-对比，说明 TTT 内循环更新相当于用\textbf{带有误差修正}的外积写入。
-在 $\mS_{t-1} \vx_t = \hat{v}_t$（零误差）时，更新量是多少？
+\textbf{内外变量区分：}
+当构建一个隐状态其实是模型参数本身的序列处理网络时。详细列举从预处理 $t=0$ 到计算进入时刻 $t=1$ 时，哪些结构变量将被系统外环（在数以 PB 计的数据中心训练期间）永久性进行更改；哪些将被推断过程中丢弃、但需要在输入时以毫秒级时间进行频繁的更小范围更新？并回答这样层叠的性能和存储占用的界是分别如何分布的？
 \end{exercise}
 
 \begin{exercise}
-外循环参数 $\theta$ 控制了"如何更新 $\mS$"（即内循环的学习率 $\eta$、投影矩阵等）。
-如果 $\theta$ 是固定的（不做预训练），TTT-RNN 会退化成什么系统？
-\end{exercise}
-
-\begin{exercise}
-把 MAML（第 \ref{ch:bilevel} 章）的双层优化和 TTT-RNN 的内/外循环
-填写进下表，找出对应关系：
-
-\begin{tabular}{lll}
-\toprule
-维度 & MAML & TTT-RNN \\
-\midrule
-外循环参数 & $\theta$ & ? \\
-内循环参数 & $\phi_i$ & ? \\
-外循环数据 & Query Set & ? \\
-内循环数据 & Support Set & ? \\
-\bottomrule
-\end{tabular}
+\textbf{泛化：从线性内模型到 MLP：}
+如果内部的网络状态不只是一个参数矩阵 $\mS$，而是一个带激活函数的的两层网络构型（例如 $Y_t^{\text{inner}} = S_2(\sigma(S_1 X_t))$）。使用偏导数的链式法则大概展示如果要对其由输入损失产生的一步更新，其表达式将产生多少个非线性截断状态。为什么在此时我们无法像线性回归下轻易替换为简单的直接状态积相加项？
 \end{exercise}
 
 \section{本章小结}
+\label{sec:l2l_summary}
 
 \begin{itemize}
-  \item TTT-RNN 把模型隐状态从"向量"升级为"矩阵（权重）"，
-        让每个 token 触发一步显式的自监督梯度步。
-  \item 内循环（显式梯度步）+ 外循环（大参数预训练）= 在序列里展开的 MAML。
-  \item 内循环更新具有外积结构，与线性注意力和快权重等价。
-  \item 这为第 \ref{ch:ttt_layers} 章的 TTT-Linear 和 TTT-MLP 奠定了基础。
+    \item \textbf{容量与显存的矛盾：}传统的 ICL 由于严重依赖保存一切旧有键值导致注意力呈平方消耗无法支持极长文本。解决的核心是将信息压缩（或说化解为）更复杂容量更大的权重状态。
+    \item \textbf{微模型即状态：}隐状态不应当只是一种降维抽取映射或单维度向量累加机，它实质上应当被设定为具备自我闭环纠偏驱动能力的微型学习参数组（例如完整的可调网络）。
+    \item \textbf{内外目标的时序固化：}通过把外部全局数据集用于培养稳定大尺度输出模型特征参数网络，把处理单次生成生命周期内的高频流数据分配给以梯度累积规则工作、具有多梯度方向性的内置网络块，实现了 “通过学习（架构上的元调整），使得大模型获得了它具有直接以动态微调作为预测基础底座”的能力。
+    \item \textbf{桥梁预备：}这就是为何我们会把这类网络称为 "Learning to (Learn at Test Time)" 系列的前奏。下文将进一步将这个“内部隐状态即隐模型”真正全面落实。
+\end{itemize}
+
+\paragraph{读完本章，你应该能够：}
+\begin{itemize}
+    \item 把传统的预训练-微调分离模型转移到能在一个推理过程中体现为双层操作流的复杂结构视角。
+    \item 解释为什么测试时不需要再跑外部的反向传播代码或梯度系统即能够被评价为“微网络层上的测试时自适应训练”。
+    \item 对比“隐状态是一个可微模型层”这个观点相较于“隐状态就是一个特征浓缩集合”所具备的理论包覆优势及存储上的常数复杂度优势。
 \end{itemize}
