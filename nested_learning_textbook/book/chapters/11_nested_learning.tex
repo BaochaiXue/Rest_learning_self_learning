@@ -1,0 +1,148 @@
+% chapters/11_nested_learning.tex
+\chapter{Nested Learning：终局视角与开放问题}
+\label{ch:nested}
+
+\section{本章想回答什么问题}
+
+我们已经看到了一个逐步展开的故事：
+从 TTT（参数更新）到 ICL（隐式 GD）到 TTT-Layer（内嵌学习器）到 Titans（多时间尺度记忆）。
+\textbf{Nested Learning（嵌套学习）}提出了一种更宏大的统一视角：
+\emph{所有深度学习架构，包括优化器本身，都是某种特定结构下的联想记忆压缩}。
+本章批判性地介绍这个框架，明确区分哪些是有数学支撑的结论，哪些是开放的解释性主张。
+
+\section{最小例子}
+
+\begin{toybox}[title=Adam 优化器作为联想记忆]
+Adam 的更新规则：
+\begin{align}
+  m_t &= \beta_1 m_{t-1} + (1-\beta_1) g_t \quad (\text{一阶矩}) \\
+  v_t &= \beta_2 v_{t-1} + (1-\beta_2) g_t^2 \quad (\text{二阶矩}) \\
+  \theta_t &= \theta_{t-1} - \alpha \frac{m_t}{\sqrt{v_t} + \epsilon}
+\end{align}
+
+\citeauthor{behrouz2025nl}（2025）指出：$(m_t, v_t)$ 的指数滑动平均结构
+可以被形式化为某种压缩梯度历史信息的联想记忆更新。
+更新公式中的动量项 $m_t$ 是对历史梯度的线性加权求和——这的确是外积记忆的一种退化形式。
+\end{toybox}
+
+\section{Nested Learning 的核心主张}
+
+\citet{behrouz2025nl} 的核心贡献是提出了一个数学框架，
+将机器学习模型及其优化过程统一表述为\textbf{嵌套的多层优化问题}：
+每一级优化都有自己的"上下文流（Context Flow）"和压缩目标。
+
+\begin{definition}[Nested Learning，简化版]
+一个 $L$ 级嵌套学习系统定义为：
+\[
+  \theta^*_l = \arg\min_{\theta_l} \mathcal{L}_l(\theta_l; \theta^*_{l+1})
+  \quad \forall l = 1, \ldots, L
+\]
+每一级 $l$ 都在给定上一级输出 $\theta^*_{l+1}$ 的条件下优化自己的目标。
+上下文流 $\theta^*_{l+1}$ 是较高层级对输入信息的压缩表示。
+\end{definition}
+
+在这个框架下，传统神经网络训练是两级系统（参数 + 批数据），
+ICL 是三级系统（预训练参数 + 上下文 token + 查询），
+TTT-Layer 则是将序列中每个 token 的处理都变成一次内嵌优化……
+
+\section{哪些部分是相对稳固的机制结论}
+
+\begin{itemize}
+  \item 优化器（Adam、SGD+Momentum）的更新公式，在数学上\textbf{确实可以}被写成
+        某种关于梯度历史的聚合形式（与时间加权求和/外积有形式联系）。
+  \item 线性注意力层与梯度下降步之间的等价（第 \ref{ch:icl} 章）
+        是严格的数学结论，这一点在 NL 框架下得到了统一的解读。
+  \item 不同时间尺度的嵌套结构（外循环慢学 + 内循环快学）
+        在 MAML 和 TTT 中都有具体实例，NL 给了这种现象统一的语言。
+\end{itemize}
+
+\section{哪些部分是解释性主张或研究议程}
+
+\begin{viewpointbox}
+以下主张在数学形式上成立，但在\textbf{普遍适用范围或唯一性}上仍有争议：
+
+\begin{enumerate}
+  \item "所有深度学习架构都不过是多级联想记忆的幻象"（标题即主张）——
+        这是一种还原论的视角，对多数具体任务的分析很有价值，
+        但尚未被整个社区接受为公理。
+  \item "Nested Learning 统一了所有已知优化器和架构"——
+        框架的完备性和解释力度仍在被检验。
+  \item "Context Flow 是正确的统一抽象"——
+        其他框架（信息瓶颈、能量函数等）也声称提供了类似的统一。
+\end{enumerate}
+
+本书的立场：NL 是一个\textbf{富有启发性的研究议程}，它提供了强有力的统一语言，
+但不应被当作"深度学习的完整解释"来教授。
+\end{viewpointbox}
+
+\section{和前面章节的自然收束}
+
+\begin{tabular}{ll}
+\toprule
+已建立的机制 & NL 层面的解读 \\
+\midrule
+线性注意力 $\equiv$ 快权重 & 内层联想记忆，Level 1 \\
+ICL $\approx$ 梯度下降 & 前向传播内嵌的 Level 2 优化 \\
+TTT-Layer & 显式的 Level 2 内循环 \\
+Titans Neural Memory & Level 3 慢记忆，跨越更长时间窗口 \\
+Adam/SGD 及动量 & 梯度历史的 Level 1 压缩 \\
+\bottomrule
+\end{tabular}
+
+\section{开放问题与未来研究方向}
+
+\begin{openproblem}
+\begin{enumerate}
+  \item 对于非线性 Softmax 注意力，NL 框架的形式描述是否同样严格？
+  \item NL 框架能否指导设计新的优化器或序列模型架构？
+  \item 多级嵌套的层数是否有理论上的"最优性"？
+  \item 连续学习（Continual Learning）如何在 NL 框架中被形式化？
+  \item 自修改学习模块（SRT）在实际大规模预训练中是否可行？
+\end{enumerate}
+\end{openproblem}
+
+\begin{labbox}
+\textbf{Lab 11}：填写"NL 对应表"
+
+\begin{enumerate}
+  \item 列出你学过的 5 种模型/优化器（如 Mamba、Adam、RetNet、GPT-4、LSTM）
+  \item 尝试将它们的核心更新规则对应到 NL 的嵌套优化语言中
+  \item 把你不确定的对应关系明确标注出来（这比虚假的完整图更有价值）
+\end{enumerate}
+\end{labbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解}：Nested Learning 已经完整解释了深度学习的所有现象，
+可以用它推导出所有架构设计决策。
+
+\textbf{纠正}：NL 是一个\textbf{统一的描述语言}，不是一个\textbf{可直接出架构的设计原则}。
+它指导我们思考多时间尺度结构，但并不能自动生成最优架构。
+前沿工程中还有许多 NL 框架尚未描述清楚的重要机制（如稀疏激活、混合专家等）。
+\end{misconceptionbox}
+
+\section{练习题}
+
+\begin{exercise}
+SGD（无动量）是 Level 几的嵌套优化器？SGD + Momentum 呢？Adam 呢？
+用 NL 的语言写出对应关系，并明确你认为"形式对应"的部分和只能"类比解读"的部分。
+\end{exercise}
+
+\begin{exercise}
+如果设计一个"Level 4 嵌套模型"（即在 Titans 之上再加一级更慢的记忆），
+它在现实任务中可能对应于什么？举一个具体的应用场景。
+\end{exercise}
+
+\begin{exercise}
+回顾第 \ref{ch:icl} 章中关于"ICL = 梯度下降"的讨论。
+如果用 NL 框架表述，ICL 对应第几级嵌套？它的"外循环知识"存在哪里？
+\end{exercise}
+
+\section{本章小结}
+
+\begin{itemize}
+  \item Nested Learning 为本书所有机制提供了统一的语言：多级嵌套优化和上下文流压缩。
+  \item 哪些是稳固结论：Adam/线性注意力与外积记忆的形式对应，ICL 与 GD 的等价（线性情形）。
+  \item 哪些是开放议程：普遍化的声称、自修改模型、Level $>3$ 的有效性。
+  \item 本书的最终建议：用 NL 作为\textbf{思考工具}，而不是作为\textbf{教条}。
+        深度学习的本质仍然是活跃的研究领域。
+\end{itemize}

@@ -1,0 +1,133 @@
+% chapters/09_titans_multi_timescale_memory.tex
+\chapter{Titans 与多时间尺度记忆系统}
+\label{ch:titans}
+
+\section{本章想回答什么问题}
+
+TTT-Layer（第 \ref{ch:ttt_layers} 章）的隐状态 $\mS_t \in \R^{d\times d}$ 大小固定。
+随着序列长度增长，新内容不断覆盖旧内容，模型会\textbf{遗忘遥远的过去}。
+如何构建一个系统，能够同时持有：
+(1) 精确的短窗口注意力（处理局部精细依赖）；
+(2) 对遥远历史的持久记忆（跨越数万 token 而不遗忘）？
+
+\section{最小例子}
+
+\begin{toybox}[title=玩具问题 B：超长序列中的针（Needle in a Haystack）]
+序列长度 $N = 10{,}000$。
+在位置 $i=1$ 处放置一个特殊键值对（"密文"）。
+在位置 $10{,}000$ 处查询这个密文。
+
+\begin{itemize}
+  \item 标准注意力（窗口 $W=512$）：无法触及 $i=1$，失败。
+  \item TTT-Layer（$d\times d=64\times 64$ 矩阵）：$i=1$ 的内容被 9999 步更新覆盖，失败。
+  \item Titans：通过专门的 Neural Memory 模块保留 $i=1$ 的内容，成功。
+\end{itemize}
+\end{toybox}
+
+\section{直觉解释：海马体 vs 海马旁区}
+
+Titans 的设计灵感来自认知神经科学的多级记忆模型：
+\begin{itemize}
+  \item \textbf{短时注意力（Short-term Attention）}：
+        处理最近 $W$ 个 token 的精确依赖，等价于局部 Softmax 注意力。
+  \item \textbf{长期神经记忆（Neural Memory）}：
+        一个附加的小型神经网络，其参数在推断时被持续更新，
+        用于存储"令人惊讶（Surprising）"的事件。
+  \item \textbf{Surprise 门控}：只有当新 token 与记忆中的预测\textbf{产生较大激活偏差}时，
+        才触发神经记忆的更新（避免遗忘已有重要内容）。
+\end{itemize}
+
+\section{数学形式化}
+
+\subsection*{Neural Memory 更新规则}
+
+设神经记忆为参数集 $\Phi_t$（即一个小型 MLP 的权重）。
+
+更新目标：最小化预测误差（类似 TTT 内循环）：
+\begin{equation}
+  \Delta\Phi_t = -\eta\, (M_{\Phi_{t-1}}(k_t) - v_t) \cdot \nabla_\Phi M_\Phi(k_t)\Big|_{\Phi_{t-1}}
+  \label{eq:neural_memory_update}
+\end{equation}
+
+其中 $M_{\Phi}(k_t)$ 是神经记忆对键 $k_t$ 的预测值，$v_t$ 是目标。
+
+\subsection*{Surprise 门控}
+
+定义惊讶度：
+\begin{equation}
+  s_t = \| M_{\Phi_{t-1}}(k_t) - v_t \|
+  \label{eq:surprise}
+\end{equation}
+
+当 $s_t$ 超过阈值或按比例缩放时，才以较大步长更新 $\Phi$，
+否则步长接近零，保护旧记忆不被遗忘。
+
+\subsection*{三档并联}
+
+Titans 的完整系统将三个子系统\textbf{并联}：
+\begin{equation}
+  y_t = \alpha_1 \cdot \text{Attn}(x_{\max(1, t-W):t}) 
+      + \alpha_2 \cdot M_{\Phi_t}(q_t)
+      + \alpha_3 \cdot h_t
+\end{equation}
+其中 $\alpha_i$ 是可学习的混合权重，$h_t$ 是一个传统 RNN 状态。
+
+\section{代表论文}
+
+\paragraph{\citet{behrouz2025titans}} \textit{Titans: Learning to Memorize at Test Time}：
+完整提出了 Neural Memory 机制和 Surprise 门控，
+在超过 2M token 的 Needle-in-Haystack 测试中超越了同等规模的 Transformer。
+
+\begin{viewpointbox}
+Titans 是一个工程原型，它展示了"短期 + 长期记忆并联"这种设计哲学的可行性。
+但它并非"多时间尺度记忆"这一问题空间的唯一或最终答案。
+Mamba、Ring Attention、压缩 KV Cache 等也在探索类似问题。
+\end{viewpointbox}
+
+\begin{labbox}
+\textbf{Lab 9}：搭建一个超简化的"短期 + 长期"记忆模型：
+
+\begin{enumerate}
+  \item 短期分支：标准注意力（窗口 $W=8$）
+  \item 长期分支：TTT-Linear 层（$d=32$），用 Surprise 门控（阈值 $\tau=0.1$）决定是否更新
+  \item 测试：生成长度 100 的序列，在位置 1 放"密文"，在位置 99 查询
+  \item 对比：单纯注意力窗口 vs 有神经记忆的混合系统
+\end{enumerate}
+\end{labbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解}：神经记忆只是把所有历史 token 存起来，等同于无限长的 KV Cache。
+
+\textbf{纠正}：神经记忆以\textbf{权重形式}存储信息（MLP 的权重），
+不是直接存储 token 向量。
+这使得它天然具有压缩和泛化能力，但也意味着检索是近似的，而不是精确的。
+\end{misconceptionbox}
+
+\section{练习题}
+
+\begin{exercise}
+在 Surprise 门控机制中，如果门控阈值 $\tau = 0$（总是更新），
+Neural Memory 退化为什么？如果 $\tau = \infty$（从不更新）呢？
+\end{exercise}
+
+\begin{exercise}
+对比式 \eqref{eq:neural_memory_update} 和 TTT-Layer 更新 \eqref{eq:ttt_hidden_update}（第 \ref{ch:ttt_layers} 章）。
+两者结构上有什么区别？主要的差异在哪里？
+\end{exercise}
+
+\begin{exercise}
+设神经记忆的参数量为 $d^2 \cdot L$（$L$ 层 MLP，每层 $d$ 宽）。
+当 $d=256, L=2$ 时，记忆的参数量是多少？
+与同等意义的 KV Cache（存储 $N$ 条 $d$ 维向量）相比，
+需要什么样的 $N$ 才使两者参数量相当？
+\end{exercise}
+
+\section{本章小结}
+
+\begin{itemize}
+  \item TTT-Layer 的固定大小隐矩阵在超长序列上会遗忘历史。
+  \item Titans 引入了\textbf{附加的神经记忆}（参数化的 MLP），
+        用 Surprise 门控机制在测试时选择性地写入重要事件。
+  \item 这实现了三档记忆体系：窗口注意力（精确局部）+ 神经记忆（压缩长期）+ RNN（流动状态）。
+  \item Titans 是一个桥梁，而非终点——它展示了架构可以系统地管理多个时间尺度。
+\end{itemize}

@@ -1,0 +1,107 @@
+% chapters/08_ttt_layers_hidden_state_as_learner.tex
+\chapter{TTT Layers：隐藏状态就是学习器}
+\label{ch:ttt_layers}
+
+\section{本章想回答什么问题}
+
+第 \ref{ch:ttt_bridge} 章奠定了理론：把隐状态当作学习器的权重来更新。
+现在的工程问题是：如何让这套机制在现代 GPU 上\textbf{高效并行}地运行，
+同时保持$O(1)$的推断端内存（不随序列长度增长）？
+
+\section{最小例子}
+
+\begin{toybox}[title=TTT-Linear：线性模型作为隐状态]
+定义隐藏状态为线性层参数 $\mS_t \in \R^{d_k \times d_v}$。
+
+每个 token $x_t$ 做如下操作：
+\begin{align}
+  \vk_t &= W_K x_t,\quad \hat\vv_t = W_V x_t \quad (\text{投影出键和目标值}) \\
+  \ell_t &= \tfrac{1}{2}\|\mS_{t-1} \vk_t - \hat\vv_t\|^2 \quad (\text{自监督损失}) \\
+  \mS_t &= \mS_{t-1} - \eta\, (\mS_{t-1}\vk_t - \hat\vv_t)\vk_t^\top \quad (\text{一步梯度}) \\
+  y_t &= \mS_t W_Q x_t \quad (\text{前向查询输出})
+\end{align}
+
+推断：每个时步只需 3 次矩阵-向量乘积 + 1 次外积，内存 $O(d^2)$ 恒定。
+\end{toybox}
+
+\section{TTT-MLP：更强的表达力}
+
+将 $\mS_t$ 从一个线性层升级为两层 MLP：
+\[
+  g_{\mS_t}(\vk) = W_2 \sigma(W_1 \vk + b_1) + b_2
+\]
+其中 $\mS_t = (W_1, b_1, W_2, b_2)$。
+更新规则同样是梯度步骤，只是现在对所有 MLP 参数同时更新。
+
+这使得隐状态的"表达能力"从线性提升到非线性！
+实验表明 TTT-MLP 在长序列任务上显著优于 TTT-Linear。
+
+\section{数学形式化：并行扫描加速}
+
+推断时按时序执行梯度步是 $O(N)$ 的。
+但\textbf{训练阶段}需要在 $N$ 个位置上计算所有梯度，
+这是否可以并行化？
+
+\begin{insight}[Parallel Scan 视角]
+TTT-Linear 的时序更新具有"线性递推"结构：
+$\mS_t = A_t \mS_{t-1} + B_t$，其中 $A_t$ 和 $B_t$ 依赖于 $x_t$。
+这种结构可以用\textbf{Parallel Prefix Scan}（并行前缀扫描）算法在 $O(\log N)$ 深度内完成，
+实现高效训练。
+\end{insight}
+
+\paragraph{\citet{sun2024ttt_done_right}} 进一步研究了如何将 TTT 层
+用更高效的 Kernel Fusion 方式实现在现代 GPU 上，以及
+如何利用小批量（mini-batch gradient）代替单点梯度步来稳定训练。
+
+\section{代表论文}
+
+\paragraph{\citet{sun2024ttt}} \textit{RNNs with Expressive Hidden States}：
+TTT-Linear 和 TTT-MLP 的正式提出，系统评估了语言建模性能。
+
+\paragraph{\citet{sun2025ttt_right}} \textit{Test-Time Training Done Right}：
+工程化改进，解决了朴素 TTT 的训练稳定性、并行化和速度瓶颈。
+
+\begin{labbox}
+\textbf{Lab 8}：实现一个最简 TTT-Linear 层（$d_k = d_v = 64$），
+和一个相同参数量的标准 GRU 层，
+在一个合成的长序列"记住第 N 步前的一个词"任务上对比性能。
+\end{labbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解}：TTT-MLP 里的"MLP 当隐状态"意味着每次前向传播都要训练一个 MLP，开销巨大。
+
+\textbf{纠正}：这个 MLP 很小（通常 $d=64$，很浅），
+它的"训练"就是一步梯度步（若干次矩阵-向量乘法和外积），
+总共不超过传统 RNN 的 $O(d^2)$ 计算量。
+开销来自矩阵尺寸，而非"训练"本身的反复迭代。
+\end{misconceptionbox}
+
+\section{练习题}
+
+\begin{exercise}
+对比 TTT-Linear 和标准线性注意力（第 \ref{ch:attention} 章）的更新规则。
+当 TTT-Linear 的自监督目标恰好为 $\hat\vv_t = k_t$（键即值目标）时，
+两者的递推是否完全等价？写出推导。
+\end{exercise}
+
+\begin{exercise}
+TTT-MLP 的隐状态维度随网络深度和宽度增长，
+对推断内存和延迟有什么影响？
+设计一个取舍矩阵（行=任务类型，列=性能/速度/内存），
+填写你的定性预测。
+\end{exercise}
+
+\begin{exercise}
+如果去掉 stop-gradient（$\text{sg}$），
+TTT 自监督目标会退化成什么优化问题？可能导致什么数值问题？
+\end{exercise}
+
+\section{本章小结}
+
+\begin{itemize}
+  \item TTT-Linear：线性微型学习器作为隐状态；三次矩阵操作 + 外积；$O(d^2)$ 内存。
+  \item TTT-MLP：MLP 作为隐状态，表达力更强，在长序列任务有显著提升。
+  \item 训练时用 Parallel Scan 实现高效并行；推断时天然因果递推。
+  \item 剩下的问题：如果序列极长（$>10^6$ token），$\mS_t$ 会因不断覆盖而"遗忘"早期内容。
+        这一问题由第 \ref{ch:titans} 章的 Titans 解决。
+\end{itemize}

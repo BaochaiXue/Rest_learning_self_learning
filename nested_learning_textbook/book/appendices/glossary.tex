@@ -1,0 +1,33 @@
+% appendices/glossary.tex
+\chapter{术语表}
+\label{app:glossary}
+
+\begin{description}
+  \item[Test-Time Training (TTT, 2020)] 在测试阶段对自监督辅助任务做梯度下降，更新持久化参数 $\theta$。参见 \citet{sun2020ttt}。
+
+  \item[TTT Layer (TTT-Linear / TTT-MLP, 2024)] 将隐状态定义为微型学习器的权重矩阵，在前向传播内嵌执行梯度步。参见 \citet{sun2024ttt}。
+
+  \item[In-Context Learning (ICL)] 通过在 prompt 中给出示例，让模型在参数不变的情况下改善预测。
+
+  \item[Fast Weights] 在前向传播中通过外积动态生成的临时记忆矩阵，介于激活值（向量）和持久参数（慢权重）之间。参见 \citet{ba2016fastweights}。
+
+  \item[Linear Attention] 去掉 Softmax 的自注意力，可以写成线性递推形式（$O(Nd^2)$），与快权重数学等价。
+
+  \item[MAML] 模型无关元学习。通过双层优化寻找最优初始化点，使得模型能以少量梯度步适应新任务。参见 \citet{finn2017maml}。
+
+  \item[Bilevel Optimization] 外循环优化问题的目标函数本身依赖于内循环优化的解。MAML 是典型例子。
+
+  \item[Neural Memory] Titans 中附加的参数化 MLP，其权重在推断时被 Surprise 门控选择性地更新，用于长期记忆。参见 \citet{behrouz2025titans}。
+
+  \item[Surprise (惊讶度)] Titans 中用于控制 Neural Memory 写入的信号：预测误差越大，更新越激进。
+
+  \item[Nested Learning (NL)] 将机器学习模型及优化器统一表述为多级嵌套优化问题和联想记忆压缩的理论框架。参见 \citet{behrouz2025nl}。
+
+  \item[Online OLS] 最小二乘回归的流式在线解法，可通过 Sherman-Morrison 公式高效递推更新。
+
+  \item[Context Flow] NL 框架中描述高层次信息如何流向低层优化器的抽象概念。
+
+  \item[Parallel Prefix Scan] 一种将线性递推并行化的算法，时间复杂度 $O(\log N)$，用于加速 TTT-Layer 训练。
+
+  \item[Induction Head] Transformer 中学会执行"[A][B]...[A] $\to$ [B]"模式匹配的注意力头。ICL 机制的一种机械解释。参见 \citet{olsson2022induction}。
+\end{description}

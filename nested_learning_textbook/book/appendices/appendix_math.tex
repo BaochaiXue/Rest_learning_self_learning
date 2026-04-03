@@ -1,0 +1,62 @@
+% appendices/appendix_math.tex
+\chapter{最低必要数学背景}
+\label{app:math}
+
+本附录汇集了理解本书所需的核心数学工具。
+不要求掌握 PAC 界或 VC 维——只需扎实理解以下内容。
+
+\section{线性代数核心}
+
+\subsection*{外积（Outer Product）}
+
+向量 $a \in \R^m, b \in \R^n$ 的外积为矩阵：
+\[
+  a b^\top \in \R^{m \times n}, \quad (ab^\top)_{ij} = a_i b_j
+\]
+
+\textbf{核心用途}：快权重更新、线性注意力递推都依赖外积。
+记住：外积 $=$ 矩阵秩1更新。
+
+\subsection*{Sherman-Morrison 公式}
+
+设可逆矩阵 $A$，秩1更新 $A + uv^\top$，则：
+\[
+  (A + uv^\top)^{-1} = A^{-1} - \frac{A^{-1} u v^\top A^{-1}}{1 + v^\top A^{-1} u}
+\]
+
+\textbf{核心用途}：在线岭回归高效更新逆协方差矩阵（第 \ref{ch:unified} 章）。
+
+\section{梯度下降}
+
+\subsection*{标量函数}
+
+$f: \R \to \R$，一步梯度下降：$x^{(t+1)} = x^{(t)} - \eta f'(x^{(t)})$
+
+\subsection*{矩阵函数：外积梯度}
+
+设 $L(W) = \|Wx - y\|^2$，则：
+\[
+  \nabla_W L = (Wx - y) x^\top
+\]
+这是一个外积形式——这解释了为什么快权重更新和梯度步都有外积结构。
+
+\section{双层优化}
+
+设外循环参数 $\theta$，内循环通过 $k$ 步梯度下降生成 $\phi(\theta)$：
+\[
+  \nabla_\theta \mathcal{L}_{\text{outer}}(\phi(\theta)) = 
+  \nabla_\phi \mathcal{L}_{\text{outer}} \cdot \frac{\partial \phi}{\partial \theta}
+\]
+后者包含 Hessian 信息（二阶偏导）。一阶近似（FOMAML）省略这一项：
+\[
+  \nabla_\theta^\text{FOMAML} \approx \nabla_\phi \mathcal{L}_{\text{outer}}\big|_{\phi = \theta - \alpha g}
+\]
+
+\section{在线学习与遗憾（Regret）}
+
+在在线学习设置下，学习器在每个时步做预测，然后看到损失。
+累积遗憾定义为：
+\[
+  \text{Regret}(T) = \sum_{t=1}^T \ell_t(\hat y_t) - \min_y \sum_{t=1}^T \ell_t(y)
+\]
+大部分本书讨论的模型（线性注意力、TTT-Linear、OLS）都与某种经典在线学习算法的遗憾界有正式联系。

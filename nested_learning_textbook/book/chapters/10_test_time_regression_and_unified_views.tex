@@ -1,0 +1,116 @@
+% chapters/10_test_time_regression_and_unified_views.tex
+\chapter{统一视角：测试时回归与在线优化}
+\label{ch:unified}
+
+\section{本章想回答什么问题}
+
+经历了快权重、线性注意力、TTT-Layer 和 Titans 之后，
+读者或许会疑问：这些模型之间有什么内在的统一关系？
+是否存在一个简洁的框架，能将它们都表述为同一类问题的不同变体？
+
+本章的答案：它们都可以被理解为某种\textbf{在线最小二乘回归（Online OLS）}的变体。
+
+\section{最小例子}
+
+\begin{toybox}[title=玩具问题 A：在线岭回归的递推解]
+目标：对流式数据 $(x_1, y_1), \ldots, (x_t, y_t)$ 最小化加权岭回归：
+\[
+  \hat W_t = \arg\min_W \sum_{s\le t} \beta^{t-s} \|W x_s - y_s\|^2 + \lambda \|W\|_F^2
+\]
+最优解满足递推更新（Sherman-Morrison 形式）：
+\begin{align}
+  \mS_t &= \beta \mS_{t-1} + y_t x_t^\top \\
+  \mC_t &= \beta \mC_{t-1} + x_t x_t^\top + \lambda I \\
+  \hat W_t &= \mS_t \mC_t^{-1}
+\end{align}
+这是在线学习的经典公式。
+\end{toybox}
+
+\section{直觉解释：万物皆回归}
+
+\begin{insight}[教材归纳视角——需评估适用范围]
+以下对应关系由 \citeauthor{xiong2025ttr}（2025）等工作提出：
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+序列模型 & 对应的在线回归变体 & 主要差异 \\
+\midrule
+线性注意力（$\lambda=1$） & 无正则化在线OLS，$\lambda=0$ & 无遗忘、无正则 \\
+带遗忘因子 $\beta < 1$ & 时间加权岭回归 & 指数遗忘 \\
+TTT-Linear & 一步梯度（不到最优） & 未到闭式解 \\
+标准 Softmax 注意力 & 非线性"软" OLS & 不精确等价 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{insight}
+
+\begin{viewpointbox}
+最后一行（Softmax 注意力）的对应关系是近似的，不是严格等价。
+这个统一视角在线性情形下最为精确，对非线性情形是一种教学归纳，
+适合直觉理解，不适合作为严格定理引用。
+\end{viewpointbox}
+
+\section{数学形式化：从 OLS 推导线性注意力}
+
+设 $\mC = \sum_{j\le t} k_j k_j^\top$，$\mS = \sum_{j\le t} v_j k_j^\top$。
+则 OLS 解 $\hat W = \mS \mC^{-1}$，查询输出：
+\begin{equation}
+  y_\text{query} = \hat W q = \mS \mC^{-1} q
+\end{equation}
+
+当 $\mC = I$（键正交化）时，$y = \mS q = \sum_j v_j (k_j^\top q)$——
+这正是线性注意力的输出（第 \ref{ch:attention} 章）！
+
+引入正则化 $\lambda > 0$：$\hat W = \mS (\mC + \lambda I)^{-1}$，
+这对应了岭回归（Ridge Regression），
+可以解释某些带有衰减或正则化的注意力变体。
+
+\section{代表论文}
+
+\paragraph{\citet{xiong2025ttr}} \textit{Test-time regression: a unifying framework}：
+系统推导了各主流序列模型在 OLS 框架下的参数对应关系。
+
+\paragraph{\citet{behrouz2025connected}} \textit{It's All Connected}：
+提供了从在线记忆化到注意力偏差、遗忘、在线优化的全景图。
+
+\begin{labbox}
+\textbf{Lab 10}：实现在线岭回归（用 Sherman-Morrison 递推维护 $\mC^{-1}$），
+并与 TTT-Linear 层在相同任务上对比。
+观察：当 $\eta$ 足够小时，TTT-Linear 的多步梯度是否逼近 OLS 解？
+\end{labbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解}：既然都是 OLS，直接用传统统计方法代替神经网络不就行了？
+
+\textbf{纠正}：OLS 框架描述的是\textbf{序列内隐状态更新层}的行为，
+输入特征 $k_t, v_t$ 本身是由网络的深层表示学习的。
+如果直接用原始特征做 OLS，缺乏深层表示变换，效果远差于神经网络版本。
+\end{misconceptionbox}
+
+\section{练习题}
+
+\begin{exercise}
+当遗忘因子 $\beta = 1$（完全记住所有历史）时，
+OLS 递推退化为什么？它和\textbf{标准线性注意力}等价吗？
+\end{exercise}
+
+\begin{exercise}
+引入 $\beta < 1$ 相当于对历史数据加指数衰减权重 $\beta^{t-s}$。
+从注意力的角度看，这等价于对距离为 $t-s$ 的位置施加什么样的位置偏置？
+\end{exercise}
+
+\begin{exercise}
+TTT-Linear 做的是一步梯度下降（而非直接求 OLS 最优解）。
+设学习率 $\eta$，使用梯度步 $k$ 次后，输出与 OLS 最优解的误差渐近于什么？
+（提示：考虑梯度下降在强凸函数上的线性收敛。）
+\end{exercise}
+
+\section{本章小结}
+
+\begin{itemize}
+  \item 在线最小二乘回归提供了统一分析多种序列模型的框架。
+  \item 线性注意力 $\approx$ 无正则 OLS；带遗忘线性注意力 $\approx$ 时间加权岭回归；
+        TTT-Linear $\approx$ 未收敛的在线 OLS。
+  \item 这种统一是一种\textbf{深刻的教学视角}，但对非线性注意力只是近似。
+  \item 下一章：Nested Learning 提议把这种"万物皆回归/优化"的思路推广到更高层次。
+\end{itemize}

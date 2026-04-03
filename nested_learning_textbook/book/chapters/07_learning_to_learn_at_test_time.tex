@@ -1,0 +1,144 @@
+% chapters/07_learning_to_learn_at_test_time.tex
+\chapter{Learning to (Learn at Test Time)：关键桥章}
+\label{ch:ttt_bridge}
+
+\section{本章想回答什么问题}
+
+前三章（4--6 章）揭示了注意力层的前向计算隐式实现了梯度下降。
+这条洞察能否被\emph{设计进架构本身}——
+不是让注意力偶然模拟梯度下降，
+而是\textbf{明确地把模型隐藏状态定义为一个学习器的参数，
+让每个 token 触发一次显式的内部梯度步骤}？
+
+\section{最小例子}
+
+\begin{toybox}[title=玩具问题 A：隐状态即权重矩阵]
+传统 RNN：$h_t = \tanh(W_h h_{t-1} + W_x x_t)$，
+$h_t$ 是一个向量（$d$ 维），随数据流更新。
+
+TTT-RNN 思路（\citeauthor{sun2023ttt}，2023）：
+将 $h_t$ 替换为一个\textbf{权重矩阵} $\mS_t \in \R^{d \times d}$，
+定义更新规则：
+\[
+  \mS_t = \mS_{t-1} - \eta \nabla_{\mS} \ell(\mS_{t-1}; x_t)
+\]
+其中 $\ell$ 是一个自监督损失（如重建损失）。
+输出：$y_t = f(\mS_t, x_t)$。
+
+关键：这个梯度步骤完全\emph{在前向计算内}完成，不需要外部反向传播！
+\end{toybox}
+
+\section{直觉解释：把架构理解为 Learn-to-Learn}
+
+\citet{sun2023ttt} 的核心重构：
+传统监督学习的"训练 + 推断"两阶段，
+可以被重新理解为\textbf{嵌套循环}：
+\begin{itemize}
+  \item \textbf{外循环（Outer Loop）}：大参数 $\theta$（投影矩阵等）
+        通过大规模预训练学习"如何更新隐状态"的方式。
+  \item \textbf{内循环（Inner Loop）}：在推断序列上，
+        隐状态 $\mS_t$ 根据当前 token 的自监督信号进行一步梯度更新。
+\end{itemize}
+
+这与第 \ref{ch:bilevel} 章的 MAML 结构完全同构！
+区别在于：MAML 的内循环在测试时是\emph{离线执行}的（需要多个样本和反向传播），
+而 TTT-RNN 的内循环是\emph{在前向传播中内嵌实时执行}的。
+
+\section{数学形式化}
+
+\subsection*{内循环自监督目标}
+
+设输入 $x_t$ 被分為两部分：键输入 $\vx_t$（用于生成自监督目标）
+和查询输入 $\vq_t$（用于最终预测）。
+
+自监督损失（以最小二乘重建为例）：
+\begin{equation}
+  \ell(\mS; x_t) = \| \mS \vx_t - \text{sg}(\hat{v}_t) \|^2
+\end{equation}
+其中 $\hat{v}_t$ 是目标（可以是某种投影后的 $x_t$），$\text{sg}$ 是 stop-gradient。
+
+\subsection*{内循环更新规则}
+
+\begin{equation}
+  \mS_t = \mS_{t-1} - \eta \nabla_{\mS_{t-1}} \ell(\mS_{t-1}; x_t)
+  = \mS_{t-1} - \eta (\mS_{t-1} \vx_t - \hat{v}_t) \vx_t^\top
+  \label{eq:ttt_hidden_update}
+\end{equation}
+
+注意：这个更新恰好是\textbf{外积形式}——与第 \ref{ch:fastweights} 章的快权重更新一致！
+
+\subsection*{外循环（预训练）目标}
+
+\begin{equation}
+  \min_\theta \E_{x_{1:T}} \left[ \sum_{t=1}^T \mathcal{L}_\text{main}(g_\theta(\mS_t, \vq_t)) \right]
+\end{equation}
+
+$\theta$ 包含所有投影矩阵和外部网络参数；
+$\mS_t$ 依赖于 $\theta$ 的方式由内循环规则 \eqref{eq:ttt_hidden_update} 决定。
+
+\section{和 Attention 机制的联系}
+
+回顾第 \ref{ch:attention} 章：线性注意力实现了 $\mS_t = \mS_{t-1} + k_t v_t^\top$。
+式 \eqref{eq:ttt_hidden_update} 形如 $\mS_t = \mS_{t-1} - \eta (e_t k_t^\top)$，
+其中误差项 $e_t = \mS_{t-1} \vx_t - \hat{v}_t$。
+
+两者的结构完全一致——TTT 更新相当于带有\textbf{误差项修正}的注意力记忆写入。
+这使得"注意力、快权重、TTT 内循环"三者形成了一个连续的理论家族。
+
+\section{代表论文}
+
+\paragraph{\citet{sun2023ttt}} \textit{Learning to (Learn at Test Time)} (2023)：
+首次将序列模型重构为显式的内/外循环系统。
+
+\begin{labbox}
+\textbf{Lab 7}：在 NumPy/PyTorch 中实现一个极简 TTT-RNN 单元，
+用式 \eqref{eq:ttt_hidden_update} 更新 $\mS$，
+在在线线性回归序列（玩具问题 A）上与线性注意力的行为进行对比和可视化。
+\end{labbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解}：内循环的梯度步骤需要调用反向传播，因此很慢。
+
+\textbf{纠正}：式 \eqref{eq:ttt_hidden_update} 的梯度可以\textbf{解析计算}（闭式外积形式），
+无需反向传播框架。
+整个更新只是矩阵乘法和外积运算（详见第 \ref{ch:ttt_layers} 章）。
+\end{misconceptionbox}
+
+\section{练习题}
+
+\begin{exercise}
+将式 \eqref{eq:ttt_hidden_update} 与快权重更新 \eqref{eq:fastweight_update}（$\lambda=1$）
+对比，说明 TTT 内循环更新相当于用\textbf{带有误差修正}的外积写入。
+在 $\mS_{t-1} \vx_t = \hat{v}_t$（零误差）时，更新量是多少？
+\end{exercise}
+
+\begin{exercise}
+外循环参数 $\theta$ 控制了"如何更新 $\mS$"（即内循环的学习率 $\eta$、投影矩阵等）。
+如果 $\theta$ 是固定的（不做预训练），TTT-RNN 会退化成什么系统？
+\end{exercise}
+
+\begin{exercise}
+把 MAML（第 \ref{ch:bilevel} 章）的双层优化和 TTT-RNN 的内/外循环
+填写进下表，找出对应关系：
+
+\begin{tabular}{lll}
+\toprule
+维度 & MAML & TTT-RNN \\
+\midrule
+外循环参数 & $\theta$ & ? \\
+内循环参数 & $\phi_i$ & ? \\
+外循环数据 & Query Set & ? \\
+内循环数据 & Support Set & ? \\
+\bottomrule
+\end{tabular}
+\end{exercise}
+
+\section{本章小结}
+
+\begin{itemize}
+  \item TTT-RNN 把模型隐状态从"向量"升级为"矩阵（权重）"，
+        让每个 token 触发一步显式的自监督梯度步。
+  \item 内循环（显式梯度步）+ 外循环（大参数预训练）= 在序列里展开的 MAML。
+  \item 内循环更新具有外积结构，与线性注意力和快权重等价。
+  \item 这为第 \ref{ch:ttt_layers} 章的 TTT-Linear 和 TTT-MLP 奠定了基础。
+\end{itemize}

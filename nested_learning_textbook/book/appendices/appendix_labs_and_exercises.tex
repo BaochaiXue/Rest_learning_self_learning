@@ -1,0 +1,43 @@
+% appendices/appendix_labs_and_exercises.tex
+\chapter{Lab 汇总与动手实验指南}
+\label{app:labs}
+
+\section{环境准备}
+
+所有 Lab 均基于 Python 3.9+，以下依赖已经足够：
+
+\begin{lstlisting}[language=bash]
+pip install torch numpy matplotlib  # 核心
+pip install higher                   # Lab 3 (MAML) 可选
+\end{lstlisting}
+
+\section{Lab 索引}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Lab & 对应章节 & 核心概念 \\
+\midrule
+Lab 2 & 第 \ref{ch:why_test_time} 章 & 分布偏移 + TTT 自监督微调 \\
+Lab 3 & 第 \ref{ch:bilevel} 章 & MAML 正弦波 \\
+Lab 4 & 第 \ref{ch:fastweights} 章 & 外积联想记忆 \\
+Lab 5 & 第 \ref{ch:attention} 章 & 线性注意力递推 vs 朴素版 \\
+Lab 6 & 第\ref{ch:icl} 章 & ICL 与最小二乘对比 \\
+Lab 7 & 第 \ref{ch:ttt_bridge} 章 & TTT-RNN 单元（NumPy） \\
+Lab 8 & 第 \ref{ch:ttt_layers} 章 & TTT-Linear vs GRU \\
+Lab 9 & 第 \ref{ch:titans} 章 & Needle-in-Haystack 混合记忆 \\
+Lab 10 & 第 \ref{ch:unified} 章 & 在线 OLS 与 TTT-Linear 对比 \\
+Lab 11 & 第 \ref{ch:nested} 章 & NL 对应表（开放性思考） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Lab 设计原则}
+
+每个 Lab 的设计遵循以下约束：
+\begin{enumerate}
+  \item 代码不超过 200 行（含注释）
+  \item 运行时间不超过 5 分钟（CPU）
+  \item 有明确的"预期观察"——学生应该知道自己在验证什么
+  \item 失败或非预期结果同样值得分析——Lab 不是黑盒验证工具
+\end{enumerate}
