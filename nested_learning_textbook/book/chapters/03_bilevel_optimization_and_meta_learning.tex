@@ -413,6 +413,82 @@ meta_optimizer.step()
 真正的成本更多来自"需要用大量任务来形成有效元训练集"这个数据要求，而不是计算。
 \end{misconceptionbox}
 
+\section{神经科学直觉与类比边界}
+\label{sec:bilevel_neuro}
+
+\begin{neurosciencebox}[title=神经科学直觉：免疫系统的适应性学习]
+
+\textbf{类比对象}：
+人体\textbf{免疫系统}的两层防御结构
+可以帮助理解双层优化的核心逻辑。
+
+\begin{itemize}
+  \item \textbf{先天免疫（Innate Immunity）}：
+    进化在基因组中编码的固定防御机制（类似预训练的初始化 $\theta$）。
+  \item \textbf{适应性免疫（Adaptive Immunity）}：
+    对新病原体的快速特异性适应——
+    B 细胞通过亲和力成熟在数天内产生高亲和力抗体
+    （类似内循环的 $k$ 步梯度适应）。
+\end{itemize}
+
+\textbf{共同之处（算法层面）}：
+
+\begin{center}
+\begin{tabular}{p{5.5cm} p{5.5cm}}
+\toprule
+\textbf{免疫系统} & \textbf{MAML 双层优化} \\
+\midrule
+进化 = 外循环 & 元训练 = 外循环 \\
+亲和力成熟 = 内循环 & 任务适应 = 内循环 \\
+基因组 = 初始化 & $\theta$ = 共享初始化 \\
+抗体特异性 = 任务特化参数 & $\phi_i$ = 任务特化参数 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{这个类比帮助理解什么}：
+为什么需要两个时间尺度——慢的过程（进化/元训练）
+学习``如何快速适应''的策略，快的过程（免疫/内循环）
+利用这个策略对新挑战做特异性响应。
+
+\end{neurosciencebox}
+
+\begin{analogyboundarybox}[title=这个类比在哪里失效]
+
+\textbf{一、``外循环''的机制不同（实现层）}
+
+\begin{tabular}{p{5cm} p{8cm}}
+\textbf{MAML}
+& 外循环通过\textbf{反向传播穿过内循环}来计算梯度，
+  这是一种精确的、可微的优化过程。 \\
+\textbf{免疫系统}
+& ``外循环''是\textbf{自然选择}——
+  一种无梯度的、基于变异和筛选的优化。
+  没有显式的目标函数。 \\
+\end{tabular}
+
+\medskip\textbf{二、``内循环''的搜索方式不同}
+
+MAML 的内循环是\textbf{梯度下降}——
+沿损失函数的最陡方向移动。
+免疫系统的亲和力成熟是\textbf{随机突变 + 选择}——
+探索是随机的，没有梯度引导。
+
+\medskip\textbf{读者不应从这个类比推出}：
+\begin{itemize}
+  \item \textbf{[X]} ``MAML 模拟了免疫系统的适应过程''
+  \item \textbf{[X]} ``元学习的外循环等价于进化''
+  \item \textbf{[X]} ``内循环的梯度步等价于亲和力成熟''
+\end{itemize}
+
+\medskip
+\textbf{类比成立的层次}：两层时间尺度分离的学习结构。
+
+\textbf{类比失效的层次}：外循环机制（梯度 vs.\ 自然选择）、
+内循环搜索方式（梯度 vs.\ 随机突变）均不同。
+
+\end{analogyboundarybox}
+
 \section{练习题}
 \label{sec:bilevel_exercises}
 

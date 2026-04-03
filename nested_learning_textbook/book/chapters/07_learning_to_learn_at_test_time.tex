@@ -145,6 +145,74 @@ $\eta, x_t, v_t$ 都是如何生成的？它们是由\textbf{全局慢参数（S
 \textbf{纠正：}这面临极大的优化脆弱期。作为内层目标的梯度如果在训练初中期稍有不适当（例如外层因为对数步长参数分配不均等给出了太剧烈的目标驱动梯度要求），内部模型的更新会迅速失控并输出爆炸级的特征，导致灾难性的崩溃。因此内循环的学习结构在当前极力追求工程稳定（限制参数复杂性、强加规范化）。
 \end{misconceptionbox}
 
+\section{神经科学直觉与类比边界}
+\label{sec:l2l_neuro}
+
+\begin{neurosciencebox}[title=神经科学直觉：突触元可塑性——``学习如何学习''的生物对应]
+
+\textbf{类比对象}：
+神经科学中的\textbf{突触元可塑性（Synaptic Metaplasticity）}
+可以帮助理解``Learning to (Learn at Test Time)''的核心思想。
+
+元可塑性是指\textbf{学习规则本身可以被调控}——
+突触不仅可以改变强度（可塑性），
+其可塑性的\textbf{阈值和速率}也可以被历史活动改变。
+Abraham \& Bear (1996) 将此称为``可塑性的可塑性''。
+
+\textbf{共同之处（算法层面）}：
+\begin{center}
+\begin{tabular}{p{5.5cm} p{5.5cm}}
+\toprule
+\textbf{突触元可塑性} & \textbf{Learning to TTT} \\
+\midrule
+突触可塑性 = 内层学习 & $W^{\text{inner}}$ 的在线更新 \\
+元可塑性 = 调控学习速率 & 外层慢参数设定 $\eta$, $W_K$, $W_V$ \\
+历史活动调控阈值 & 预训练决定内循环的``如何学习'' \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{这个类比帮助理解什么}：
+为什么需要``学习如何学习''——
+固定的学习规则无法适应所有情境，
+需要一个更高层级的过程来调节学习行为本身。
+
+\end{neurosciencebox}
+
+\begin{analogyboundarybox}[title=这个类比在哪里失效]
+
+\textbf{一、调控的精度不同（实现层）}
+
+\begin{tabular}{p{5cm} p{8cm}}
+\textbf{Learning to TTT}
+& 外层通过端到端反向传播精确优化
+  内层的所有超参数（学习率、投影矩阵、目标函数系数）。 \\
+\textbf{突触元可塑性}
+& 调控通过局部的生化信号（钙离子浓度、受体磷酸化状态等）实现，
+  精度远低于梯度优化，且无法做端到端调控。 \\
+\end{tabular}
+
+\medskip\textbf{二、``内模型''的概念不同}
+
+在 Learning to TTT 中，内层状态 $W^{\text{inner}}$ 是一个明确的参数化模型，
+有输入、输出和目标函数。
+在生物系统中，没有``突触矩阵作为一个模型''的对应概念——
+突触可塑性是分布式的、局部的。
+
+\medskip\textbf{读者不应从这个类比推出}：
+\begin{itemize}
+  \item \textbf{[X]} ``内层网络等价于一组突触''
+  \item \textbf{[X]} ``元可塑性通过梯度实现''
+  \item \textbf{[X]} ``Learning to TTT 解释了大脑的元学习''
+\end{itemize}
+
+\medskip
+\textbf{类比成立的层次}：``学习规则本身可被调节''的两层结构。
+
+\textbf{类比失效的层次}：调控精度、内模型的抽象程度均不同。
+
+\end{analogyboundarybox}
+
 \section{练习题}
 \label{sec:l2l_exercises}
 
