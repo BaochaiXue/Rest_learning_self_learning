@@ -170,8 +170,75 @@ Transformer 接收该序列的前向计算，输出 $\hat{y}$ 能否逼近 ${w^*
 \textbf{纠正：}本章所展示的主要是“优化视角”（Optimizer View）的研究议程，说明 ICL 在某些任务上\textbf{可以被等同对待}为微调或学习。但在复杂语言任务（特别是翻译、提取）中，贝叶斯推断视角（Bayesian Inference 认为是在隐式识别上下文对应的元任务概率）也同样有力并有效。两者在更深层的数学上并不矛盾。在阅读时应保持一定的批判和边界感。
 \end{misconceptionbox}
 
+\section{神经科学直觉与类比边界}
+\label{sec:icl_neuro}
+
+\begin{neurosciencebox}[title=神经科学直觉：元学习与大脑的``学会如何学习'']
+
+\textbf{类比对象}：
+前额叶皮层（PFC）的\textbf{元学习能力}
+可以帮助理解 Transformer 如何``学会在上下文中做梯度下降''。
+
+Wang et al.\ (2018) 的研究表明，
+递归神经网络在大量不同任务上的元训练后，
+能够在 PFC 类的循环层中发展出
+\textbf{隐式的强化学习算法}——
+网络的前向传播本身等价于执行 Bayes-optimal RL。
+
+\textbf{共同之处（算法层面）}：
+\begin{center}
+\begin{tabular}{p{5.5cm} p{5.5cm}}
+\toprule
+\textbf{PFC 的元学习} & \textbf{Transformer 的 ICL} \\
+\midrule
+外循环 = DA 驱动的突触学习 & 外循环 = 大规模预训练 \\
+内循环 = PFC 活动动态 & 内循环 = 前向传播中的GD \\
+慢权重 = 突触强度 & 慢权重 = $W_K, W_V, W_Q$ \\
+快变量 = 瞬时活动模式 & 快变量 = 注意力权重 / KV cache \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{neurosciencebox}
+
+\begin{analogyboundarybox}[title=这个类比在哪里失效]
+
+\textbf{一、学习算法的实现不同（实现层）}
+
+\begin{tabular}{p{5cm} p{8cm}}
+\textbf{Transformer ICL}
+& 前向传播通过矩阵乘法精确执行梯度下降。
+  ``学会的算法''编码在投影矩阵的参数值中。 \\
+\textbf{PFC 元学习}
+& 学到的``内循环算法''分布在循环连接的动态中，
+  以活动模式的形式存在。
+  PFC 不做矩阵乘法，也不计算显式梯度。 \\
+\end{tabular}
+
+\medskip\textbf{二、``学会什么''的验证标准不同}
+
+Transformer 的 ICL-as-GD 等价性可以被\textbf{构造性地证明}
+（在线性任务上，可以直接写出 $W_K, W_V$ 的解析形式）。
+PFC 的元学习只有间接的行为证据——
+我们无法打开生物网络验证它``内部在运行什么算法''。
+
+\medskip\textbf{读者不应从这个类比推出}：
+\begin{itemize}
+  \item \textbf{[X]} ``Transformer 是 PFC 的计算模型''
+  \item \textbf{[X]} ``ICL 解释了人类的快速学习能力''
+  \item \textbf{[X]} ``预训练等价于多巴胺驱动的突触学习''
+\end{itemize}
+
+\medskip
+\textbf{类比成立的层次}：外循环学习``如何做内循环''的两层结构。
+
+\textbf{类比失效的层次}：实现机制、可验证性、学习规模均不同。
+
+\end{analogyboundarybox}
+
 \section{练习题}
 \label{sec:icl_exercises}
+
 
 \begin{exercise}
 \textbf{注意力实现二阶更新：}

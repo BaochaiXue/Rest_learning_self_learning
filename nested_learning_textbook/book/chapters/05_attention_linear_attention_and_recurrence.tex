@@ -407,6 +407,79 @@ Softmax 注意力使用指数核，无法写成有限维内积形式，因此不
 这个区别很重要，不能混淆。
 \end{misconceptionbox}
 
+\section{神经科学直觉与类比边界}
+\label{sec:attn_neuro}
+
+\begin{neurosciencebox}[title=神经科学直觉：注意力作为内容寻址记忆]
+
+\textbf{类比对象}：
+我们可以用\textbf{海马体的内容寻址记忆（Content-Addressable Memory）}
+来帮助理解注意力机制的核心计算。
+
+海马体 CA3 区的循环连接可以实现\textbf{模式补全（Pattern Completion）}：
+给定部分线索（query），通过与存储记忆（keys）的相似度匹配，
+回忆出完整的记忆（values）。
+
+\textbf{共同之处（算法层面）}：
+\begin{center}
+\begin{tabular}{p{5cm} p{5cm}}
+\toprule
+\textbf{海马体 CA3} & \textbf{注意力机制} \\
+\midrule
+存储模式 = 突触连接强度 & 键值缓存 = $K, V$ 矩阵 \\
+线索输入 = 部分模式 & 查询 = $q$ \\
+模式补全 = 循环网络收敛 & 输出 = 相似度加权聚合 \\
+存储容量 $\propto$ 神经元数 & KV cache $\propto N$（序列长度） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{这个类比帮助理解什么}：
+为什么``用相似度选择性检索''是一种有效的处理信息方式——
+因为它允许以线索（query）为索引，
+从大量存储中选择性地提取相关信息，
+而不是对所有信息做无差别处理。
+
+\end{neurosciencebox}
+
+\begin{analogyboundarybox}[title=这个类比在哪里失效]
+
+\textbf{一、存储与检索的分离（实现层）}
+
+\begin{tabular}{p{5cm} p{8cm}}
+\textbf{注意力机制}
+& 存储（写入 KV cache）和检索（query 乘法）
+  是\textbf{分离的}线性代数操作。
+  存储是精确的、无损的。 \\
+\textbf{海马体 CA3}
+& 存储和检索通过\textbf{同一组}循环连接实现。
+  存储是分布式的、有干扰的，
+  检索依赖于网络动力学的收敛（吸引子）。 \\
+\end{tabular}
+
+\medskip\textbf{二、容量限制的本质不同}
+
+注意力的容量限制是\textbf{计算性的}（$O(N^2)$ 复杂度），而非存储性的——
+$N$ 个 KV 对都被完整保留。
+海马体的容量限制是\textbf{表征性的}——
+由于干扰效应，存储的模式数不能超过约 $0.14 \times$ 神经元数。
+
+\medskip\textbf{读者不应从这个类比推出}：
+\begin{itemize}
+  \item \textbf{[X]} ``注意力等价于海马体的内容寻址''
+  \item \textbf{[X]} ``线性注意力的容量问题类似海马体的干扰''
+  \item \textbf{[X]} ``多头注意力对应海马体的多列结构''
+\end{itemize}
+
+\medskip
+\textbf{类比成立的层次}：\textit{计算目标}——
+两者都实现了``基于相似度的选择性检索''。
+
+\textbf{类比失效的层次}：存储/检索机制、
+容量限制的本质、动态行为均不同。
+
+\end{analogyboundarybox}
+
 \section{练习题}
 \label{sec:attn_exercises}
 

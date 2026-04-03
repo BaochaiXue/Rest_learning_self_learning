@@ -1,169 +1,514 @@
 % chapters/10_test_time_regression_and_unified_views.tex
-% 第10章：Test-Time Regression 与统一视角
+% Version 2.0 — B11-B26 compliant rewrite
 \chapter{统一视角：Test-Time Regression 与联想记忆}
 \label{ch:unified}
 
-\epigraph{``Much of the complexity in modern sequence modeling stems from different heuristic approaches to solving the exact same fundamental problem: sequential associative retrieval under limited memory.''}{--- A unifying view of memory}
+\epigraph{``All these models are solving the same optimization problem. They just don't know it yet.''}{--- 一种统一的解读}
 
+%─────────────────────────────────────────────
 \section{本章想回答什么问题}
+\label{sec:ttr_question}
+%─────────────────────────────────────────────
 
-我们在这本书中走过了一段漫长的旅程。
-从第 4 章的快权重联想记忆，到第 5 章的线性注意力递推，第 6 章的隐式梯度下降（ICL），
-再到第 7、8 章的 TTT Layers 把隐状态变成学习器，
-最后到第 9 章的 Titans 引入神经记忆和惊讶度门控。
+我们在这本书中走过了一段漫长的旅程：
+\begin{itemize}
+  \item 第~\ref{ch:fastweights}~章：快权重用外积 $\mS_t = \mS_{t-1} + v_t k_t^\top$ 写入联想记忆。
+  \item 第~\ref{ch:attention}~章：线性注意力的递推公式与快权重严格等价。
+  \item 第~\ref{ch:icl}~章：ICL 可以被理解为隐式梯度下降。
+  \item 第~\ref{ch:ttt_layers}~章：TTT-Layer 把隐状态变成通过梯度下降更新的学习器。
+  \item 第~\ref{ch:titans}~章：Titans 用 Surprise 门控选择性写入神经记忆。
+\end{itemize}
 
-看似我们学习了许多互不相干的模型架构和算法（Fast Weights, Linear Attention, ICL as GD, TTT, Titans）。
-但问题是：\textbf{这些模型真的互不相干吗？有没有一种底层数学语言，能够把它们全部写成同一个算式的不同变体？}
+现在的问题是：\textbf{这些模型真的互不相干吗？}
 
-本章的主旨是：\textbf{有}。这个语言就是 \textbf{Test-Time Regression (TTR, 测试时回归)} 和 \textbf{Online Optimization (在线优化)}。
+本章将展示：\textbf{它们都是在近似求解同一个优化问题}——
+\textbf{Test-Time Regression（TTR，测试时回归）}。
+区别仅在于使用的优化算法、截断策略和正则化方式。
 
-通过文献如 \citet{taylor2025test} 和 \citet{smith2025connected} 的统合工作，
-本章将展示：刚才列举的所有模型，本质上全是在尝试解决同一个“在线联想记忆流”上的测试时岭回归（Ridge Regression）优化问题。
-理解了这个统一视角，你就不再是“学习了几十种新架构”，而是“掌握了一个生成变体的方程族”。这是进入最终章（Nested Learning）前最重要的理论收束。
+理解了这个统一视角，你就不再是``学习了十种新架构''，
+而是``掌握了一个能生成所有变体的方程族''。
 
-\section{最小例子：在单一视角下看清所有变体}
+%─────────────────────────────────────────────
+\section{最小例子：在线联想回忆的统一性}
 \label{sec:ttr_minimal}
+%─────────────────────────────────────────────
 
-\begin{toybox}[title=玩具问题 F：在线联想回忆的同一性]
-假设你的模型依次观测到 $(k_1, v_1), (k_2, v_2), \ldots, (k_N, v_N)$。
-然后在时刻 $q$，模型需要基于查询 $q$，输出与历史上最匹配的 $k$ 所对应的 $v$。
+\begin{toybox}[title=玩具问题 F：从同一个目标函数推导出不同模型]
+设一个序列模型依次观测 $(k_1, v_1), (k_2, v_2), \ldots, (k_t, v_t)$，
+目标是维护一个状态矩阵 $\mS_t$，
+使得对任意查询 $q$，输出 $\hat{v} = \mS_t q$ 能尽可能准确地回忆出对应的值。
 
-所有序列模型都需要把这段历史提取成一个隐状态矩阵 $\mS$，当面临 $q$ 时输出 $\hat{v} = \mS q$。
-到底该怎么更新 $\mS$ 才能让它最好地记住这些历史？
-标准的思路是定义一个\textbf{回归目标函数}：
-\[
-  \min_{\mS} \quad \frac{1}{2} \sum_{i=1}^N \lambda^{N-i} \|\mS k_i - v_i\|^2 + \frac{\gamma}{2}\|\mS\|^2
-\]
-这在统计学里叫做\textbf{带指数时延折减的岭回归}。
-\begin{itemize}
-    \item \textbf{如果用一次最简单的梯度下降（步长设定为 1）来近似求解这个回归}，你得到的就是 \textbf{快权重（Fast Weights）}。
-    \item \textbf{如果把这个一层的近似用在序列预测的框架里}，你得到的就是 \textbf{线性自注意力（Linear Attention）}。
-    \item \textbf{如果把回归里固定矩阵 $\mS$ 替换成可微非线性权重 $W_{mlp}$} 并用 SGD，你得到的就是 \textbf{TTT-MLP}。
-    \item \textbf{如果你在这个回归中引入针对奇异值的门控系数（Surprise gating）来过滤低质量的 $(k,v)$}，你得到的就是 \textbf{Titans} 的机制和某些变种的 \textbf{Mamba}！
-\end{itemize}
-
-看到了吗？全都是在近似或试图精准地解同一个目标函数！
-\end{toybox}
-
-\section{直觉解释：优化的物理实体化}
-\label{sec:ttr_intuition}
-
-要建立这个统一视角，首先要抛弃“模型是在算力（FLOPs）”的视角，拥抱“模型是一段未被充分跑完的优化算法代码”的视角。
-
-我们面临的任务是如何用有限空间、流式（one-pass）地吸收无限长的数据（Associative Memory 联想记忆）。这天然是一个\textbf{在线优化（Online Optimization）}问题。
-每次来一个新数据点（新的 token 或新的键值对），我们不能回顾过去所有数据（因为算力和内存不允许），只能“就着当前这个状态”，结合“刚来的新数据产生的误差（Regret/Loss）”，通过梯度（Gradient）对状态进行\textbf{修补}。
-
-我们其实根本没有在设计“层结构”，\textbf{我们在设计的仅仅是一个特定优化器的单步推演公式}。我们把这个优化公式在代码图里包装了一下，接上输入和输出插头，然后宣告：“你看，这是一个全新的神级模型层架构！”
-
-\section{数学形式化：作为强力生成器的岭回归}
-\label{sec:ttr_math}
-
-我们深入推导一下这个基座生成方程：\textbf{Test-Time Regression (TTR)}。
-
-\subsection{基石定义}
-假设隐态参数为 $\mS \in \R^{d \times d}$。当前时间步 $t$ 我们得到 $x_t$（通过慢参数转换为 $k_t$ 和 $v_t$）。
-我们的“理想隐态”应该在观测了前 $t$ 个点后最小化以下加权回归：
+定义\textbf{带遗忘的岭回归}目标：
 \begin{equation}
-   \mathcal{L}_t(\mS) = \frac{1}{2} \left( \sum_{i=1}^t \alpha_i \|\mS k_i - v_i\|^2 + \gamma \|\mS\|_F^2 \right)
-   \label{eq:ttr_objective}
-\end{equation}
-其中 $\gamma$ 是防止参数过大的 L2 正则（对应我们熟悉的衰减项），$\alpha_i$ 可以被用作处理过去时间权重的遗忘设置或特征提取权重。
-
-\subsection{对 \eqref{eq:ttr_objective} 进行近似求解}
-在这个在线流问题里，由于矩阵太庞大我们无法每步进行由于要求二次项带来的计算逆矩阵的操作，最稳妥和极其省事的方法是：永远只跑一步通过最快下山方向的梯度法，那就是 SGD！
-在每一次步骤只考虑针对当前点 $i=t$ 所施加在已有矩阵基础上的拉动：
-
-由于 $\nabla_{\mS} \ell_{(k_t, v_t)} = (\mS_{t-1}k_t - v_t) k_t^\top$。
-用固定步长 $\eta$ 进行步进：
-\begin{equation}
-   \mS_t = \mS_{t-1} - \eta (\mS_{t-1}k_t - v_t) k_t^\top
-   \label{eq:ttr_sgd}
+  \mathcal{L}_t(\mS) = \frac{1}{2}\sum_{i=1}^{t} \lambda^{t-i} \|\mS k_i - v_i\|_2^2
+  + \frac{\gamma}{2}\|\mS\|_F^2
+  \label{eq:ttr_toy}
 \end{equation}
 
-这不正是我们在第 8 章写出的 TTT-Linear 的状态更替方程（方程式 \ref{eq:ttt_linear_grad}）吗？
-
-\subsection{特殊退化情形}
-如果在回归目标中，极其荒谬地不仅用梯度，而且还假定“当前的 $\mS_{t-1}$ 本来就是零或者极其稀疏，以至于 $\mS_{t-1}k_t \approx 0$”，那么公式会退化为什么？
-
-代入 $\mS_{t-1}k_t \to 0$ 到前述的步进：
-\begin{equation}
-   \mS_t = \mS_{t-1} + \eta v_t k_t^\top
-\end{equation}
-
-这！完全就是我们在第 4 章里苦心孤诣解释的外积构型的\textbf{快权重（Fast Weights）}与第 5 章里的\textbf{线性注意力（Linear Attention）的递推主导核心方程}！
-
-这在理论上揭示了：\textbf{线性注意力不过是对在线优化岭回归的一个没有使用真实闭环纠偏（不用当前状态作抵消）而仅以粗暴前馈的超短视低阶截断计算}。由于它缺乏抵消抗力项，使得它的抗干扰表达能力有着极大漏洞（这也是需要把它进一步提升为 TTT 的理由）。
-
-\section{代表论文精读与发展}
-\label{sec:ttr_papers}
-
-\paragraph{\citet{taylor2025test} — Test-time regression: a unifying framework ...}
-这篇重磅之作将过去五年几十种碎片化的语言序列构造成果通过在线凸优化严格还原成了各种数学参数条件改变的形式。其最深远的成就是：你可以通过给目标函数加上一种称为重估门控参数的手段或者更换一个求解矩阵逆的高阶逼近解，自然推导出具有动态反馈甚至具备二阶加速拟合的最优注意力替代品。这是序列工程从“搭积木试错”跨越到“定义求解体系然后推导”的分水岭。
-
-\paragraph{\citet{smith2025connected} — It's All Connected ...}
-同样是对底层逻辑的串联。文中证明了注意力偏差、带有持续化短板的序列抽取器实际上就是在不同形式（或具有显式神经网表达界，或由特定的参数空间构成）在线内存保留优化而已。这把我们带进了一个宏大叙事层。
-
-\section{和前后章节的关系}
-\label{sec:ttr_bridges}
-
-\begin{itemize}
-    \item \textbf{对第 \ref{ch:fastweights}--\ref{ch:titans} 章的综合}：本章是上文所有的最终统一解释。上文分别是以机制演变的历史顺序写出的发展历程；但在本章视点，所有机制只是同一个目标方程下的梯度下降截断选择。
-    \item \textbf{引出下一章的矛盾（第 \ref{ch:nested} 章 Nested Learning）}：到目前为止，这种“训练阶段学习预备，预测阶段流式优化”的双重过程已经被彻底验证与数学统一。但一个不可回避的最后哲学与系统级究极提问是：“如果学习就是测试的子集，那么一切深度的架构（甚至是模型层次的叠加）有没有可能压根就是一个幻觉？”这就会直接通向我们的深水压轴终章：Nested Learning 框架。
-\end{itemize}
-
-\begin{labbox}[title=Lab 10: 基于框架重头推导和部署变体层]
-\textbf{目标：}不借助具体的学术论文变体名称，直接通过修改目标函数的参数获得新网络架构并验证表现差距。
-
+现在观察以下三种``求解策略''的结果：
 \begin{enumerate}
-    \item 选定基座测试问题为 300 点的高扰动多元在线回归。
-    \item \textbf{基线：} 编写简单的线性矩阵更新 $\mS = \mS + v_t k_t^\top$（无纠偏）。记录全套累计误差曲线。
-    \item \textbf{第一次推导改造：}基于回归误差实现一次带有预测反馈消除的梯度步 $\mS = \mS - \eta(\mS k_t - v_t)k_t^\top$。设置不同 $\eta$ 并记录它的平滑表现，观察是否有比上一步拥有更具抗多扰动抗力。
-    \item \textbf{第二次进阶推导：}如果在这个回归里加入非常强的 L2 衰减项并且结合当前梯度的更新（相当于引入带有记忆过滤或者称为步进松弛）。这就是目前热门开源模型某些特定的变体核心层！
+  \item \textbf{一步 SGD，忽略预测反馈}（$\mS_{t-1} k_t \approx 0$）：
+    $\mS_t = \mS_{t-1} + v_t k_t^\top$
+    $\Rightarrow$ \textbf{快权重 / 线性注意力}。
+
+  \item \textbf{一步 SGD，保留预测反馈}：
+    $\mS_t = \mS_{t-1} - \eta(\mS_{t-1} k_t - v_t) k_t^\top$
+    $\Rightarrow$ \textbf{TTT-Linear}。
+
+  \item \textbf{一步 SGD + Surprise 门控}（仅当 $\|\mS_{t-1} k_t - v_t\|$ 大时更新）：
+    $\Rightarrow$ \textbf{Titans 的长时记忆}。
 \end{enumerate}
 
-通过修改基础代价函数的惩罚元并施加一次梯度生成数学公式，自己推导出了超越注意力的自定义强化核。
-\end{labbox}
+\textbf{结论}：
+三个看似不同的``模型架构''，
+其实都是对\textbf{同一个回归目标}的不同近似求解！
+\end{toybox}
 
-\begin{misconceptionbox}
-\textbf{常见误解 1：既然所有模型都是在做同样的 Test-Time Regression 近似，那么它们在实际使用中的效果也是差不多的，选哪个都可以。}
+%─────────────────────────────────────────────
+\section{直觉解释：优化的物理实体化}
+\label{sec:ttr_intuition}
+%─────────────────────────────────────────────
 
-\textbf{纠正：}错。虽然理论上同源，但是哪怕一点“极其微小”的不同截断或近似计算都会引发硬件实施代价与模型特征捕猎的云泥之别。比如没有残差冲抵的“粗略积分”（线性注意力）虽然干扰大，但执行是最高效极快的硬件吞吐量首选。而加入了门控或是采用真实多层 MLP 用链式规则实施精准逼近 TTR 的方案虽然精确地把持住了记忆，但吞吐量下降且内存调压沉重。这就是为何学术同源但工业不同派的真相。
-\end{misconceptionbox}
+理解这个统一视角需要一个范式转换：
 
-\begin{misconceptionbox}
-\textbf{常见误解 2：有了这一套完整的框架体系，说明我们完全弄懂了 Transformer 及其后续大模型智能涌现的全部本质，深度学习成了完全白盒。}
+\begin{quote}
+\textbf{不要把序列模型理解为``一种层结构''，
+而要理解为``一个未被充分跑完的优化算法在硬件上的截断展开''。}
+\end{quote}
 
-\textbf{纠正：}极其错误的膨胀认知。Test-Time Regression 或其它优化视角仅仅在数学算子上提供了明确的“等变映射解读”，这种证明是机制层面的结构澄清，并不等价于“特征涌现的生成机理被破译”。这就好像我们明白了人类的肌肉蛋白质是由某种氨基酸缩合生成，但这完全不能直接跨层级去解释为什么你能产生并用复杂的肌肉行为跳出一支天鹅湖舞蹈。
-\end{misconceptionbox}
+具体来说：
+\begin{enumerate}
+  \item 我们面临的核心问题是\textbf{在线联想回忆}：
+    用有限的内存（$d \times d$ 的状态矩阵）
+    存储不断到来的键-值对，并在查询时高效检索。
 
-\section{练习题}
-\label{sec:ttr_exercises}
+  \item 这天然是一个\textbf{在线优化问题}：
+    每来一个新数据点，无法回顾所有历史
+    （内存不够），只能``就着当前状态''做修补。
 
-\begin{exercise}
-\textbf{推演递归的极限：}假设 $\mS_t$ 是通过针对平方回归的优化步骤得到。随着序列流步骤到达无穷 $t \to \infty$，且键均值不为零有系统性偏置分布时，单纯基于梯度的一阶步进 $\mS$ 会面临怎样的解漂移（Drift）问题？解释为何我们一定需要在这种理论模型的前方加上规范化提取器去归一操作键的特征。
-\end{exercise}
+  \item 不同的``修补策略''（优化算法的选择）
+    导致了不同的``层结构''——
+    外积写入、梯度步、门控写入……
+\end{enumerate}
 
-\begin{exercise}
-\textbf{与在线二阶算法的结合：}既然使用一步一阶最速下降（SGD）是由于防止每步求解密集矩阵逆太耗时。如果在目标方程引入经典的 Recursive Least Squares（递归最小二乘算法，详见附录部分）里面的谢尔曼-莫里森（Sherman-Morrison）恒等式做秩一来避免复杂的满秩求解操作。尝试写出更新步骤的样子？它有什么好处为什么还不够普及？
-\end{exercise}
+所以我们其实不是在``设计层''，
+而是在\textbf{选择一个在线优化器的单步更新公式}，
+然后把它包装成一个``网络层''。
 
-\begin{exercise}
-\textbf{解释 Titans门控的源起：}尝试将 Titans 中所谓的“Surprise值（惊讶阈值激增）”的检测操作等效对应到刚才介绍的回归目标损失方程里去：当哪一项的值在什么情况下会急剧扩大到使得门限打开被大幅写入覆盖的可能？如果这个大误差是被恶意制造出来的错误监督数据，这会导致怎样的系统崩溃风险。
-\end{exercise}
+%─────────────────────────────────────────────
+\section{数学形式化：Test-Time Regression}
+\label{sec:ttr_math}
+%─────────────────────────────────────────────
 
-\section{本章小结}
-\label{sec:ttr_summary}
+\subsection{基石定义}
+
+\begin{definition}[Test-Time Regression (TTR)]
+\label{def:ttr}
+设隐态参数为 $\mS \in \R^{d_v \times d_k}$。
+在时间步 $t$，输入 token $x_t$
+通过慢参数（投影矩阵）转换为 $k_t = W_K x_t$ 和 $v_t = W_V x_t$。
+
+理想状态 $\mS_t^*$ 应最小化以下加权岭回归：
+\begin{equation}
+  \mathcal{L}_t(\mS) = \frac{1}{2}\sum_{i=1}^{t} \alpha_i \|\mS k_i - v_i\|_2^2
+  + \frac{\gamma}{2}\|\mS\|_F^2
+  \label{eq:ttr_objective}
+\end{equation}
+其中 $\alpha_i \ge 0$ 是每个时间点的权重（可用于实现遗忘 $\alpha_i = \lambda^{t-i}$），
+$\gamma$ 是 L2 正则系数。
+\end{definition}
+
+\subsection{闭式解：Recursive Least Squares (RLS)}
+
+目标函数~\eqref{eq:ttr_objective} 是关于 $\mS$ 的二次函数，
+存在闭式解：
+
+\begin{equation}
+  \mS_t^* = V_t K_t^\top \left(K_t K_t^\top + \gamma I\right)^{-1}
+  \label{eq:ttr_closedform}
+\end{equation}
+其中 $K_t = [\sqrt{\alpha_1} k_1, \ldots, \sqrt{\alpha_t} k_t] \in \R^{d_k \times t}$，
+$V_t$ 类似定义。
+
+这个闭式解可以通过 \textbf{Sherman–Morrison 公式}递推计算：
+\begin{align}
+  P_t &= P_{t-1} - \frac{P_{t-1} k_t k_t^\top P_{t-1}}{1 + k_t^\top P_{t-1} k_t}
+  \label{eq:rls_P} \\
+  \mS_t &= \mS_{t-1} + (v_t - \mS_{t-1} k_t) k_t^\top P_t
+  \label{eq:rls_S}
+\end{align}
+其中 $P_t \in \R^{d_k \times d_k}$ 是精度矩阵的逆
+（初始化 $P_0 = \gamma^{-1} I$）。
+
+\begin{remark}
+RLS 在每步需要 $O(d_k^2)$ 的矩阵运算来维护 $P_t$。
+这虽然比重新计算逆矩阵（$O(d_k^3)$）高效，
+但在 $d_k$ 很大时仍然不实用。
+正是这个成本驱动了我们转向更粗糙但更便宜的近似。
+\end{remark}
+
+\subsection{一阶近似：在线 SGD}
+
+不求精确解，而是对每个新数据点 $(k_t, v_t)$ 只做一步 SGD：
+
+\begin{equation}
+  \nabla_{\mS} \ell_t = (\mS_{t-1} k_t - v_t) k_t^\top
+\end{equation}
+
+\begin{equation}
+  \mS_t = \mS_{t-1} - \eta (\mS_{t-1} k_t - v_t) k_t^\top
+  \label{eq:ttr_sgd}
+\end{equation}
+
+\textbf{这就是 TTT-Linear 的状态更新公式}
+（第~\ref{ch:ttt_layers}~章式~\eqref{eq:ttt_linear_grad}）。
+
+\subsection{极端截断：忽略预测反馈}
+
+如果进一步假设 $\mS_{t-1} k_t \approx 0$
+（当前状态对新键的预测约为零——
+在 $\mS$ 初始化为零且键近似正交时这是合理的），
+则梯度退化为：
+
+\begin{equation}
+  \nabla_{\mS} \ell_t \approx -v_t k_t^\top
+\end{equation}
+
+代入更新公式（取 $\eta = 1$）：
+\begin{equation}
+  \mS_t = \mS_{t-1} + v_t k_t^\top
+  \label{eq:ttr_degenerate}
+\end{equation}
+
+\textbf{这就是快权重 / 线性注意力的递推公式}
+（第~\ref{ch:attention}~章式~\eqref{eq:linear_attn_recurrence}）。
+
+\begin{insight}[title=线性注意力是在线回归的``最粗暴''近似]
+线性注意力不是一种``独立发明的机制''，
+而是对在线岭回归目标的一步 SGD 求解中，
+进一步忽略了预测反馈项 $\mS_{t-1} k_t$ 后得到的极端截断。
+它之所以有时性能不足，
+正是因为缺少了这个闭环纠偏项。
+TTT-Layer 通过保留这个项来获得更好的记忆质量。
+\end{insight}
+
+%─────────────────────────────────────────────
+\section{统一表格：所有模型作为 TTR 特例}
+\label{sec:ttr_unification}
+%─────────────────────────────────────────────
+
+\begin{center}
+\begin{tabular}{p{2.5cm}p{3.5cm}p{2.5cm}p{3.5cm}}
+\toprule
+\textbf{模型} & \textbf{求解策略} & \textbf{保留反馈？} & \textbf{额外机制} \\
+\midrule
+快权重 & 1 步 SGD & 否 & 无 \\
+线性注意力 & 1 步 SGD & 否 & $= $ 快权重 \\
+RetNet & 1 步 SGD & 否 & 衰减 $\lambda^{t-i}$ \\
+TTT-Linear & 1 步 SGD & \textbf{是} & 无 \\
+TTT-MLP & 1 步 SGD & \textbf{是} & 非线性内层模型 \\
+Titans LTM & 1 步 SGD & \textbf{是} & Surprise 门控 \\
+RLS (假想) & 精确闭式解 & \textbf{是} & $P_t$ 精度矩阵 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+每一行的区别仅在于：
+对\textbf{同一个} TTR 目标函数~\eqref{eq:ttr_objective}
+选择了不同的（a）优化算法、（b）截断策略、（c）附加门控。
+
+%─────────────────────────────────────────────
+\section{Worked Example：从 TTR 推导 TTT-Linear}
+\label{sec:ttr_worked}
+%─────────────────────────────────────────────
+
+\begin{example}[从 TTR 推导 TTT-Linear 的更新规则]
+\textbf{设定}：$d_k = d_v = 3$，$\gamma = 0$（无正则），$\eta = 0.1$。
+
+时间步 $t=1$：$k_1 = (1, 0, 0)^\top$，$v_1 = (3, 1, 2)^\top$，$\mS_0 = 0_{3 \times 3}$。
+
+\textbf{TTR-SGD 更新}：
+\begin{align}
+  \text{预测} &: \mS_0 k_1 = 0 \\
+  \text{残差} &: v_1 - \mS_0 k_1 = (3, 1, 2)^\top \\
+  \text{梯度} &: -(v_1 - \mS_0 k_1) k_1^\top = -(3, 1, 2)^\top (1, 0, 0) = \begin{pmatrix} -3 & 0 & 0 \\ -1 & 0 & 0 \\ -2 & 0 & 0 \end{pmatrix} \\
+  \mS_1 &= \mS_0 - 0.1 \times \text{梯度} = \begin{pmatrix} 0.3 & 0 & 0 \\ 0.1 & 0 & 0 \\ 0.2 & 0 & 0 \end{pmatrix}
+\end{align}
+
+时间步 $t=2$：$k_2 = (0, 1, 0)^\top$，$v_2 = (0, 5, 0)^\top$。
+
+\textbf{TTR-SGD 更新}（注意保留了预测反馈！）：
+\begin{align}
+  \text{预测} &: \mS_1 k_2 = (0, 0, 0)^\top \quad (\text{因为 } k_2 \text{ 的第 1 分量为 0}) \\
+  \text{残差} &: v_2 - \mS_1 k_2 = (0, 5, 0)^\top \\
+  \mS_2 &= \mS_1 + 0.1 \times (0, 5, 0)^\top (0, 1, 0) = \begin{pmatrix} 0.3 & 0 & 0 \\ 0.1 & 0.5 & 0 \\ 0.2 & 0 & 0 \end{pmatrix}
+\end{align}
+
+\textbf{查询}：$q = k_1 = (1, 0, 0)^\top$：
+$\hat{v} = \mS_2 q = (0.3, 0.1, 0.2)^\top = 0.1 \times v_1$。
+回忆不完美（因为 $\eta = 0.1 < 1$），但方向正确。
+
+\textbf{对比线性注意力}（忽略预测反馈，$\eta = 1$）：
+$\mS_2^\text{LA} = v_1 k_1^\top + v_2 k_2^\top$，
+查询 $q = k_1$ 得 $\hat{v} = v_1$——精确回忆（因为 $k_1 \perp k_2$）。
+
+\textbf{对比 TTT-Linear}（保留预测反馈，$\eta = 1$）：
+$\mS_2^\text{TTT}$ 的计算与上述相同但 $\eta = 1$，也得到精确回忆。
+
+\textbf{结论}：当键正交时，TTT-Linear 和线性注意力给出相同结果。
+它们的差异在键\textbf{非正交}时体现——
+TTT-Linear 的预测反馈项可以抑制干扰。
+\end{example}
+
+%─────────────────────────────────────────────
+\section{神经科学直觉与类比边界}
+\label{sec:ttr_neuro}
+%─────────────────────────────────────────────
+
+\begin{neurosciencebox}[title=神经科学直觉：Hebbian 学习与误差驱动学习的统一]
+
+\textbf{类比对象}：
+我们可以用\textbf{Hebbian 学习}和\textbf{误差驱动学习（Error-Driven Learning）}
+这两种神经科学范式来帮助理解 TTR 框架中的两端特例。
+
+在神经科学中，突触可塑性有两个经典模型：
+\begin{itemize}
+  \item \textbf{Hebb 规则}：``共同激活的神经元加强连接''——
+    $\Delta w \propto v \cdot k$（外积形式）。
+    这是一种\textbf{无监督的、正反馈的}学习规则。
+
+  \item \textbf{Delta 规则 / LMS}：
+    $\Delta w \propto (v - w^\top k) \cdot k$（预测误差形式）。
+    这是一种\textbf{有闭环纠偏的}学习规则。
+\end{itemize}
+
+\textbf{共同之处（算法层面）}：
+
+TTR 框架中，快权重/线性注意力的更新
+$\mS_t = \mS_{t-1} + v_t k_t^\top$
+在形式上等同于 Hebb 规则（外积写入）。
+而 TTT-Linear 的更新
+$\mS_t = \mS_{t-1} - \eta(\mS_{t-1} k_t - v_t) k_t^\top$
+在形式上等同于 Delta 规则（误差驱动写入）。
+
+TTR 框架把这两者统一到一个连续谱上：
+它们是同一个目标函数在不同截断程度下的产物。
+
+\end{neurosciencebox}
+
+\begin{analogyboundarybox}[title=这个类比在哪里失效]
+
+\textbf{一、学习信号的来源不同（信息流层）}
+
+\begin{tabular}{p{5cm} p{8cm}}
+\textbf{TTR 框架}
+& $(k_t, v_t)$ 由全局慢参数 $W_K, W_V$ 从输入 $x_t$ 投影得到。
+  学习目标是全局端到端训练的结果，
+  已经包含了对``什么信息值得记住''的高层判断。 \\
+\textbf{Hebb / Delta 规则}
+& 学习信号是\textbf{局部的}——
+  仅依赖突触前后的活动，没有全局目标函数。
+  神经元不知道自己的学习是否有助于``整体任务''。 \\
+\end{tabular}
+
+\medskip\textbf{二、``闭环''的含义不同（实现层）}
+
+TTT-Linear 的``预测反馈'' $\mS_{t-1} k_t$
+是通过矩阵乘法精确计算的。
+生物的误差信号（如小脑的攀缘纤维信号）
+是通过专门的神经回路传递的，
+具有延迟、噪声和容量限制。
+
+\medskip\textbf{读者不应从这个类比推出}：
+\begin{itemize}
+  \item \textbf{[X]} ``线性注意力就是 Hebbian 学习''
+  \item \textbf{[X]} ``TTT-Linear 实现了大脑的误差驱动学习''
+  \item \textbf{[X]} ``TTR 框架解释了大脑如何学习''
+\end{itemize}
+
+\medskip
+\textbf{类比成立的层次}：\textit{数学形式}——
+外积 vs.\ 误差修正的二元性在两个系统中都存在。
+
+\textbf{类比失效的层次}：信号来源（全局 vs.\ 局部）、
+误差传递机制、学习的目的性均不同。
+
+\end{analogyboundarybox}
+
+%─────────────────────────────────────────────
+\section{代表论文精读}
+\label{sec:ttr_papers}
+%─────────────────────────────────────────────
+
+\paragraph{\citet{taylor2025test} --- Test-Time Regression: A Unifying Framework}
+这篇论文将过去几年的十多种序列模型架构
+通过在线凸优化的语言归约为同一个目标函数的不同近似。
+核心贡献：证明了通过改变 TTR 目标函数的正则化项、
+求解策略和门控参数，
+可以系统地推导出 RetNet、Mamba、TTT-Linear
+等多种``看似独立''的模型层。
+这是序列模型设计从``搭积木试错''
+转向``从目标函数推导''的分水岭。
+
+\paragraph{\citet{smith2025connected} --- It's All Connected}
+从不同角度建立了类似的统一。
+文中证明了注意力偏置、序列提取器、在线内存优化
+之间的形式联系，进一步印证了 TTR 视角的普遍性。
+
+%─────────────────────────────────────────────
+\section{和前后章节的关系}
+\label{sec:ttr_bridges}
+%─────────────────────────────────────────────
 
 \begin{itemize}
-    \item \textbf{理论归一：}本章彻底扫除了“堆砌概念”的迷雾，利用同一且泛用的在线非条件优化与测试时回归目标重塑了所有的模型层原理基底。
-    \item \textbf{截断产生架构：}快权重和基础线性类模型在理论方程里无非就是忽略了反馈或惩罚项下的极速退化版本；TTT 具有残差补偿纠偏且通过升格神经网络获得了宽阔容量拟真域。
-    \item \textbf{方法论跃迁：}这极大幅度地颠覆了序列模型研发者的工作习惯。模型工程从以前被动的结构调参演化为了针对明确回归约束与资源约束在数学分析推导下降解并用硬件转写的过程。
-    \item \textbf{哲学收敛的终点：}当我们将所有的推断和学习合并到这一个底层等价操作图内，这就不只是一种特定领域的突破，而是在准备迎接最纯粹的系统框架提纯（也就是在下一章我们将踏入最后也是终极研究议程境界的嵌套学习宇宙中）。
+  \item \textbf{对第~\ref{ch:fastweights}--\ref{ch:titans}~章的综合}：
+    本章是前面所有模型章节的统一解释。
+    之前按历史顺序介绍的机制，
+    在本章被归约为同一个目标函数下的不同求解策略。
+
+  \item \textbf{通向第~\ref{ch:nested}~章（Nested Learning）}：
+    TTR 统一了单层的状态更新规则。
+    但如果多个层叠在一起，每层都在做 TTR，
+    层间的参数传导如何组织？
+    这正是 Nested Learning 要回答的问题——
+    把 TTR 推广到多层嵌套的形式。
+\end{itemize}
+
+%─────────────────────────────────────────────
+\section{实验}
+\label{sec:ttr_lab}
+%─────────────────────────────────────────────
+
+\begin{labbox}[title=Lab 10：从 TTR 目标函数推导并实验对比三种层]
+\textbf{目标}：不参考任何具体论文的架构名称，
+直接通过修改目标函数的求解策略推导出三种不同的状态更新层，
+并用在线回归实验对比它们的性能。
+
+\begin{enumerate}
+  \item \textbf{数据}：生成 $T = 500$ 步的在线回归序列，$d = 16$，
+    键非正交（随机高斯），每 100 步切换一次目标函数参数。
+
+  \item \textbf{方法 A}（无反馈）：
+    $\mS_t = \mS_{t-1} + v_t k_t^\top$。
+    记录累积误差。
+
+  \item \textbf{方法 B}（有反馈）：
+    $\mS_t = \mS_{t-1} - \eta(\mS_{t-1} k_t - v_t) k_t^\top$，$\eta = 0.01$。
+    记录累积误差。
+
+  \item \textbf{方法 C}（有反馈 + 衰减）：
+    $\mS_t = \lambda \mS_{t-1} - \eta(\mS_{t-1} k_t - v_t) k_t^\top$，
+    $\lambda = 0.99$，$\eta = 0.01$。
+    记录累积误差。
+
+  \item \textbf{分析}：
+    绘制``时间步 vs.\ 累积 MSE''曲线。
+    在任务切换点附近，哪种方法恢复最快？
+\end{enumerate}
+
+\textbf{预期观察}：
+方法 B 优于方法 A（闭环纠偏）；
+方法 C 在任务切换后恢复最快（衰减帮助遗忘旧信息）。
+\end{labbox}
+
+%─────────────────────────────────────────────
+\section{常见误解}
+\label{sec:ttr_misconceptions}
+%─────────────────────────────────────────────
+
+\begin{misconceptionbox}
+\textbf{误解 1}：既然所有模型都在解同一个优化问题，
+那么它们的实际性能应该差不多。
+
+\textbf{纠正}：
+理论上同源，但``极其微小''的近似差异
+会导致实际性能和硬件效率的巨大差异。
+例如：线性注意力（无反馈）在 GPU 上吞吐量最高，
+但记忆质量差；
+TTT-MLP（有反馈 + 非线性）记忆质量好，
+但每步需要对内层 MLP 做反向传播，吞吐量显著下降。
+选择哪个``近似''取决于具体的硬件约束和任务需求。
+\end{misconceptionbox}
+
+\begin{misconceptionbox}
+\textbf{误解 2}：TTR 框架完全解释了深度学习的一切。
+
+\textbf{纠正}：
+TTR 在\textbf{机制层面}提供了一种``优化算子''的统一语言。
+但``统一了底层运算的数学形式''
+不等于``解释了复杂行为的涌现''。
+大模型的推理能力、多模态对齐、
+对抗鲁棒性等高层现象，
+至今没有被任何单一框架充分解释。
+TTR 是理解机制的有力工具，不是万能理论。
+\end{misconceptionbox}
+
+%─────────────────────────────────────────────
+\section{练习题}
+\label{sec:ttr_exercises}
+%─────────────────────────────────────────────
+
+\begin{exercise}
+\textbf{推导 RetNet}：
+从 TTR 目标函数~\eqref{eq:ttr_objective} 出发，
+设 $\alpha_i = \lambda^{t-i}$（指数衰减权重），
+$\gamma = 0$，优化策略为``一步 SGD，忽略预测反馈''。
+推导出 RetNet 的递推更新公式
+$\mS_t = \lambda \mS_{t-1} + v_t k_t^\top$。
+说明衰减因子 $\lambda$ 在目标函数中的含义。
+\end{exercise}
+
+\begin{exercise}
+\textbf{RLS 的递推推导}：
+使用 Sherman--Morrison 恒等式
+$(A + uv^\top)^{-1} = A^{-1} - \frac{A^{-1} u v^\top A^{-1}}{1 + v^\top A^{-1} u}$，
+从 $\mS_{t-1}^* = V_{t-1} K_{t-1}^\top (K_{t-1} K_{t-1}^\top + \gamma I)^{-1}$
+推导出 $\mS_t^*$ 的递推更新公式~\eqref{eq:rls_P}--\eqref{eq:rls_S}。
+说明为什么 RLS 虽然是``精确解''，
+但在实践中不如一步 SGD 常用（提示：$P_t$ 的维护代价）。
+\end{exercise}
+
+\begin{exercise}
+\textbf{Surprise 门控的 TTR 解读}：
+将 Titans 中的 Surprise 值 $s_t = \|\mS_{t-1} k_t - v_t\|_2^2$
+对应到 TTR 目标函数~\eqref{eq:ttr_objective} 中的哪一项？
+解释为什么高 Surprise 表示``当前状态对新数据的预测很差''，
+因此应该加大更新步长。
+\end{exercise}
+
+%─────────────────────────────────────────────
+\section{本章小结}
+\label{sec:ttr_summary}
+%─────────────────────────────────────────────
+
+\begin{itemize}
+  \item \textbf{TTR 统一视角}：
+    快权重、线性注意力、TTT-Linear、TTT-MLP、Titans 的长时记忆
+    都可以被理解为对同一个在线岭回归目标的不同近似求解。
+    区别仅在于优化算法、截断策略和附加门控。
+
+  \item \textbf{核心方程}：
+    TTR 目标函数~\eqref{eq:ttr_objective}
+    $\to$ 一步 SGD 得到通用更新 $\mS_t = \mS_{t-1} - \eta(\mS_{t-1} k_t - v_t) k_t^\top$
+    $\to$ 忽略反馈退化为外积写入 $\mS_t = \mS_{t-1} + v_t k_t^\top$。
+
+  \item \textbf{方法论转变}：
+    序列模型设计从``搭积木试错''转向
+    ``从目标函数推导新变体''。
+    通过修改正则化项、求解策略和门控参数，
+    可以系统地推导出新的模型层。
+
+  \item \textbf{闭式解 vs.\ 近似}：
+    RLS 给出精确闭式解但计算代价高；
+    一步 SGD 便宜但不精确；
+    实际系统在两端之间权衡。
 \end{itemize}
 
 \paragraph{读完本章，你应该能够：}
 \begin{itemize}
-    \item 准确复现怎样将普通的单步梯度回归更新方程式在退化特定项后无缝转换为外积关联形态也就是曾经的自注意。
-    \item 对于不清楚内部计算过程的模型论文，能够直接采用寻找它的拟合优化约束目标的倒装法看透其底层的学习本质和改进优劣代价界限。
-    \item 防止对机制性统一产生过度狂热而不严谨地外延：清楚掌握机制层等价与涌现特征复杂系仍存在的不可知白墙。
+  \item 写出 TTR 目标函数，并从中推导出快权重、TTT-Linear 的更新公式
+  \item 解释线性注意力为什么是``最粗暴的近似''
+        ——因为它忽略了预测反馈项
+  \item 对一个新提出的序列模型层，判断它在 TTR 框架中对应的优化策略
+  \item 用 Sherman--Morrison 公式推导 RLS 的递推更新
 \end{itemize}
