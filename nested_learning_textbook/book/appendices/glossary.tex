@@ -1,33 +1,39 @@
 % appendices/glossary.tex
-\chapter{术语表}
-\label{app:glossary}
+\chapter{术语、符号与神经科学对照表}
+\label{ch:glossary}
 
-\begin{description}
-  \item[Test-Time Training (TTT, 2020)] 在测试阶段对自监督辅助任务做梯度下降，更新持久化参数 $\theta$。参见 \citet{sun2020ttt}。
+为防止跨章阅读时的混淆，并在大量使用神经科学辅助直觉时保持学术严谨边界感，特提供以下对照表。
 
-  \item[TTT Layer (TTT-Linear / TTT-MLP, 2024)] 将隐状态定义为微型学习器的权重矩阵，在前向传播内嵌执行梯度步。参见 \citet{sun2024ttt}。
+\section{核心数学与架构符号}
 
-  \item[In-Context Learning (ICL)] 通过在 prompt 中给出示例，让模型在参数不变的情况下改善预测。
+\begin{itemize}
+    \item $\theta$: \textbf{全局慢权重 / 静态预训练参数} (Slow Weights / Global Parameters)。在庞大离线数据中心通过几十天上千步才被更新一丁点的巨大骨架。在推断时被物理锁定。
+    \item $\mS_t, \Phi_t$: \textbf{隐状态参数 / 内部快学习器} (Fast Weights / Inner State parameters)。在一句话前向推演时，由于遇到了当前这句话的特定上下文而实时被以极少数步修改的张量。生命周期与推断共存亡。
+    \item $\mathcal{L}_{\text{outer}}$: \textbf{外部（预训练）损失}。用于确定产生大常识规律 $\theta$ 走向的损失。
+    \item $\mathcal{L}_{\text{inner}}$: \textbf{内部（推断期）损失}。在推演过程时自我构造的微型纠偏局部损失。
+    \item $s_t$: \textbf{惊诧度（Surprise）}。用来衡量当前观察对象与之前模型对世界预估误差的范数差量系数标尺，控制可塑性大小。
+\end{itemize}
 
-  \item[Fast Weights] 在前向传播中通过外积动态生成的临时记忆矩阵，介于激活值（向量）和持久参数（慢权重）之间。参见 \citet{ba2016fastweights}。
+\section{机器学习术语 vs. 神经科学易混淆概念映射}
 
-  \item[Linear Attention] 去掉 Softmax 的自注意力，可以写成线性递推形式（$O(Nd^2)$），与快权重数学等价。
+在本书中，我们高度调用下述神经元理作为\textbf{辅助直觉的平行层（非替代等价物）}。请牢记这些映射及其不可僭越的失真边界：
 
-  \item[MAML] 模型无关元学习。通过双层优化寻找最优初始化点，使得模型能以少量梯度步适应新任务。参见 \citet{finn2017maml}。
+\begin{center}
+\begin{tabular}{p{4cm} p{4cm} p{6cm}}
+\toprule
+\textbf{人工智能/工程概念} & \textbf{用作直觉的生物概念} & \textbf{关键的严禁等同边界} \\
+\midrule
+上下文视窗隐状态维持 (Context Window State) & 工作记忆 (Working Memory) & 生物的工作记忆依赖极其复杂的全脑同步驻留电脉冲震荡协调；模型仅是被动持有了上文键值被乘出的残值张量快照而已。 \\
+\midrule
+隐层参数的梯度改写 (Inner-loop parameter update) & 突触强可塑性 (Synaptic Plasticity/LTP) & 梯度法需要精确计算并向后连坐全链条逆传播差值；而真实的突触强化多数为由于局部电场和时序递质冲刷（Hebbian / 脉冲序列依赖）驱动，是非确切靶向的。 \\
+\midrule
+Titans的长期神经态层 (Long-Term neural memory module) & 系统级皮层固化 (Systems Consolidation) & 电脑中只是给一块大线性网放低学习率并在同一流水线上加算；而在神经组织内是从暂存海马体漫漫多日间断性转移、脱离关联剥壳写入广袤皮层物理网络的极异质变迁。 \\
+\midrule
+模型间的自我注意权重偏移 (Transformer Attention) & 选择性注意 (Selective Attention) & 模型的 attention 就是对一切元素硬开销做穷举点积去查最大相似；生物的注意往往具有强烈生存动机导向的动作与眼跳主动节律耦合寻源扫描！ \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-  \item[Bilevel Optimization] 外循环优化问题的目标函数本身依赖于内循环优化的解。MAML 是典型例子。
-
-  \item[Neural Memory] Titans 中附加的参数化 MLP，其权重在推断时被 Surprise 门控选择性地更新，用于长期记忆。参见 \citet{behrouz2025titans}。
-
-  \item[Surprise (惊讶度)] Titans 中用于控制 Neural Memory 写入的信号：预测误差越大，更新越激进。
-
-  \item[Nested Learning (NL)] 将机器学习模型及优化器统一表述为多级嵌套优化问题和联想记忆压缩的理论框架。参见 \citet{behrouz2025nl}。
-
-  \item[Online OLS] 最小二乘回归的流式在线解法，可通过 Sherman-Morrison 公式高效递推更新。
-
-  \item[Context Flow] NL 框架中描述高层次信息如何流向低层优化器的抽象概念。
-
-  \item[Parallel Prefix Scan] 一种将线性递推并行化的算法，时间复杂度 $O(\log N)$，用于加速 TTT-Layer 训练。
-
-  \item[Induction Head] Transformer 中学会执行"[A][B]...[A] $\to$ [B]"模式匹配的注意力头。ICL 机制的一种机械解释。参见 \citet{olsson2022induction}。
-\end{description}
+\section{严正申明}
+如果你在任何其他文献看到“此模型通过模仿人脑的XX完全实现了某种突破”。请回想本书内容对其保留十二分的存疑和重新解构能力。
+工程与生物是两条从不同山脚攀登智能高峰的曲线；我们借用对方的望远镜看路（获取直觉），但我们脚下永远各走着自己那条由硅基和碳基决定的硬路（数学算法实体结构不同）。
