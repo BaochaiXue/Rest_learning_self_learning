@@ -1,156 +1,545 @@
 % chapters/09_titans_and_multi_timescale_memory.tex
-% 第9章：Titans 与多时间尺度记忆
-\chapter{Titans 与多时间尺度记忆：别把鸡蛋放在一个篮子里}
+% Version 2.0 — B11-B26 compliant full rewrite
+\chapter{Titans 与多时间尺度记忆：如何在长河中钉住一根针}
 \label{ch:titans}
 
-\epigraph{``You cannot expect a single neural network layer to handle both the immediately relevant context and the lifelong accumulation of facts. Memory must be differentiated by its timescale.''}{--- Titans: Learning to Memorize}
+\epigraph{``Memory is not a single thing. It is a family of mechanisms operating at
+different speeds, capacities, and timescales.''}{--- 互补学习系统理论（CLS），McClelland et al., 1995}
 
+%─────────────────────────────────────────────
 \section{本章想回答什么问题}
+\label{sec:titans_question}
+%─────────────────────────────────────────────
 
-在第 \ref{ch:ttt_layers} 章中，我们将“大显存上下文硬搜（KV Cache）”优化成了“带有推断层微调的小型模型（TTT-MLP）”。它利用自己的内部层网络容纳并在新信息经过时做适应调节更新，容量与非线性泛化性极强。
+第~\ref{ch:ttt_layers}~章给了我们一个能力强大的机制：
+把隐藏状态升级为一个实时更新的微型神经网络，
+使模型在处理序列的过程中能够持续"消化"新出现的信息。
 
-但这又带来了一个极其严重且客观存在的死局：\textbf{灾难性遗忘（Catastrophic Forgetting）}。
+但这带来了一个不可回避的矛盾：
+
 \begin{quote}
-\textit{既然这个微型网络是一个整体，那么如果在100万个字符的处理长河中，每时每刻的新字都在逼迫它沿损失方向微调权重去记忆当前的事物。到了文章末尾，它最早期记住的信息哪怕是最隐秘非线性的深层权重，不也早被后来无数不相干的高频次普通更新覆盖重置而面目全非了吗？}
+\textit{如果这个微型网络对每一个到来的 token 都做梯度更新，
+那么经过足够长的序列（比如一百万字），
+早期写入的信息早就被后续的无数次更新覆盖殆尽了。
+这就是\textbf{灾难性遗忘（Catastrophic Forgetting）}——
+一个系统在学新东西的同时不可逆地忘掉旧东西。}
 \end{quote}
 
-本章将聚焦于在超长文本（百万量级以上 token）时代的最新演进：Titans（Learning to Memorize at Test Time）。我们将回答如果面对极限超长的信息流任务需要兼顾长短记忆保留，我们应该如何在架构中分立“短时精确焦点”与“长篇容纳存储器”，并用一个叫做惊讶度（Surprise）的关键机制来做选择性的高质量遗忘与吸收。
+本章的问题是：\textbf{能否在一个模型内同时维护"紧密追踪当前上下文的短时记忆"
+和"在超长序列上稳定保留关键信息的长时记忆"？}
 
-\section{最小例子：沙海淘金的极端过滤考验}
+Titans~\citep{behrouz2024titans} 给出的回答是：让这两种记忆机制在架构上分离，
+并设计一个叫做\textbf{惊讶度（Surprise）}的可微门控算子，
+使系统只在遇到"高度出乎意料的输入"时才触发对长时记忆的大幅度写入，
+从而集中有限的记忆容量，保护已存储的信息不被平凡噪声覆盖。
+
+读完本章，你将能够：
+\begin{itemize}
+  \item 推导 Surprise 门控写入规则，说明它为何减少平凡输入对记忆的干扰
+  \item 解释 Titans 的三类记忆如何组合输出
+  \item 用互补学习系统（CLS）理论作为直觉，但同时指出模型与生物系统的明确差异
+  \item 识别"灾难性遗忘"问题在哪些架构设计假设下会出现，在哪些设计下得到缓解
+\end{itemize}
+
+%─────────────────────────────────────────────
+\section{最小例子：大海捞针}
 \label{sec:titans_minimal}
+%─────────────────────────────────────────────
 
-\begin{toybox}[title=玩具问题 F：千万级 Token 的“草垛寻针”]
-试想一种任务：在一部上千万字的长篇废话巨著（草垛）的第 100 页里随机塞入了一句：“特别任务暗号：红狐狸跳墙。”除此之外一千万字全是干扰性的废料。最后一句直接向模型提问：“暗号是什么？”（著名的 Needle In A Haystack 草垛寻针基准）。
+\begin{toybox}[title=玩具问题 F：百万 Token 草垛寻针（Needle in A Haystack）]
+\textbf{设置}：序列总长 $T = 10^6$ tokens。
+在位置 $t = 100$ 处出现一条唯一的高价值信息，称之为"针"：
+\[
+  (k_{\text{needle}},\; v_{\text{needle}}) = (\text{"暗号"},\; \text{"红狐狸跳墙"})
+\]
+此后 $t = 101$ 到 $t = 10^6$ 的所有输入均为统计上平凡的噪声（"草垛"）。
+任务：在 $t = 10^6$ 处给定查询 $q \approx k_{\text{needle}}$，
+输出 $\hat{v} \approx v_{\text{needle}}$。
 
-\textbf{如果在纯标准 TTT 架构下：}
-刚读完暗号时，TTT隐性层进行了更新把它内化到了权重里。但是接着的一千万字废话犹如不休不止的海浪，每一次都产生更新的冲刷，不断强行微调这个薄弱隐层矩阵使其努力去适应和拟合最新的那点废料。最后由于权重飘移漂白，模型彻底把暗号“覆盖抹除”了。
+\textbf{基准方案（朴素 TTT-Layer）}：
+每个 token 到来时都对内层参数 $\mS_t$ 执行一步梯度更新：
+\[
+  \mS_t = \mS_{t-1} - \eta \nabla_{\mS} \ell(\mS_{t-1}, k_t, v_t)
+\]
+问题：$10^6 - 100 = 999{,}900$ 次对噪声的梯度更新，
+会把 $t=100$ 时写入的 $(k_{\text{needle}}, v_{\text{needle}})$ 完全覆盖。
+$t = 10^6$ 时查询，输出将接近噪声分布的均值，"针"已不可追回。
 
-\textbf{Titans 架构下：}
-当废话到来时，Titans中独有的由惊诧度（Surprise）算子构成的一套监察守门系统发现“废话”极度符合普遍预期，没有信息量（Surprise $\to 0$），于是不允许把它们进行大的写入（控制记忆网络参数封印锁定不改）！而只把它们暂时维持在并行短存的小框里处理完迅速丢弃。而当“暗号”出现这种反常且不匹配平时预期的强信息突刺时，惊讶度飙升，大开闸门重重地将其向负责长期记忆的网络中烙印！这就极大免疫了由于无差别连续调整带来的干扰摧毁。从而即使在百万字后，也能把深藏不漏的针给调出来。
+\textbf{Titans 方案}：
+设计一个标量门控 $s_t \in [0, 1]$，称为"惊讶度"。
+对噪声输入，$s_t \approx 0$，长时记忆模块的参数基本不变；
+对"针"输入，$s_t \approx 1$，执行大幅度写入。
+
+结果：$10^6$ 次更新中，只有极少数高惊讶度时刻真正改变长时记忆，
+大量噪声被屏蔽，"针"在 $t = 10^6$ 时依然可以被检索出来。
 \end{toybox}
 
-\section{直觉解释：将草稿纸与刻表分类}
+这个玩具问题揭示了核心矛盾：
+\textit{无差别的在线更新会把重要信息淹没在噪声中}。
+解决方案的关键是\textbf{选择性写入}——但如何使"选择"本身可微、可学、可训练？
+
+%─────────────────────────────────────────────
+\section{直觉解释：三种记忆的分工}
 \label{sec:titans_intuition}
+%─────────────────────────────────────────────
 
-在模型中强加一个庞然大物般的无差别学习器是不对的。正确的是进行明确的分工协作计算系统。
+Titans 的设计基于一个简单的原则：\textbf{不同类型的信息应当由不同的存储机制处理}。
 
-Titans 框架抛弃了“用一个模块打天下”的想法。它并立（或层配）了两种截然不同的运算资源池组和提取管线：
+具体来说，Titans 并联三类模块：
+
 \begin{enumerate}
-    \item \textbf{并行窗口注意力模块（也就是草稿纸）：}只处理当前最新的一小段，极为精确且完全不遗忘，算完就换页丢弃。这用于承担对即时语境的高度词法结构依赖操作。
-    \item \textbf{神经常期记忆模块（那是雕刻泥板）：}这是一个带有持久累积效应的参数学习层。为了不对这块珍贵容量做胡乱消磨，加装了基于“当前记忆的偏差预期程度”的判断标量来作为进入这个大网更新其可塑性的倍差阀门！
+  \item \textbf{短时记忆（Short-term Memory，$\text{STM}$）}：
+    标准的滑动窗口注意力。只看最近的 $W$ 个 token。
+    精确度极高，但容量有限（$O(W)$）。适合处理精细的语法结构和局部因果关系。
+
+  \item \textbf{长时记忆（Long-term Neural Memory，$\mathcal{M}$）}：
+    一个权重矩阵 $\Phi_t$，随序列流式在线更新，
+    通过 Surprise 门控保护关键信息。适合存储跨越长距离的高价值事实。
+
+  \item \textbf{持久记忆（Persistent Memory）}：
+    少量固定的可学习 token，与输入无关。
+    可理解为模型从预训练中固化下来的通用先验知识，推断时不更新。
 \end{enumerate}
 
-最终输出是被这两个途径分别算完并根据情况以不同权比（Alpha门控）进行捏合汇出给下游输出决定的。
+最终输出是三类模块输出的加权融合，
+权重通过可学习的门控参数 $\alpha$ 控制：
+\[
+  y_t = \alpha_1 \cdot \text{output}_{\text{STM}}(x_t) +
+        \alpha_2 \cdot \text{output}_{\mathcal{M}}(x_t) +
+        \alpha_3 \cdot \text{output}_{\text{Persistent}}(x_t)
+\]
 
-\begin{neurosciencebox}[title=神经科学直觉：系统融合与长短时海马体区分]
-\textbf{计算功能类比：}
-Titans 这种区分短视窗计算和极其慎重的永久写录更新极其巧妙地类比了神经学中\textbf{短时工作记忆向长期皮层固化存储}（Cortical Consolidation）的转移分工。
-\begin{itemize}
-    \item 局部精确的“窗口注意力（Window Attention）”可以类比为前额叶主导的**工作记忆（Working Memory）**。在这个区域里，你非常清楚对方上一分钟前说了什么的精确词句排序；但你过两天就全忘了，它容量固定但极其精准且抛弃极快。
-    \item 而带着筛选器通过惊奇重塑来进行网络权重刻录的模块，非常贴切地展示了\textbf{海马结构与杏仁核联合（Hippocampus \& Amygdala interplay）对强情绪/强异常事件发生极其深度的长期突触修改强留（LTP）}！只有引起极大意外（Surprise）的事物或者不断由于高度显著而击穿注意阀的值，神经微系统才允许为它消耗那极度高昂代谢并永久拉动全局突触链接（改变皮层网络的重量分布用以伴随终身提取）。因为你的大脑也是一再规避灾难性突触同质重塑失效的！
-\end{itemize}
-\end{neurosciencebox}
+\begin{insight}[设计直觉：不同信息的"保质期"不同]
+短时精确信息（"刚才那个词是什么？"）需要立刻取用又立刻丢掉——
+短时记忆模块胜任。
+长期重要信息（"这个序列开头出现的特殊标记是什么？"）需要穿越大量噪声被保留——
+长时记忆模块负责。
+通用世界知识（"Paris 是 France 的首都"）随预训练固化，推断时不应改动——
+持久记忆负责。
+\end{insight}
 
-\begin{analogyboundarybox}[title=这并不是说“模型就是大脑”]
-虽然从长/短分流以及“异变情绪（惊叹门）”把关记忆写入的做法听起来就像是对认知心理学的完全模仿，但这其中有着绝不容混淆的形式边界：
-\begin{itemize}
-    \item \textbf{更新规则的严酷冰冷：}在模型中，Surprise 被物理地定性为了 $s_t = \| M_{\Phi} - v \|$ 一个刚性的误差数学标量乘积，没有任何类似于神经系统的生化传递阻滞和多路信号非线性突现特征。它只是一场算计好的数学梯度加权步长惩罚控制。
-    \item \textbf{结构并非绝对实体隔离：}Titans 的两个模块实际上同处一个大型可导架构下并在一个前向中进行紧耦合向量拼接加法运算；而在脑科学中，海马长期化是在睡眠与离线过程大量伴有电活动回放（Replay）并跨越大脑叶层发生的物理电传导改建，它涉及跨组织的宏大空间漫游生理变性支持而不是并排简单的输出相加权。永远把这种机制视作在数学系统上\textbf{极具高阶抽象概括和阉割重组过后的优化效能手段而已}！
-\end{itemize}
-\end{analogyboundarybox}
-
-\section{数学形式化：惊诧度（Surprise）作为可导滤筛}
+%─────────────────────────────────────────────
+\section{数学形式化：惊讶度门控写入}
 \label{sec:titans_math}
+%─────────────────────────────────────────────
 
-我们展示 Titans 之所以精妙的关键目标公式，即长期的“神经记忆模块”核心计算如何兼顾自我保护与自我修正。
+本节给出长时记忆模块 $\mathcal{M}$ 的完整形式化。
 
-\subsection{惊诧门控与状态修正步进}
-假设 $\Phi_{t-1}$ 是这个大记忆库此刻带有的网络参数。当外部慢权重投射入新的查询-输出对比对（$k_t, v_t$）。
-网络此时会通过读取其自身对 $k_t$ 的既有理解，产生输出：
+\subsection*{Step 1：定义问题}
+
+长时记忆模块的任务是：给定当前键值对 $(k_t, v_t)$，
+维护一个映射 $k \mapsto v$ 的参数化函数 $M_{\Phi}(\cdot)$，
+使得 $M_{\Phi_t}(k_t) \approx v_t$。
+
+这是一个\textbf{在线回归问题}（参见第~\ref{ch:unified}~章的统一视角）：
+隐式的损失函数是
 \begin{equation}
-   \hat{v}_t = M(k_t; \Phi_{t-1})
+  \ell_t(\Phi) \;=\; \tfrac{1}{2}\bigl\| M_{\Phi}(k_t) - v_t \bigr\|_2^2
+  \label{eq:titans_loss}
 \end{equation}
 
-在经典的隐式梯度步（如上一章的 TTT 更新那般），参数调整会顺着 $\eta \nabla_{\Phi} \ell$ 继续发生大偏移。
-
-而这儿我们引入“惊诧度”，在数学里，它被自然定义为当期输出和预期值的真实向量误差差值的直接标量范数衡量项：
+如果直接用梯度步更新（朴素 TTT-Layer）：
 \begin{equation}
-    s_t = \sigma( \| \hat{v}_t - v_t \|_2 - b ) \quad （或者配合其他线性缩放）
+  \Phi_t^{\text{naive}} = \Phi_{t-1} - \eta\,\nabla_\Phi \ell_t(\Phi_{t-1})
+  \label{eq:titans_naive}
 \end{equation}
-此处 $\sigma$ 表示通过约束后的系数（或甚至就是包含在梯度中的那个缩放比），$b$ 做基线抵消。这使得当预测已经挺准确（代表已经完全被同化和记住这类知识）时，或者极其微小偏移时，算式产生极其逼近零的正向增益。
+这在噪声主导的情况下会导致灾难性遗忘，原因在 Section~\ref{sec:titans_minimal} 中已说明。
 
-将其与梯度下降混合：
+\subsection*{Step 2：引入惊讶度的形式化}
+
+\begin{definition}[惊讶度（Surprise）]
+\label{def:surprise}
+在时刻 $t$，给定当前参数 $\Phi_{t-1}$ 和输入 $(k_t, v_t)$，
+惊讶度 $s_t \in [0,1]$ 定义为模型预测误差的归一化度量：
 \begin{equation}
-    \Phi_t = \Phi_{t-1} - \eta \cdot s_t \cdot \nabla_{\Phi} \ell( \hat{v}_t , v_t )  \ + \ \alpha\Delta\Phi_{\text{momentum}}
+  s_t \;=\; \sigma\!\left(\gamma \cdot \bigl\| M_{\Phi_{t-1}}(k_t) - v_t \bigr\|_2 - \beta \right)
+  \label{eq:surprise}
+\end{equation}
+其中 $\sigma(\cdot)$ 是 sigmoid 函数，$\gamma > 0$ 是缩放系数，$\beta \in \mathbb{R}$ 是偏置。
+
+变量含义：
+\begin{itemize}
+  \item $M_{\Phi_{t-1}}(k_t)$：当前参数对 $k_t$ 的预测输出 $\hat{v}_t$
+  \item $\bigl\| \hat{v}_t - v_t \bigr\|_2$：预测误差的 $\ell_2$ 范数
+  \item $\gamma, \beta$：可通过训练学习的超参数（或固定为常数）
+\end{itemize}
+\end{definition}
+
+\textbf{如何读这个公式}：
+当 $\hat{v}_t \approx v_t$（模型已经"知道"这条信息）时，
+$\bigl\|\hat{v}_t - v_t\bigr\|_2 \approx 0$，
+因此 $s_t \approx \sigma(-\beta) \approx 0$（偏置 $\beta > 0$ 时）。
+当 $\hat{v}_t$ 与 $v_t$ 相差较大（高度出乎预料）时，
+$s_t \approx 1$。
+这使得 $s_t$ 成为一个天然的"选择性写入强度控制器"。
+
+\subsection*{Step 3：Surprise 门控更新规则}
+
+将惊讶度作为梯度步长的乘性系数：
+\begin{equation}
+  \boxed{
+    \Phi_t \;=\; \Phi_{t-1}
+      \;-\; \eta \cdot s_t \cdot \nabla_\Phi \ell_t(\Phi_{t-1})
+      \;+\; \mu\,\Delta\Phi_{t-1}
+  }
+  \label{eq:titans_update}
 \end{equation}
 
-通过这一个控制项 $s_t$，在梯度图反拉时如果误差微弱，则强行以零项挂起，\textbf{强制锁死了对于当前这种无效常见平滑信息的改写响应度门阀！}从而为存储记忆空间进行了巨大减负保全。
+变量含义：
+\begin{itemize}
+  \item $\eta > 0$：基础学习率
+  \item $s_t$：Surprise 门控系数（见公式~\eqref{eq:surprise}）
+  \item $\nabla_\Phi \ell_t(\Phi_{t-1})$：损失对参数的梯度
+  \item $\mu\,\Delta\Phi_{t-1}$：动量项，平滑历史梯度方向
+\end{itemize}
 
-\subsection{输出合成组网}
-最终预测结果将被结合上述模块加上另一个平行的短距离纯自注意力缓存头（$H_{SA}$）所产生的结果拼装并重投影进行下游任务应用。这种分离即在保留近期 $W$ 视窗的绝对无损下，赋予了超越数个世纪级别时空跳跃的隐式过滤检索能。
+\textbf{为什么这个公式能解决灾难性遗忘？}
 
-\section{代表论文精读与发展}
+当输入为噪声时，$s_t \approx 0$，
+方程~\eqref{eq:titans_update} 退化为 $\Phi_t \approx \Phi_{t-1}$（加上小幅动量修正）——
+参数几乎不变。
+当输入为高价值信息时，$s_t \approx 1$，方程退化为标准梯度步——
+参数显著更新以吸收新信息。
+
+因此，噪声不累积对参数的影响，关键信息才能持久写入。
+
+\subsection*{Step 4：读取（Retrieval）}
+
+给定查询 $q_t$（由慢权重投影 $q_t = W_Q x_t$ 得到），长时记忆的输出为：
+\begin{equation}
+  \hat{v}_t^{\mathcal{M}} \;=\; M_{\Phi_t}(q_t)
+  \label{eq:titans_read}
+\end{equation}
+即直接用更新后的参数 $\Phi_t$ 对查询做前向计算。
+
+\begin{remark}
+$M_{\Phi}(\cdot)$ 的具体形式在 Titans 中为一个小型的多层感知机（MLP），
+与第~\ref{ch:ttt_layers}~章的 TTT-MLP 结构类似。
+这使得 $M_{\Phi}$ 具有非线性逼近能力，
+能够存储比线性矩阵更复杂的关联关系。
+\end{remark}
+
+%─────────────────────────────────────────────
+\section{Worked Example：三步追踪 Surprise 的行为}
+\label{sec:titans_worked}
+%─────────────────────────────────────────────
+
+\begin{example}[Surprise 门控行为的数值追踪]
+设 $M_\Phi$ 为一个线性模型（简化），$\Phi_0 = \mathbf{0}$，$\eta = 1$，$\mu = 0$，$\beta = 0$，$\gamma = 5$。
+
+\textbf{时刻 $t=1$（写入针）}：$(k_1, v_1) = (e_1, 2)$（$e_1$ 为第一个标准基向量）
+\begin{align*}
+  \hat{v}_1 &= \Phi_0 k_1 = 0 \\
+  s_1 &= \sigma(5 \cdot |0 - 2| - 0) = \sigma(10) \approx 1 \\
+  \Phi_1 &= \Phi_0 - 1 \cdot 1 \cdot (-2 \cdot e_1^\top) = 2\,e_1 e_1^\top
+    \quad\text{（写入成功）}
+\end{align*}
+
+\textbf{时刻 $t=2$（噪声）}：$(k_2, v_2) = (e_2, \epsilon)$，$\epsilon = 0.01$
+\begin{align*}
+  \hat{v}_2 &= \Phi_1 k_2 = 2\,e_1 e_1^\top e_2 = 0
+    \quad\text{（$e_1, e_2$ 正交）}\\
+  s_2 &= \sigma(5 \cdot |0 - 0.01|) = \sigma(0.05) \approx 0.51\\
+  \Phi_2 &= \Phi_1 - 1 \cdot 0.51 \cdot \nabla\ell_2
+\end{align*}
+由于 $k_2 = e_2$ 方向与 $k_1 = e_1$ 正交，噪声更新只作用在 $e_2$ 方向，
+对 $e_1$ 方向（针所在）无干扰。这正是高维键向量近似正交时的保护效果。
+
+\textbf{时刻 $t=3$（查询针）}：$q_3 = e_1$
+\[
+  \hat{v}_3^{\mathcal{M}} = \Phi_2\,e_1 \approx 2 \checkmark
+\]
+针成功检索。
+
+\textbf{关键观察}：即使 $s_2 \approx 0.51$（噪声的惊讶度不为零），
+只要键向量的高维正交性成立，噪声对"针"方向的干扰仍然有限。
+参见第~\ref{sec:fastweights_interference}~章的干扰界分析。
+\end{example}
+
+%─────────────────────────────────────────────
+\section{与前后章的关系}
+\label{sec:titans_bridges}
+%─────────────────────────────────────────────
+
+\begin{itemize}
+  \item \textbf{来自第~\ref{ch:ttt_layers}~章}：
+    TTT-Layer 证明了"隐状态是可学习参数而非静态向量"的可行性。
+    本章的长时记忆 $\mathcal{M}$ 直接继承这一思路，
+    并通过 Surprise 门控解决 TTT-Layer 的灾难性遗忘问题。
+
+  \item \textbf{来自第~\ref{ch:fastweights}~章}：
+    Surprise 门控 $s_t$ 在功能上与遗忘因子 $\lambda$ 互补：
+    $\lambda$ 是时间维度的全局衰减，$s_t$ 是内容维度的选择性门控。
+    第~\ref{ch:fastweights}~章的干扰界分析直接适用于本章 Worked Example 的正交键假设。
+
+  \item \textbf{通向第~\ref{ch:unified}~章}：
+    方程~\eqref{eq:titans_loss} 是标准在线回归损失。
+    第~\ref{ch:unified}~章将说明，Titans 的长时记忆在温和条件下
+    是一种带选择性权重的在线岭回归问题。
+
+  \item \textbf{通向第~\ref{ch:nested}~章}：
+    Titans 展示了在一个前向传播中同时运行三个时间尺度的记忆组件：
+    这是"多层嵌套优化"思想的架构实例，
+    在 Nested Learning 中将被形式化为三级优化层次。
+\end{itemize}
+
+%─────────────────────────────────────────────
+\section{代表论文}
 \label{sec:titans_papers}
+%─────────────────────────────────────────────
 
 \paragraph{\citet{behrouz2024titans} — Titans: Learning to Memorize at Test Time}
-这篇重磅之作宣告在抛除极其占有显存的情况下使得真正具有无尽大记忆能力的测试自适应生成成为现实基理底座方案突破。它的主论文并不是空对空讲结构，而是非常实在的放开到近数百万长的寻针等评测级进行消融破坏。证实了仅使用其中一个模块会立刻崩解并在融合状态下展现出了即使对于 $2M$ Token长度也不发生梯度塌陷。
+提出三类记忆并联架构与 Surprise 门控机制，
+在长达 $2 \times 10^6$ tokens 的 Needle-in-a-Haystack 基准上
+验证了长时记忆模块在极长上下文下的检索性能，
+并通过消融实验分别了解各模块的贡献。
 
-\section{和前后章节的关系}
-\label{sec:titans_bridges}
+%─────────────────────────────────────────────
+\section{神经科学直觉与类比边界}
+\label{sec:titans_neuro}
+%─────────────────────────────────────────────
 
+\begin{neurosciencebox}[title=神经科学直觉：互补学习系统（CLS）理论]
+
+\textbf{类比对象}：
+我们把 \textbf{互补学习系统（Complementary Learning Systems, CLS）理论}
+（McClelland, McNaughton \& O'Reilly, 1995；Kumaran et al., 2016）
+视为帮助理解 Titans 三类记忆架构的一个类比。
+
+CLS 理论的核心主张是：哺乳动物大脑需要两种互补的记忆系统来避免灾难性遗忘——
 \begin{itemize}
-    \item \textbf{对第 \ref{ch:ttt_layers} 章 TTT的打补丁修正：}它是直接作为针对 TTT 如果无边界地吞噬和被改写会导致全盘“参数遗忘毁天灭地”所做的最后一道防御屏障和救生衣架构方案加入。
-    \item \textbf{通向第 \ref{ch:unified} 章 和第 \ref{ch:nested} 章的前置线索：}这种基于“当前偏差判断”再去执行“过滤”或“不同更新深度”的手法。本质上说明，在在线持续回归系统里，所有的新数据权重并不是等同处理的；也启示了如果把这套把控时间截断与门控的逻辑泛推，整个深度的结构实质也就是套娃，指引全书理论最高大收尾。
+  \item \textbf{海马体（Hippocampus）}：
+    用稀疏编码快速存储情景记忆（episodic memory），
+    可以在单次呈现后记住一个新事件（one-shot learning）。
+    容量有限，存储的是具体的情景。
+  \item \textbf{新皮质（Neocortex）}：
+    通过大量重复和缓慢的突触修改，整合统计规律，
+    构建泛化的语义记忆（semantic memory）。
+    容量大，但更新慢，抵抗单次输入的干扰。
 \end{itemize}
 
-\begin{labbox}[title=Lab 9: 设计惊奇阈值的抗干扰遗忘截断效果观察]
-\textbf{目标：}利用一个微型的循环回归参数网络，手动加入/去除 Surprise 项，比较他们在长期数据被覆盖中“寻回最初高频重点”的能力。
+\textbf{共同之处（计算角色上的相似）}：
+Titans 的设计与 CLS 的分工在\textbf{算法组织层面}有对应：
+\begin{center}
+\begin{tabular}{p{4cm} p{4cm}}
+\toprule
+\textbf{CLS 理论} & \textbf{Titans 架构} \\
+\midrule
+海马体：快速写入，高可塑性，情景特定 & 长时记忆模块 $\mathcal{M}$：Surprise 门控高频写入 \\
+新皮质：缓慢整合，低可塑性，泛化 & 持久记忆（Persistent Memory）：预训练固化，推断不更新 \\
+工作记忆：维持当前任务相关信息 & 短时记忆（STM / Window Attention）：滑动窗口 \\
+\bottomrule
+\end{tabular}
+\end{center}
 
+\textbf{这个类比帮助理解什么}：
+为什么架构需要分离三个时间尺度？
+CLS 理论提供了一个来自认知神经科学的设计动机：
+\textit{不同保质期的信息不能由同一个机制来处理}，
+混用会导致新学的东西覆盖旧学的东西。
+这给 Titans 的多模块设计提供了直觉背书。
+
+\end{neurosciencebox}
+
+\begin{analogyboundarybox}[title=这个类比在哪里失效]
+
+\textbf{一、更新规则根本不同（实现机制层）}
+
+\begin{tabular}{p{5cm} p{8cm}}
+\textbf{Titans 的 Surprise 门控}
+& 一个精确的可微标量函数：
+  $s_t = \sigma(\gamma \|\hat{v}_t - v_t\|_2 - \beta)$，
+  通过标准反向传播端到端训练，$\gamma, \beta$ 可学习。 \\
+\textbf{生物的新异刺激驱动强化}
+& 依赖多巴胺奖励预测误差（多脑区环路）、去甲肾上腺素（新异信号），
+  通过局部突触标签（Synaptic Tagging）和生化级联实现，
+  无全局目标函数，无反向传播。 \\
+\end{tabular}
+
+\medskip\textbf{二、海马体的功能比"快速写入器"复杂得多（时间与机制层）}
+
+CLS 理论中海马体的功能包括：
+情景记忆的\textbf{编码}、基于关系的\textbf{索引}、睡眠期的\textbf{重放（Replay）}以引导皮层巩固。
+Titans 的长时记忆模块 $\mathcal{M}$ 只是一个更新频率受门控的参数矩阵，
+它没有稀疏编码、索引化、或任何类似睡眠重放的机制。
+将 $\mathcal{M}$ 直接对等于海马体会掩盖这些关键功能差异。
+
+\medskip\textbf{三、皮层巩固的时间尺度与模型完全不同（时间尺度层）}
+
+生物的系统巩固（Systems Consolidation）历经数天至数年，
+涉及跨脑区的物理迁移和离线重放。
+Titans 的持久记忆（Persistent Memory）在推断时静态固定，
+在预训练阶段通过标准梯度下降学习；
+两者在时间尺度和信息迁移机制上没有真实对应。
+
+\medskip\textbf{读者不应从这个类比推出}：
+\begin{itemize}
+  \item ❌ "Titans 实现了大脑的 CLS 机制"
+  \item ❌ "长时记忆模块 $\mathcal{M}$ 等同于海马体"
+  \item ❌ "Surprise 门控和多巴胺 RPE 是同一机制"
+  \item ❌ "生物系统在解同一优化问题"
+\end{itemize}
+
+\medskip
+\textbf{类比成立的层次}：\textit{算法组织上的相似}——
+两者都有快/慢两类子系统分工处理不同保质期的信息，快的容易遗忘，慢的稳定。
+\textbf{类比失效的层次}：实现机制、学习信号、时间尺度均不同。
+
+\end{analogyboundarybox}
+
+%─────────────────────────────────────────────
+\section{Lab 9：手写 Surprise 门控并观察遗忘-保留权衡}
+\label{sec:titans_lab}
+%─────────────────────────────────────────────
+
+\begin{labbox}[title=Lab 9：Surprise 门控对长序列遗忘的缓解]
+
+\textbf{目标}：通过代码实验，直接观察"有无 Surprise 门控"对灾难性遗忘的影响。
+
+\textbf{数据构造}：
 \begin{enumerate}
-    \item \textbf{构造数据流}：总长 $T=10000$ 的 1 维流序列，在前 10 步放入目标 $(0.5, 0.99)$ 这个对。在那后面的 $9990$ 步全部是用一个微小高斯分布震荡于均值附近波动的底噪噪音对。
-    \item \textbf{朴素微更新（无把关）}：开启基于 MSE 梯度的普通递推，在走完 $10000$ 步之后去问如果在 $(0.5)$ 此位置它能给出什么解？（可以预见：由于全域不断被细小的高斯噪音对在微调着，最终它会失去对那个大极值 0.99 的精确匹配而是掉到了平庸均值附近）。
-    \item \textbf{建立门控（加惊诧判定控制阀）}：设定 $\Delta W = \text{Error} \cdot (\text{如果Error}>0.1 \rightarrow 倍率开大 ；反之倍率切分为 1/1000 衰减)。$
-    \item 重新再过一次！再去拿 0.5 测！由于惊诧门直接封挡了后方那些只有 0.01 震荡的连续干扰噪音废数据的污染，参数极高地保持着纯净状态并在大步重写入期间维持住了坚挺响应度！
+  \item 生成序列长度 $T = 5000$，特征维度 $d = 64$。
+  \item 在 $t = 10$ 处写入一个高价值对：
+    $k_{\text{needle}} = $ 随机单位向量，$v_{\text{needle}} = 1.0$（标量）。
+  \item 对 $t = 11$ 到 $T$，生成服从 $\mathcal{N}(0, 0.1)$ 的随机键 $k_t$
+    和对应值 $v_t \sim \mathcal{N}(0, 0.1)$。
 \end{enumerate}
-这就是对系统性知识“被动抵抗性记忆保护”的数学粗体验。
+
+\textbf{实验 A（无门控）}：用标准梯度步更新线性模型 $\Phi$，学习率 $\eta = 0.01$。
+在每 100 步检查 $\Phi \cdot k_{\text{needle}}$ 与 $v_{\text{needle}}$ 的余弦相似度。
+
+\textbf{实验 B（Surprise 门控）}：
+在梯度步前乘以 $s_t = \sigma(20 \cdot |v_{\text{pred}} - v_t| - 2)$，
+其余设置相同。
+
+\textbf{方法对比表（预期结果）}：
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+& $t = 100$ & $t = 1000$ & $t = 5000$ \\
+\midrule
+无门控（A） & $> 0.9$ & $\approx 0.4$ & $\approx 0.1$ \\
+有门控（B） & $> 0.9$ & $> 0.8$ & $> 0.7$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{思考题}：如果噪声值 $v_t$ 的方差与针值 $v_{\text{needle}}$ 相近，
+门控的效果会减弱还是增强？为什么？
 \end{labbox}
 
-\begin{misconceptionbox}
-\textbf{常见误解 1：加了门限就能无限大跨度保持不忘所以这个记忆存储模块可以无限用下去不用管。}
+%─────────────────────────────────────────────
+\section{常见误解}
+\label{sec:titans_misconceptions}
+%─────────────────────────────────────────────
 
-\textbf{纠正：}这是一种错觉与过激乐观。这依然受到由于物理矩阵特征降秩极点的压制。如果出现的“极其令人惊奇和具有大信息的知识点”足够多并充斥在整个时间段而不是被那些容易隔离废料噪音包围，那么惊诧滤门会一直处于“强开启态”，最后仍就会出现系统由于权重冲刷带来的交叉退化灾难性溃散和交织记忆幻觉，这就是为什么工业化需要定期的进行跨阶段冷存储洗牌或外部检索重构辅助（如 RAG 系统）。
+\begin{misconceptionbox}
+\textbf{误解 1}：只要加了 Surprise 门控，长时记忆就永远不会遗忘重要信息。
+
+\textbf{纠正}：Surprise 门控缓解的是\textit{平凡噪声对记忆的稀释}。
+如果序列中出现了大量高惊讶度的"真实"新信息，
+门控会持续开启，累积的写入同样可能覆盖早期写入的内容。
+此外，长时记忆的容量受参数矩阵的秩限制（与第~\ref{ch:fastweights}~章的干扰界同原理）。
+Surprise 门控是缓解手段，不是完全解决方案。
 \end{misconceptionbox}
 
 \begin{misconceptionbox}
-\textbf{常见误解 2：有了长时记忆这块，外层的结构就不再起到“检索”的作用而只要全部去存就行了。}
+\textbf{误解 2}：加入了神经科学类比，就说明这个架构在模拟大脑机制。
 
-\textbf{纠正：}外全局固定的大架构在此依然极为致命重要。惊奇度的高低从何决定？完全依赖于大架构事先预训练出来的“预判表征函数映射器”。预训练学到了什么是世界本该合理存在的普通运行轨迹，它才会觉得那句废话低分平庸；它才能让门控制阀工作。如果整个主骨干本身未被广袤数据雕琢过，它是看不出“反常与无聊”之区别的盲者，那么后面再精巧的一切保护层依然如失效空物。
+\textbf{纠正}：CLS 理论在本章中是\textbf{设计直觉的来源}，不是架构正确性的证明。
+Titans 的性能保证来自数学推导和实验结果，与生物机制无关。
+如果实验证明某个不受 CLS 理论启发的架构性能更好，
+该架构应当被选择——生物类比不是评判标准。
 \end{misconceptionbox}
 
+\begin{misconceptionbox}
+\textbf{误解 3}：$s_t$ 等于零时长时记忆完全"冻结"，$\Phi_t = \Phi_{t-1}$。
+
+\textbf{纠正}：由于动量项 $\mu \Delta\Phi_{t-1}$ 的存在，
+即使 $s_t = 0$，参数依然受历史动量影响而略有变化。
+若设 $\mu = 0$，则在 $s_t = 0$ 时参数确实不变——
+但这是一个超参数选择，不是 Surprise 机制本身的必然行为。
+\end{misconceptionbox}
+
+%─────────────────────────────────────────────
 \section{练习题}
 \label{sec:titans_exercises}
+%─────────────────────────────────────────────
 
 \begin{exercise}
-\textbf{不同权衡（Trade-off）分配的讨论：}假设我们在工业推行部署一项实时极其关注于毫秒级“动作指令和位置感联”（极度短期关注依赖）兼少量对过去很久的系统启动设置项的回调的机器人动作系统。在 Titans 构架的两个分别被赋权重为 $\alpha_1$（对短工作窗）与 $\alpha_2$（对神经大记忆区）的拼接里。相比于让其作为一个通用的读写长文章 AI，这个针对极高速实时偏重的系统中你会在超参数训练上偏重什么配方趋势为什么？
+\textbf{Surprise 的敏感性分析}：
+设 $\gamma = 5$，$\beta = 2$，$\sigma$ 为标准 sigmoid。
+计算以下情况下的 $s_t$：
+（a）$\|\hat{v}_t - v_t\|_2 = 0$，
+（b）$\|\hat{v}_t - v_t\|_2 = 0.5$，
+（c）$\|\hat{v}_t - v_t\|_2 = 1.0$。
+根据你的计算，说明 $\gamma$ 和 $\beta$ 分别控制门控行为的哪个方面。
 \end{exercise}
 
 \begin{exercise}
-\textbf{长短期机制与梯度的联结矛盾：}在长短时合并系统被提出之前，对于一个只基于隐性更新的大微模型态推导模型，由于其隐性学习带来的步长微推可能与全时反向的后串形成高度纠缠致使多模化训练难以实现融合计算图优化。在目前长短机制采用分别输出然后汇加的粗分离方式后，是否这种由于短线记忆区仅利用纯软线注意因而“可以断开时序链条单独极速矩阵算尽”带来了关于硬件并发支持率上的本质计算瓶颈优势消除的解释？请用硬件分块概念做推演作答。
+\textbf{输出融合的权衡}：
+假设三个记忆模块的输出分别为
+$y_{\text{STM}} = 0.9$，$y_{\mathcal{M}} = 0.1$，$y_{\text{Persistent}} = 0.5$，
+且 $\alpha_1 = 0.5, \alpha_2 = 0.3, \alpha_3 = 0.2$（已归一化）。
+（a）计算最终输出 $y_t$。
+（b）如果任务要求精确恢复序列开头出现的一个特殊值（即典型的"针"任务），
+$\alpha_2$ 应该更高还是更低？请给出直觉理由。
 \end{exercise}
 
+\begin{exercise}
+\textbf{与 TTT-Layer 的对比}：
+TTT-Layer（第~\ref{ch:ttt_layers}~章）的参数更新规则为
+$\mS_t = \mS_{t-1} - \eta \nabla_\mS \ell_t$，
+Titans 的更新规则为公式~\eqref{eq:titans_update}。
+（a）写出两者更新规则的差异（数学形式）。
+（b）若输入序列中 99\% 为平凡噪声，1\% 为高价值信息，
+当 $s_t$ 设置为恰当的阈值后，Titans 对长时记忆的有效写入次数相比 TTT-Layer 减少多少（用百分比估计）？
+（c）这个减少对计算开销有何影响？
+\end{exercise}
+
+\begin{exercise}
+\textbf{CLS 类比的边界检验}：
+CLS 理论中，海马体通过睡眠期重放将信息迁移到新皮质。
+（a）Titans 架构中有没有对应"睡眠期重放"的机制？
+（b）如果要在 Titans 中设计一个类似"离线巩固"步骤，
+形式上应该是什么操作？
+（c）这个操作在工程上的代价是什么？
+\end{exercise}
+
+%─────────────────────────────────────────────
 \section{本章小结}
 \label{sec:titans_summary}
+%─────────────────────────────────────────────
 
 \begin{itemize}
-    \item \textbf{灾难遗忘的解决之药：}本章解释了当模型使用隐态变网络持续改写的方案中随着数据量暴增必然面临的覆写崩塌。指出并提供了基于短视分离抛弃及长效受控强改录两种截然机制分离架构这一破围思路。
-    \item \textbf{通过惊诧（误差）设置防线：}不仅要学习还得学会“如何拒绝平庸学习而抵抗消磨”。Surprise门阀作为一个数学和认知心理上的同频共振结合项展示出了巨大价值，完成了对模型进行记忆纯度提纯保修的关键。
-    \item \textbf{融合不代表万灵：}它并不是解决了本质表达的局限，而是极高效地把干扰给截除了。对真正有意义长线交叉检索依然挑战着理论天花板。
-    \item \textbf{在整个学习阶梯的登顶前奏：}从解决微调、变身为网络再到增加记忆把控，这条以适应度为追求的设计线已经近乎推到极限完形态；下一步就是将整个这片版图拔高，统统解释为时空上的回归切片（即最终两章）。
+  \item \textbf{核心问题}：无差别在线更新导致灾难性遗忘；
+    解决方向是选择性写入——只在输入"出乎意料"时才大幅更新长时记忆。
+
+  \item \textbf{Surprise 门控}：
+    $s_t = \sigma(\gamma \|\hat{v}_t - v_t\|_2 - \beta)$，
+    是一个可微的误差幅度归一化函数，
+    在端到端训练中与主网络一同优化。
+
+  \item \textbf{三类记忆并联}：
+    短时（窗口注意力）+ 长时（Surprise 门控更新的 MLP）+ 持久（预训练固化），
+    各司其职，通过可学习权重融合输出。
+
+  \item \textbf{CLS 类比}：
+    互补学习系统理论提供了"为什么需要快/慢双系统"的设计直觉，
+    相似性在\textbf{算法组织层面}成立；
+    但更新规则、学习信号、时间尺度均与生物系统根本不同。
+
+  \item \textbf{通向下一章}：
+    Titans 是"多时间尺度嵌套优化"的架构实例。
+    第~\ref{ch:unified}~章将从在线回归的角度统一解释所有这些机制，
+    第~\ref{ch:nested}~章将给出形式化的理论框架。
 \end{itemize}
 
 \paragraph{读完本章，你应该能够：}
 \begin{itemize}
-    \item 为何“用隐状态在极长跨度做记忆全盘维护”是个灾难以及采用多重子策略是自然应对的最优解给出解释原因与机制构成解剖。
-    \item 掌握如何在一个普通的一步参数微进公式上加上一个与梯度无关但是取决于输出误差模长的标量因子来进行受控阀门的门控改写控制操作实现方法理念。
-    \item 在不将模型真理解为动物生物脑的前提条件下懂得如何利用生物本初对于危险或意外强保留刺激的直觉来更好地搭建或向外解说你的控制逻辑过滤。
+  \item 推导 Surprise 门控更新规则，并解释公式中每一项的作用
+  \item 解释为什么 Surprise 门控能缓解灾难性遗忘，以及它的局限性
+  \item 将 Titans 的三类记忆与 CLS 理论进行对照，
+    并\textbf{显式说明对照在哪个层面成立，在哪个层面失效}
+  \item 设计 Lab 9 的数值实验，预测结果并解释差异来源
 \end{itemize}

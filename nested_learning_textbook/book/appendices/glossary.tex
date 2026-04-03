@@ -1,39 +1,287 @@
 % appendices/glossary.tex
+% Version 2.0 — B11-B26 compliant: 12 ML↔Neuroscience term pairs
 \chapter{术语、符号与神经科学对照表}
 \label{ch:glossary}
 
-为防止跨章阅读时的混淆，并在大量使用神经科学辅助直觉时保持学术严谨边界感，特提供以下对照表。
+为防止跨章阅读时的混淆，并在大量使用神经科学辅助直觉时保持学术严谨边界感，
+本附录提供三部分内容：核心数学符号表、机器学习↔神经科学术语对照表，
+以及一份"容易混同但绝不能混同"的概念列表。
 
-\section{核心数学与架构符号}
+%─────────────────────────────────────────────
+\section{核心数学符号}
+%─────────────────────────────────────────────
 
-\begin{itemize}
-    \item $\theta$: \textbf{全局慢权重 / 静态预训练参数} (Slow Weights / Global Parameters)。在庞大离线数据中心通过几十天上千步才被更新一丁点的巨大骨架。在推断时被物理锁定。
-    \item $\mS_t, \Phi_t$: \textbf{隐状态参数 / 内部快学习器} (Fast Weights / Inner State parameters)。在一句话前向推演时，由于遇到了当前这句话的特定上下文而实时被以极少数步修改的张量。生命周期与推断共存亡。
-    \item $\mathcal{L}_{\text{outer}}$: \textbf{外部（预训练）损失}。用于确定产生大常识规律 $\theta$ 走向的损失。
-    \item $\mathcal{L}_{\text{inner}}$: \textbf{内部（推断期）损失}。在推演过程时自我构造的微型纠偏局部损失。
-    \item $s_t$: \textbf{惊诧度（Surprise）}。用来衡量当前观察对象与之前模型对世界预估误差的范数差量系数标尺，控制可塑性大小。
-\end{itemize}
-
-\section{机器学习术语 vs. 神经科学易混淆概念映射}
-
-在本书中，我们高度调用下述神经元理作为\textbf{辅助直觉的平行层（非替代等价物）}。请牢记这些映射及其不可僭越的失真边界：
-
-\begin{center}
-\begin{tabular}{p{4cm} p{4cm} p{6cm}}
+\begin{tabular}{p{2.5cm} p{4cm} p{7cm}}
 \toprule
-\textbf{人工智能/工程概念} & \textbf{用作直觉的生物概念} & \textbf{关键的严禁等同边界} \\
+\textbf{符号} & \textbf{名称} & \textbf{含义与注意事项} \\
 \midrule
-上下文视窗隐状态维持 (Context Window State) & 工作记忆 (Working Memory) & 生物的工作记忆依赖极其复杂的全脑同步驻留电脉冲震荡协调；模型仅是被动持有了上文键值被乘出的残值张量快照而已。 \\
+$\theta$ & 慢权重 (Slow Weights)
+  & 通过大规模数据集上的离线训练优化。推断时固定不变。
+    跨任务、跨序列的通用知识载体。 \\
 \midrule
-隐层参数的梯度改写 (Inner-loop parameter update) & 突触强可塑性 (Synaptic Plasticity/LTP) & 梯度法需要精确计算并向后连坐全链条逆传播差值；而真实的突触强化多数为由于局部电场和时序递质冲刷（Hebbian / 脉冲序列依赖）驱动，是非确切靶向的。 \\
+$\mW_t$, $\mS_t$, $\Phi_t$ & 快权重 / 内层状态 (Fast Weights)
+  & 在推断时由当前序列输入动态更新。生命周期随当前序列。
+    不是通过离线梯度下降，而是通过显式写入规则（外积、梯度步）更新。 \\
 \midrule
-Titans的长期神经态层 (Long-Term neural memory module) & 系统级皮层固化 (Systems Consolidation) & 电脑中只是给一块大线性网放低学习率并在同一流水线上加算；而在神经组织内是从暂存海马体漫漫多日间断性转移、脱离关联剥壳写入广袤皮层物理网络的极异质变迁。 \\
+$\calL_{\mathrm{outer}}$ & 外层损失
+  & 控制慢权重更新方向。 \\
 \midrule
-模型间的自我注意权重偏移 (Transformer Attention) & 选择性注意 (Selective Attention) & 模型的 attention 就是对一切元素硬开销做穷举点积去查最大相似；生物的注意往往具有强烈生存动机导向的动作与眼跳主动节律耦合寻源扫描！ \\
+$\calL_{\mathrm{inner}}$, $\ell_t$ & 内层损失
+  & 在推断期间自构造的局部损失，驱动快权重更新。 \\
+\midrule
+$s_t$ & 惊讶度 (Surprise)
+  & 当前输入与模型预测的误差幅度，用于门控快权重更新强度。
+    数学定义：$s_t = \sigma(\|\hat{v}_t - v_t\|_2 - b)$。
+    不等于人类的"惊讶"情绪体验。 \\
+\midrule
+$\lambda$ & 遗忘因子 (Forget Factor)
+  & 指数衰减系数，$\lambda \in (0,1]$。$\lambda=1$ 为均等历史。 \\
+\midrule
+$\vk_t, \vv_t, \vq_t$ & 键、值、查询 (Key, Value, Query)
+  & 联想记忆的标准三元组。逐章含义一致。 \\
 \bottomrule
 \end{tabular}
-\end{center}
 
-\section{严正申明}
-如果你在任何其他文献看到“此模型通过模仿人脑的XX完全实现了某种突破”。请回想本书内容对其保留十二分的存疑和重新解构能力。
-工程与生物是两条从不同山脚攀登智能高峰的曲线；我们借用对方的望远镜看路（获取直觉），但我们脚下永远各走着自己那条由硅基和碳基决定的硬路（数学算法实体结构不同）。
+%─────────────────────────────────────────────
+\section{机器学习术语 vs.\ 神经科学类比术语对照}
+%─────────────────────────────────────────────
+
+以下每对术语均标明：\textbf{共同功能}（类比为何有帮助）
+和\textbf{不能等同原因}（类比在哪里失效）。
+
+\subsection*{对 1：上下文窗口隐状态 vs.\ 工作记忆}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Context Window State
+（上下文窗口隐状态）
+& Working Memory（工作记忆）
+& \textbf{共同功能}：两者都短暂持有当前"在用"的信息，容量有限，
+  用完即释放。
+  \textbf{不能等同}：生物工作记忆依赖前额叶皮层的持续神经振荡
+  和多脑区同步；模型是被动持有过去 token 的键值张量，
+  无主动维护机制，无容量的生理约束。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 2：内层参数梯度更新 vs.\ 突触可塑性（LTP）}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Inner-loop parameter update（内层参数梯度更新）
+& Synaptic Plasticity / LTP（突触长时增强）
+& \textbf{共同功能}：两者都使系统根据输入调整内部连接强度。
+  \textbf{不能等同}：梯度更新需要精确计算并沿整个计算图反向传播；
+  突触 LTP 由局部电位、钙离子内流和时序相关性驱动（STDP），
+  是高度局部的非精确过程。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 3：长期神经记忆模块 vs.\ 系统级皮层巩固}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Long-Term Neural Memory Module（如 Titans 的慢层）
+& Systems Consolidation（系统级皮层巩固）
+& \textbf{共同功能}：两者都用于长期存储，更新频率低，
+  相对稳定，不受单次输入干扰。
+  \textbf{不能等同}：生物皮层巩固历经睡眠中的多次海马体重放，
+  跨脑区物理迁移，持续数天；模型只是降低了一个参数矩阵的学习率，
+  无时间维度和物理迁移过程。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 4：Transformer Attention vs.\ 选择性注意}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Transformer Attention
+& Selective Attention（选择性注意）
+& \textbf{共同功能}：两者都对不同信息来源分配不同权重，
+  实现"相关信息优先"。
+  \textbf{不能等同}：模型 Attention 是对所有 token 的穷举点积，
+  是精确可微的数学运算；
+  生物注意力伴随眼跳、感知-行动耦合、执行功能调控，
+  具有显著的具身性和生存动机驱动，不可简化为加权求和。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 5：快权重外积写入 vs.\ Hebbian 学习}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Fast Weight outer product update $\mW \leftarrow \mW + v k^\top$
+& Hebb's Rule（赫布规则）"同时激发的神经元，连接增强"
+& \textbf{共同功能}：两者都通过"共同出现"来增强连接，
+  在矩阵语言中有形式对应。
+  \textbf{不能等同}：Hebb 规则无遗忘，无全局目标，
+  不保证收敛；外积更新是精确矩阵代数，
+  配合遗忘因子 $\lambda$ 和投影矩阵完成工程精确控制。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 6：Surprise 门控 vs.\ 新异刺激驱动的突触强化}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Surprise-gated memory write（惊讶度门控写入）
+& 新异刺激（Novelty）驱动的突触强化；多巴胺奖励预测误差（RPE）
+& \textbf{共同功能}：两者都用"预测误差大" 作为触发强记忆写入的信号，
+  对高可预测输入保持保守。
+  \textbf{不能等同}：Surprise $s_t = \sigma(\|\hat{v}_t - v_t\|_2)$
+  是单一标量，由模型当前预测误差决定；
+  生物的多巴胺信号来自复杂的皮层-纹状体回路，
+  受期望、奖励历史、上下文共同调制，
+  不可简化为一个误差范数。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 7：外层/内层双循环 vs.\ 快/慢双速学习}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Outer-loop / Inner-loop（双层优化）
+& 互补学习系统（CLS）理论：海马体（快）+ 新皮质（慢）
+& \textbf{共同功能}（算法组织层）：两者都有快速适应系统和缓慢巩固系统的分工。
+  \textbf{不能等同}：CLS 中海马体和新皮质是解剖实体，
+  通过睡眠回放进行信息迁移；
+  outer/inner loop 是训练算法的两阶段，
+  没有对应的物理分离或时序信息迁移过程。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 8：批次梯度下降 vs.\ 经验回放/系统巩固}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Mini-batch training（批量训练）
+& Hippocampal Replay during sleep（睡眠期海马体重放）
+& \textbf{共同功能}：两者都通过对过去经验的"再次处理"来强化已学内容。
+  \textbf{不能等同}：批量训练是人为构造的随机采样；
+  海马体重放在睡眠期自发产生，具有时序压缩和跨脑区协调特性，
+  且重放的是压缩后的模式而非原始感觉数据。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 9：TTT-Layer 写入 vs.\ 任务内可塑性}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+TTT-Layer inner update（TTT层内循环更新）
+& Within-episode fast plasticity（任务内快速可塑性）
+& \textbf{共同功能}（计算角色）：两者都在一次任务执行过程中实时调整内部状态，
+  不依赖跨任务的长期训练。
+  \textbf{不能等同}：TTT 更新是有明确损失目标的梯度步，
+  通过标准反向传播实现；
+  生物任务内可塑性依赖局部突触修饰，受乙酰胆碱等神经调质调控，
+  无全局损失目标，无反向传播。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 10：Softmax Attention 的 softmax 归一化 vs.\ 侧抑制}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Softmax normalization in Attention
+& Lateral Inhibition（侧向抑制）
+& \textbf{共同功能}：两者都使"赢家"的激活被相对放大，  
+  "输家"被相对抑制，形成竞争性选择。
+  \textbf{不能等同}：Softmax 是全局精确的指数归一化，
+  对所有位置同时计算；
+  侧向抑制是局部的皮层电路现象，
+  受解剖距离、抑制性神经元类型的制约，不是精确的全局归一化。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 11：在线学习（Online Learning）vs.\ 突触元可塑性（Metaplasticity）}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Online Learning Rate Scheduling
+& Metaplasticity（突触元可塑性）：BCM 规则中 $\theta_M$ 的动态调整
+& \textbf{共同功能}（算法组织）：两者都根据近期活动历史动态调整"可学性"——
+  近期学了很多则降低可塑性，近期接受较少则提高可塑性。
+  \textbf{不能等同}：学习率调度是工程超参数；
+  BCM 规则的 $\theta_M$ 是由每个突触后神经元的历史活动均值确定的生物变量，
+  逐神经元独立维护。Adam 的二阶矩类似 BCM 的精神，
+  但粒度（per-scalar）和机制（移动平均 vs 生化级联）完全不同。 \\
+\bottomrule
+\end{tabular}
+
+\subsection*{对 12：Nested Learning 多层优化 vs.\ 多时间尺度神经活动}
+
+\begin{tabular}{p{4cm} p{3.5cm} p{6cm}}
+\toprule
+\textbf{AI 概念} & \textbf{神经科学类比} & \textbf{边界} \\
+\midrule
+Nested / Multi-level Optimization（嵌套多层优化）
+& Multi-timescale neural dynamics：neural firing → synaptic change → consolidation → development
+& \textbf{共同功能}（算法组织）：两者都有多个运行在不同时间尺度上的更新层，
+  慢层约束快层，快层适应当前输入。
+  \textbf{不能等同}：嵌套优化是形式上的统一视角，
+  是一种数学建模语言；
+  神经系统的多时间尺度协调是真实存在于不同生理过程中的，
+  不应被直接"实例化"为嵌套优化的证据。 \\
+\bottomrule
+\end{tabular}
+
+%─────────────────────────────────────────────
+\section{容易混同但绝不能混同的概念}
+%─────────────────────────────────────────────
+
+\begin{itemize}
+  \item \textbf{Working Memory vs.\ Context Window}：
+    工作记忆是主动维护的（需要持续神经活动），Context Window 是被动的
+    （KV Cache 无需持续维护）。
+
+  \item \textbf{Synaptic Plasticity vs.\ Parameter Update}：
+    突触可塑性是局部化学过程；参数更新是全局梯度反向传播。
+    两者的学习信号来源、实现机制、时间尺度均不同。
+
+  \item \textbf{Systems Consolidation vs.\ Long-term Neural Memory Module}：
+    系统巩固是跨脑区、跨天级别的物理重组过程；
+    长期神经记忆模块只是一个更新频率较低的参数矩阵。
+
+  \item \textbf{Selective Attention vs.\ Transformer Attention}：
+    生物选择性注意涉及执行控制、眼动、具身性；
+    Transformer Attention 是对所有位置的穷举点积，无"主动选择"过程。
+
+  \item \textbf{Hippocampus vs.\ Fast-updating Component}：
+    海马体负责情景记忆编码和索引化，不是简单的"短期记忆"；
+    快速更新组件（TTT-Layer、LoRA）只是更新频率快，
+    不具有海马体的稀疏编码、索引化等特定功能。
+\end{itemize}
+
+%─────────────────────────────────────────────
+\section{学术诚实申明}
+%─────────────────────────────────────────────
+
+如果你在其他文献中看到"此模型通过模仿人脑的 XX 机制实现了突破"，
+请对照本书的类比分级框架重新审视：
+那个类比属于哪一层相似性？作者是否明确了不同之处？
+
+工程与生物是从不同山脚攀登"智能"高峰的两条路径。
+本书借用神经科学的望远镜来获取直觉和方向感，
+但脚下走的永远是由梯度、矩阵运算和损失函数构成的工程之路。
