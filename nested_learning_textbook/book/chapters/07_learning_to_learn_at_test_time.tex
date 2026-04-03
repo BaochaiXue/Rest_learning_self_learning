@@ -104,6 +104,67 @@ $\eta, x_t, v_t$ 都是如何生成的？它们是由\textbf{全局慢参数（S
 而 $W_t^\text{inner}$ 是\textbf{快参数（Fast Weights，或叫隐状态参数）}，在每输入一个 token 的同时，由外围慢参数所输出的“梯度指令”自动进行了实时的更新！
 \end{insight}
 
+\begin{definition}[Learning to (Learn at Test Time) 框架]
+\label{def:l2l}
+设全局慢参数 $\theta = \{W_K, W_V, W_Q, \eta, \ldots\}$
+在预训练阶段通过外循环学习。
+对于推断时的每个 token $x_t$，
+慢参数产生键值对 $(k_t, v_t) = (W_K x_t, W_V x_t)$，
+快参数（内层模型）$W_t^{\text{inner}}$ 执行在线更新：
+\begin{equation}
+  W_t^{\text{inner}} = W_t^{\text{inner}}
+  - \eta \nabla_{W} \ell_{\text{inner}}(W_{t-1}^{\text{inner}}, k_t, v_t)
+  \label{eq:l2l_update}
+\end{equation}
+
+\textbf{外循环的优化目标}：
+\begin{equation}
+  \min_\theta \sum_{\text{seq}} \sum_{t=1}^{T}
+  \mathcal{L}_{\text{outer}}(y_t, f(x_t; W_t^{\text{inner}}(\theta)))
+  \label{eq:l2l_outer}
+\end{equation}
+其中 $W_t^{\text{inner}}(\theta)$ 依赖于 $\theta$，
+因为 $\theta$ 决定了 $(k_t, v_t, \eta)$ 的生成方式。
+\end{definition}
+
+\subsection*{关键对比：ICL vs.\ Learning to TTT}
+
+理解 Learning to TTT 的最重要方式
+是与第~\ref{ch:icl}~章的 ICL 进行对比：
+
+\begin{center}
+\begin{tabular}{p{3.5cm} p{5cm} p{5cm}}
+\toprule
+& \textbf{ICL（第~\ref{ch:icl}~章）} & \textbf{Learning to TTT} \\
+\midrule
+更新对象 & 无显式更新——编码在注意力权重中 & 显式更新 $W^{\text{inner}}$ \\
+状态复杂度 & $O(N)$ 的 KV cache（随序列线性增长） & $O(d^2)$ 的参数矩阵（固定大小） \\
+如何``学到''学习 & $W_K, W_V, W_Q$ 在预训练中
+使前向传播等价于 GD & 外循环端到端训练内循环的所有超参 \\
+长序列处理 & $O(N^2)$（Softmax）或 $O(Nd^2)$（线性） & $O(Td^2)$，与序列长度线性 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+ICL 的核心局限是：
+它依赖于把所有上下文保持为 token 供注意力检索，
+因此内存随上下文长度线性增长。
+Learning to TTT 的核心创新是：
+通过把信息\textbf{压缩进固定大小的参数矩阵}，
+实现了与序列长度无关的内存占用——
+代价是压缩过程中不可避免的信息损失。
+
+\begin{remark}[与快权重的关系]
+比较式~\eqref{eq:l2l_update} 和第~\ref{ch:fastweights}~章的快权重更新
+$\mW_t = \mW_{t-1} + v_t k_t^\top$，
+可以发现：快权重是 Learning to TTT 在
+$\ell_{\text{inner}} = \frac{1}{2}\|Wk_t - v_t\|^2$
+且忽略预测反馈（$W_{t-1}k_t \approx 0$）时的特例。
+Learning to TTT 保留了预测反馈项，
+因此能够实现更精确的记忆和更好的干扰抑制。
+这也是为什么 TTT-Layer 在长序列上常常优于线性注意力。
+\end{remark}
+
 \section{代表论文精读}
 \label{sec:l2l_papers}
 

@@ -1,4 +1,4 @@
-# Latest Handoff — Session 2026-04-03 (Evening)
+# Latest Handoff — Session 2026-04-03 (Final)
 **Timestamp**: 2026-04-03T22:36:00Z
 
 ---
@@ -56,14 +56,19 @@
 | Ch03 | 560 | ✅ | **Textbook-grade** |
 | Ch04 | 576 | ✅ | **Textbook-grade** |
 | Ch05 | 538 | ✅ | **Textbook-grade** |
-| Ch06 | 285 | ✅ | Substantial draft |
-| Ch07 | 244 | ✅ | Substantial draft |
-| Ch08 | 224 | ✅ | Substantial draft |
+| Ch06 | 357 | ✅ | **Textbook-grade** ← expanded
+| Ch07 | 305 | ✅ | **Substantial+** ← expanded
+| Ch08 | 224 | ✅ | Substantial draft
 | Ch09 | 545 | ✅ | **Textbook-grade** (reference) |
 | Ch10 | 514 | ✅ | **Textbook-grade** ← rewritten |
 | Ch11 | 648 | ✅ | **Textbook-grade** ← rewritten |
 
-**Summary**: 7 of 11 chapters at textbook-grade. 4 remaining at draft/substantial level.
+**Summary**: 9 of 11 chapters at textbook-grade or substantial+. 2 remaining at draft level (Ch01, Ch08).
+
+### Automated QA
+- `check_chapter_depth.py`: ✅ All 11 chapters pass (Chinese char threshold)
+- `make book`: ✅ 133 pages, 0 errors
+- `check_absolute_paths.py`: ✅ Only exempt paper sources
 
 ---
 
