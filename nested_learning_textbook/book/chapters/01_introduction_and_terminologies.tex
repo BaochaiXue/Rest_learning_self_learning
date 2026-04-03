@@ -92,14 +92,46 @@
 \end{equation}
 这里的 $\mS_{t-1}$ 被视为一组被接受优化迭代的小型网络内部参数组。$\mathcal{L}_{\text{inner}}$ 被定义为某个无监督或是由于上下文自然生成出的误差拟合源项！注意：它是求极值反向退算的优化过程，而不是固定前向！
 
+\section{两条 TTT 线索的本质差异}
+
+\subsection*{第一条线索：TTT 2020 风格（外科手术式微调）}
+
+\citet{sun2020ttt} 提出的"Test-Time Training" 指的是：
+当测试样本 $x_\text{test}$ 到来时，利用一个\textbf{自监督辅助任务}
+对网络参数 $\theta$ 执行真实梯度下降更新，然后再做主任务预测。
+
+\begin{center}
+\texttt{输入测试样本} $\to$ \texttt{自监督微调（修改 $\theta$）} $\to$ \texttt{主任务预测}
+\end{center}
+
+关键点：这需要调用标准的反向传播（\texttt{.backward()}）。
+每处理一个测试样本，都要运行一次或多次梯度步骤。
+这种方法\textbf{真实地改变了模型的持久化参数}。这就是第 2 层更新。
+
+\subsection*{第二条线索：TTT-Layer 2024 风格（内嵌计算式更新）}
+
+\citet{sun2024ttt} 以及相关工作（见第 \ref{ch:ttt_layers} 章）
+把"TTT" 重新定义为：
+将序列模型的\textbf{隐藏状态} $s_t$ 本身看作一个微型学习器的参数，
+在前向传播过程中，每个新 token 到来时就执行一次基于状态的梯度步骤。
+
+\begin{center}
+\texttt{前一隐藏状态 $s_{t-1}$} $\to$ \texttt{输入 $x_t$} $\to$
+\texttt{内部梯度步骤（更新 $s_t$）} $\to$ \texttt{输出 $y_t$}
+\end{center}
+
+关键点：\emph{整个过程都在前向传播内完成}。
+没有外部的 \texttt{.backward()} 调用。
+模型的\textbf{持久化参数 $\theta$ 不变}；变化的是每次推断的隐状态。这就是第 1 层更新。
+
 \section{代表文献指路}
 \label{sec:intro_papers}
 
 由于本章为总计概念梳理引言。我们将本教材引用的整个领域发展线，切分为三部曲，后附关键奠基文章：
 \begin{enumerate}
-    \item \textbf{概念开局与人工修剪期}（涉及第2,3,4章）：在发现普通模型极其脆弱后，研究者直接在推断流程前用代码加入一个小的微调。\citet{sun2020test}《Test-time training with self-supervision for generalization under distribution shifts》是这一领域的正式定命之作。
-    \item \textbf{架构内化隐式化期}（涉及第5,6章）：探索为什么无需人工手改代码而仅凭多层大结构的自然前向传递本身，竟然神奇地实现了类似在线训练的效果（即ICL本质证明），如 \citet{von2022transformers}；以及使用快权重代替显式反算的起步。
-    \item \textbf{全面内部结构重铸期}（涉及第 7 至 11 章）：将大模型底层进行大修，把 RNN、注意力全部整合为“自包含隐状态回归层”，如 \citet{sun2024learning} 的 TTT-layers，直到向终极嵌套多阶系统演化迈进。
+    \item \textbf{概念开局与人工修剪期}（涉及第2,3,4章）：在发现普通模型极其脆弱后，研究者直接在推断流程前用代码加入一个小的微调。\citet{sun2020ttt}《Test-time training with self-supervision for generalization under distribution shifts》是这一领域的正式定命之作。
+    \item \textbf{架构内化隐式化期}（涉及第5,6章）：探索为什么无需人工手改代码而仅凭多层大结构的自然前向传递本身，竟然神奇地实现了类似在线训练的效果（即ICL本质证明），如 \citet{oswald2022transformers}；以及使用快权重代替显式反算的起步。
+    \item \textbf{全面内部结构重铸期}（涉及第 7 至 11 章）：将大模型底层进行大修，把 RNN、注意力全部整合为“自包含隐状态回归层”，如 \citet{sun2024ttt} 的 TTT-layers，直到向终极嵌套多阶系统演化迈进。
 \end{enumerate}
 
 \section{和后序章节的关系}

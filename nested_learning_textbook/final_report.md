@@ -1,5 +1,8 @@
 # 项目全流程交付与总结报告 (Final Report)
 
+> **WARNING**: This document is a **LEGACY** artifact from an older phase. 
+> The project has migrated to a LaTeX-canonical source (`book/`). The `manuscript/` folder is now source material only. Do not treat this document as the system of record. See `docs/project_state/reconciled_repo_state.md` for current truth.
+
 本报告总结了 “从 Test-Time Training (TTT) 到 Nested Learning (NL)” 教材的“一站式文献工程 + 方案设计 + 教材初稿研发”的执行全景。目前该批处理程序与核心文稿已完全安置于 `nested_learning_textbook/` 下。
 
 ## 1. 实际下载与处理文献状态

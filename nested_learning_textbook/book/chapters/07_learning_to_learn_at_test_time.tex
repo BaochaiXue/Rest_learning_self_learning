@@ -71,7 +71,7 @@ Transformer 无法把学习到的历史真正的"融合"进某个小型状态里
 \end{equation}
 这里的 $h_t \in \R^d$ 是一个向量，其表达能力随时间序列暴增会迅速枯竭。这是为什么我们有了 LSTM，也有了最终摒弃 RNN 而走向 Transformer 的过去。
 
-\subsection{隐状态升级为一个微型模型 $\mS_t$}
+\subsection{隐状态升级为一个微型模型}
 在第 \ref{ch:attention} 线性注意力的推导中我们已经知道：去 softmax 后的状态矩阵实质上是：
 \begin{equation}
   \mS_t = \lambda \mS_{t-1} + k_t v_t^\top \in \R^{d \times d}
@@ -98,7 +98,7 @@ Transformer 无法把学习到的历史真正的"融合"进某个小型状态里
   = W_{t-1}^\text{inner} - \eta (W_{t-1}^\text{inner} x_t - v_t)x_t^\top
 \end{equation}
 
-\begin{insight}[双重参数界限]
+\begin{insight}[title=双重参数界限]
 注意这之中的奇妙区别：
 $\eta, x_t, v_t$ 都是如何生成的？它们是由\textbf{全局慢参数（Slow Weights，大模型的投影矩阵等，在此处冻结）}经过预训练决定和输出的！
 而 $W_t^\text{inner}$ 是\textbf{快参数（Fast Weights，或叫隐状态参数）}，在每输入一个 token 的同时，由外围慢参数所输出的“梯度指令”自动进行了实时的更新！

@@ -18,7 +18,7 @@ CHAPTERS_DIR = BOOK_ROOT / "chapters"
 MAIN_TEX = BOOK_ROOT / "main.tex"
 
 EXPECTED_CHAPTERS = [
-    "01_terminology_and_map.tex",
+    "01_introduction_and_terminologies.tex",
     "02_why_models_can_learn_at_test_time.tex",
     "03_bilevel_optimization_and_meta_learning.tex",
     "04_fast_weights_memory_and_timescales.tex",
@@ -26,7 +26,7 @@ EXPECTED_CHAPTERS = [
     "06_is_in_context_learning_really_learning.tex",
     "07_learning_to_learn_at_test_time.tex",
     "08_ttt_layers_hidden_state_as_learner.tex",
-    "09_titans_multi_timescale_memory.tex",
+    "09_titans_and_multi_timescale_memory.tex",
     "10_test_time_regression_and_unified_views.tex",
     "11_nested_learning.tex",
 ]

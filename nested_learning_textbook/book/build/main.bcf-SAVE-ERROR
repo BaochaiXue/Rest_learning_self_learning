@@ -2373,3 +2373,27 @@
     <bcf:datasource type="file" datatype="bibtex" glob="false">bibliography/library.bib</bcf:datasource>
   </bcf:bibdata>
   <bcf:section number="0">
+    <bcf:citekey order="1" intorder="1">sun2020ttt</bcf:citekey>
+    <bcf:citekey order="2" intorder="1">sun2024ttt</bcf:citekey>
+    <bcf:citekey order="3" intorder="1">sun2020ttt</bcf:citekey>
+    <bcf:citekey order="4" intorder="1">oswald2022transformers</bcf:citekey>
+    <bcf:citekey order="5" intorder="1">sun2024ttt</bcf:citekey>
+    <bcf:citekey order="6" intorder="1">sun2020test</bcf:citekey>
+    <bcf:citekey order="7" intorder="1">nichol2018reptile</bcf:citekey>
+    <bcf:citekey order="8" intorder="1">andrychowicz2016l2l</bcf:citekey>
+    <bcf:citekey order="9" intorder="1">andrychowicz2016l2l</bcf:citekey>
+    <bcf:citekey order="10" intorder="1">ba2016fastweights</bcf:citekey>
+    <bcf:citekey order="11" intorder="1">ha2016hypernetworks</bcf:citekey>
+    <bcf:citekey order="12" intorder="1">santoro2016mann</bcf:citekey>
+    <bcf:citekey order="13" intorder="1">schlag2021linear</bcf:citekey>
+    <bcf:citekey order="14" intorder="1">vaswani2017attention</bcf:citekey>
+    <bcf:citekey order="15" intorder="1">katharopoulos2020rnn</bcf:citekey>
+    <bcf:citekey order="16" intorder="1">schlag2021linear</bcf:citekey>
+    <bcf:citekey order="17" intorder="1">garg2022what</bcf:citekey>
+    <bcf:citekey order="18" intorder="1">olsson2022context</bcf:citekey>
+    <bcf:citekey order="19" intorder="1">von2022transformers</bcf:citekey>
+    <bcf:citekey order="20" intorder="1">garg2022what</bcf:citekey>
+    <bcf:citekey order="21" intorder="1">von2022transformers</bcf:citekey>
+    <bcf:citekey order="22" intorder="1">ahn2023transformers</bcf:citekey>
+    <bcf:citekey order="23" intorder="1">zhang2023transformers</bcf:citekey>
+    <bcf:citekey order="24" intorder="1">sun2023learning</bcf:citekey>

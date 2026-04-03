@@ -19,8 +19,7 @@ Rest_learning/
     ├── book_plan.md                ← LEGACY: absorbed into docs/design-docs/
     ├── chapter_map.md              ← LEGACY: absorbed into docs/references/
     ├── consensus_vs_interpretation.md  ← LEGACY: absorbed into docs/quality/
-    ├── final_report.md             ← LEGACY: superseded by this audit + handoff
-    ├── learning_theory_scope.md    ← LEGACY: absorbed into docs/design-docs/
+    ├── final_report.md             ← LEGACY: superseded by reconciled_repo_state.md + handoff
     ├── math_prerequisites.md       ← LEGACY: absorbed into docs/design-docs/
     ├── reading_list.md             ← LEGACY: absorbed into docs/references/
     ├── book/                       ← NEW: canonical LaTeX manuscript
@@ -79,7 +78,7 @@ Rest_learning/
 | Papers entirely missing | 1 | ❌ `optimization_as_a_model_for_few_shot_learning` |
 | v0 Markdown chapter drafts | 14 | ✅ Preserved as source material |
 | Per-paper notes | 24 | ⚠️ All stubs (need content) |
-| LaTeX chapters | 11 | ⚠️ Scaffolded (need content migration) |
+| LaTeX chapters | 11 | ⚠️ Ch04, 08, 09 are substantially advanced; remainder scaffolded |
 | Bibliography entries | 24 | ✅ Generated in `library.bib` |
 
 ---

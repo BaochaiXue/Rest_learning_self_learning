@@ -110,7 +110,7 @@ Transformer 接收该序列的前向计算，输出 $\hat{y}$ 能否逼近 ${w^*
   y_{\text{pred}} = W_1 q = (W_0 - \eta \nabla \ell(W_0)) q
 \end{equation}
 
-\begin{insight}[Transformer的前向计算是在线优化]
+\begin{insight}[title=Transformer的前向计算是在线优化]
 这个构造性证明说明了：只需要构造简单的参数映射 $W_K, W_V, W_Q$，
 一层（线性）注意力层的前向传递操作，在数学上可以精确执行一步带动量的梯度下降；
 叠加 $L$ 层这样的注意力层，就可以执行 $L$ 步梯度下降。
