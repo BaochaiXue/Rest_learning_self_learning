@@ -1,0 +1,38 @@
+# .gitignore for inference-time learning textbook repo
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+nested_learning_textbook/book/build/*.pdf
+nested_learning_textbook/book/build/*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# macOS
+.DS_Store
+.Spotlight-V100
+
+# Editor
+.vscode/
+.idea/
+
+# Temp downloads (fully processed archives should not be committed)
+nested_learning_textbook/downloads/*.tar.gz
+nested_learning_textbook/downloads/*.tgz
+
+# Keep PDFs in downloads (they represent fallback sources)
+!nested_learning_textbook/downloads/*.pdf
