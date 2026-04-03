@@ -247,6 +247,91 @@ RLS (假想) & 精确闭式解 & \textbf{是} & $P_t$ 精度矩阵 \\
 对\textbf{同一个} TTR 目标函数~\eqref{eq:ttr_objective}
 选择了不同的（a）优化算法、（b）截断策略、（c）附加门控。
 
+\subsection*{推导谱：从精确解到极端截断}
+
+以下展示了从同一个 TTR 目标函数出发，
+不同的求解策略如何生成不同的模型。
+这不是``分类''（每个模型有各自的来源），
+而是``推导谱''（所有模型从同一个方程分叉）。
+
+\begin{enumerate}
+  \item \textbf{精确闭式解}（无截断）：
+    $\mS_t^* = V_{1:t} K_{1:t}^\top (K_{1:t} K_{1:t}^\top + \gamma I)^{-1}$
+    $\Rightarrow$ \textbf{在线最小二乘 / RLS}
+    \begin{itemize}
+      \item 优点：最优回忆精度
+      \item 代价：需要维护 $d \times d$ 的精度矩阵 $P_t$
+        并用 Sherman-Morrison 增量更新。计算量 $O(d^2)$/步，但常数大。
+    \end{itemize}
+
+  \item \textbf{一步 SGD，保留预测反馈}：
+    $\mS_t = \mS_{t-1} - \eta (\mS_{t-1} k_t - v_t) k_t^\top$
+    $\Rightarrow$ \textbf{TTT-Linear}
+    \begin{itemize}
+      \item 近似程度：忽略了历史样本的贡献，只用当前样本更新
+      \item 优点：硬件友好，$O(d^2)$/步且不需要维护 $P_t$
+    \end{itemize}
+
+  \item \textbf{一步 SGD，忽略预测反馈}（令 $\mS_{t-1} k_t \approx 0$）：
+    $\mS_t = \mS_{t-1} + v_t k_t^\top$
+    $\Rightarrow$ \textbf{快权重 / 线性注意力}
+    \begin{itemize}
+      \item 近似程度：进一步丢弃了当前状态对预测的反馈
+      \item 优点：实现最简单，并行效率最高
+      \item 代价：无法抑制旧记忆对新查询的干扰
+    \end{itemize}
+
+  \item \textbf{一步 SGD + 门控}（仅在 Surprise 高时大步更新）：
+    $\Rightarrow$ \textbf{Titans 长时记忆}
+    \begin{itemize}
+      \item 近似程度：与(2)相同的 SGD，但乘以 Surprise 门控
+      \item 优点：保护已存信息不被平凡噪声覆盖
+    \end{itemize}
+
+  \item \textbf{多步 SGD / 非线性内层模型}：
+    $\Rightarrow$ \textbf{TTT-MLP}
+    \begin{itemize}
+      \item 近似程度：用更多的计算换取更高的近似精度
+      \item 代价：内层反向传播使每步计算量显著增加
+    \end{itemize}
+\end{enumerate}
+
+\subsection*{扩展主表：假设、增益与代价}
+
+\begin{center}
+\begin{tabular}{p{2cm}p{2.5cm}p{2.5cm}p{2.5cm}p{2.5cm}}
+\toprule
+\textbf{模型} & \textbf{核心假设} & \textbf{增益} & \textbf{代价} & \textbf{目标场景} \\
+\midrule
+快权重 /\newline 线性注意力
+& $\mS_{t-1} k_t \approx 0$\newline（键近似正交）
+& 实现最简单，\newline 高并行
+& 键相关时\newline 记忆干扰
+& 信息检索，\newline 短序列 \\
+TTT-Linear
+& 当前梯度近似\newline 精确方向
+& 更准确的\newline 记忆更新
+& 每步 $O(d^2)$\newline 且不可并行
+& 长序列，\newline 分布偏移 \\
+Titans LTM
+& Surprise 可以\newline 识别重要信息
+& 保护已存\newline 关键信息
+& 需要调参\newline 门控阈值
+& 超长序列，\newline needle-in-haystack \\
+TTT-MLP
+& 内层 MLP 的\newline 表达能力足够
+& 非线性\newline 记忆容量
+& 内层反传\newline 代价高
+& 复杂任务，\newline 高记忆需求 \\
+RLS
+& 二阶信息值得\newline 维护
+& 最优回忆\newline 精度
+& 需要 $d \times d$\newline 精度矩阵
+& 理论参考/\newline 小 $d$ 场景 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
 %─────────────────────────────────────────────
 \section{Worked Example：从 TTR 推导 TTT-Linear}
 \label{sec:ttr_worked}
@@ -364,6 +449,64 @@ TTT-Linear 的``预测反馈'' $\mS_{t-1} k_t$
 误差传递机制、学习的目的性均不同。
 
 \end{analogyboundarybox}
+
+%─────────────────────────────────────────────
+\section{这个统一视角的边界}
+\label{sec:ttr_limits}
+%─────────────────────────────────────────────
+
+TTR 作为统一框架的价值是真实的，
+但它的适用范围有明确的边界。
+本节区分框架的``威力范围''和``过度推广区域''。
+
+\subsection*{TTR 框架在哪里有力}
+
+\begin{enumerate}
+  \item \textbf{作为分析语言}：
+    给定一个新的序列模型，你可以问：
+    ``它对应 TTR 目标函数中的哪种求解策略？
+    它做了什么近似？放弃了什么？''
+    这种问题的结构化能力是真正有价值的。
+
+  \item \textbf{作为设计原理}：
+    如果你想设计一个新的序列模型层，
+    不再需要从零开始``搭积木''。
+    你可以从 TTR 目标函数出发，
+    修改正则化项、优化器、或截断策略，
+    然后推导出更新规则。
+    这把``灵感驱动的架构搜索''
+    转化为``在优化空间中的系统探索''。
+
+  \item \textbf{作为比较工具}：
+    扩展主表使得不同模型的假设和代价
+    可以在同一个坐标系中被并列比较。
+\end{enumerate}
+
+\subsection*{TTR 框架不应被过度推广之处}
+
+\begin{enumerate}
+  \item \textbf{Softmax 注意力不在框架内}：
+    标准的 Softmax 注意力由于其非线性归一化，
+    不能被简单地归入``TTR 的一种近似求解''。
+    TTR 框架主要覆盖的是\textbf{线性}或\textbf{可线性化}的状态更新。
+
+  \item \textbf{离散操作超出范围}：
+    Token embedding、argmax 解码、
+    位置编码等离散操作
+    没有对应的在线优化解读。
+
+  \item \textbf{``统一 $\neq$ 解释''}：
+    TTR 说明了多种架构可以被放入同一个数学框架中，
+    但它没有解释为什么某些架构在实践中
+    比其他架构表现更好。
+    性能差异来自近似质量和硬件适配，
+    而不是来自目标函数本身。
+
+  \item \textbf{预训练不在框架内}：
+    TTR 统一的是\textbf{推断时}的状态更新规则。
+    ``外层参数 $\theta$ 如何被预训练''是一个独立的问题，
+    TTR 框架对此没有发言权。
+\end{enumerate}
 
 %─────────────────────────────────────────────
 \section{代表论文精读}
