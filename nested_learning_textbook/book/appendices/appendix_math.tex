@@ -1,62 +1,280 @@
 % appendices/appendix_math.tex
+% Version 2.0 — Expanded to support self-contained reading
 \chapter{最低必要数学背景}
 \label{app:math}
 
 本附录汇集了理解本书所需的核心数学工具。
-不要求掌握 PAC 界或 VC 维——只需扎实理解以下内容。
+目标不是完整的线性代数或优化教材，
+而是让读者在遇到具体推导时可以快速查阅。
+最重要的提示：\textbf{如果你理解了外积和矩阵梯度，
+本书 80\% 的公式就会变得自然}。
 
+%═════════════════════════════════════════════
 \section{线性代数核心}
+%═════════════════════════════════════════════
 
-\subsection*{外积（Outer Product）}
+\subsection{外积（Outer Product）}
 
 向量 $a \in \R^m, b \in \R^n$ 的外积为矩阵：
 \[
   a b^\top \in \R^{m \times n}, \quad (ab^\top)_{ij} = a_i b_j
 \]
 
-\textbf{核心用途}：快权重更新、线性注意力递推都依赖外积。
-记住：外积 $=$ 矩阵秩1更新。
+\textbf{核心性质}：
+\begin{itemize}
+  \item $ab^\top$ 是一个\textbf{秩 1 矩阵}——它的所有列都是 $a$ 的标量倍。
+  \item 对任意向量 $c$：$(ab^\top) c = a (b^\top c)$——
+    右乘一个向量，结果是 $a$ 方向上的投影，幅度由 $b^\top c$ 决定。
+\end{itemize}
 
-\subsection*{Sherman-Morrison 公式}
+\textbf{为什么外积在本书中反复出现}：
+\begin{enumerate}
+  \item \textbf{联想记忆}（第~\ref{ch:fastweights}~章）：
+    存储一对 $(k, v)$ 到矩阵中：$\mS \leftarrow \mS + v k^\top$。
+    读取时 $\mS k' = v(k^\top k')$——如果 $k' \approx k$，输出 $\approx v$。
+  \item \textbf{梯度结构}：损失 $\ell = \|Wx - y\|^2$ 的梯度 $\nabla_W \ell$
+    也是外积形式（见下一节）。
+  \item 这就是为什么``快权重更新''和``梯度步''在数学上长得一样。
+\end{enumerate}
 
-设可逆矩阵 $A$，秩1更新 $A + uv^\top$，则：
+\subsection{矩阵的 Frobenius 范数}
+
+$\|A\|_F = \sqrt{\sum_{i,j} A_{ij}^2} = \sqrt{\text{tr}(A^\top A)}$。
+
+在本书中，正则化项 $\frac{\gamma}{2}\|\mS\|_F^2$
+惩罚状态矩阵的``总能量''，防止无限增长。
+
+%═════════════════════════════════════════════
+\section{最小二乘与岭回归}
+\label{sec:app_regression}
+%═════════════════════════════════════════════
+
+\subsection{普通最小二乘（OLS）}
+
+给定数据矩阵 $X \in \R^{n \times d}$（$n$ 个样本，$d$ 维特征）
+和目标 $Y \in \R^{n \times m}$，OLS 求解：
 \[
+  W^* = \arg\min_W \|XW - Y\|_F^2
+\]
+
+\textbf{正规方程（Normal Equations）}：
+\begin{equation}
+  W^* = (X^\top X)^{-1} X^\top Y
+  \label{eq:ols_solution}
+\end{equation}
+
+\textbf{几何解释}：$XW^*$ 是 $Y$ 在 $X$ 列空间上的正交投影。
+$(X^\top X)^{-1} X^\top$ 是伪逆矩阵 $X^+$。
+
+当 $X^\top X$ 不可逆（$n < d$ 或特征共线性）时，OLS 不唯一。
+
+\subsection{岭回归（Ridge Regression）}
+
+加入 $L_2$ 正则化解决 $X^\top X$ 的不可逆问题：
+\begin{equation}
+  W^* = \arg\min_W \|XW - Y\|_F^2 + \gamma \|W\|_F^2
+  = (X^\top X + \gamma I)^{-1} X^\top Y
+  \label{eq:ridge_solution}
+\end{equation}
+
+$\gamma > 0$ 保证 $X^\top X + \gamma I$ 总是可逆的。
+在本书中，第~\ref{ch:unified}~章的 TTR 目标函数
+正是在线版本的岭回归。
+
+%═════════════════════════════════════════════
+\section{递归最小二乘（RLS）}
+\label{sec:app_rls}
+%═════════════════════════════════════════════
+
+在在线设定中，数据点逐个到来。
+目标：每次新增一个样本 $(x_t, y_t)$ 时，
+不重新计算整个 $(X^\top X)^{-1}$，
+而是用 $O(d^2)$ 的代价增量更新。
+
+\subsection{推导思路}
+
+设到时刻 $t-1$ 时，我们维护：
+\begin{itemize}
+  \item 状态矩阵 $W_{t-1} = P_{t-1} \cdot (\text{累积} X^\top Y)$
+  \item 精度矩阵 $P_{t-1} = (X_{1:t-1}^\top X_{1:t-1} + \gamma I)^{-1}$
+\end{itemize}
+
+新增样本 $(x_t, y_t)$ 后：
+\[
+  P_t^{-1} = P_{t-1}^{-1} + x_t x_t^\top
+\]
+
+这是一个\textbf{秩 1 更新}。
+用 Sherman-Morrison 公式求 $P_t$（见下一节），
+避免了 $O(d^3)$ 的矩阵求逆。
+
+\subsection{RLS 更新公式}
+
+\begin{equation}
+  \kappa_t = \frac{P_{t-1} x_t}{1 + x_t^\top P_{t-1} x_t}
+  \label{eq:rls_gain}
+\end{equation}
+\begin{equation}
+  W_t = W_{t-1} + (y_t - W_{t-1} x_t) \kappa_t^\top
+  \label{eq:rls_update}
+\end{equation}
+\begin{equation}
+  P_t = P_{t-1} - \kappa_t x_t^\top P_{t-1}
+  \label{eq:rls_precision}
+\end{equation}
+
+这里 $\kappa_t$ 称为\textbf{Kalman 增益}。
+$y_t - W_{t-1} x_t$ 是预测残差（prediction error）。
+
+\textbf{观察}：
+式~\eqref{eq:rls_update} 的形式是
+$W_t = W_{t-1} + \text{(残差)} \cdot \text{(方向)}^\top$——
+又是一个外积更新！这与 TTT-Layer 的梯度步在结构上完全一致。
+
+%═════════════════════════════════════════════
+\section{Sherman-Morrison 公式}
+\label{sec:app_sm}
+%═════════════════════════════════════════════
+
+\begin{theorem}[Sherman-Morrison]
+设可逆矩阵 $A \in \R^{d \times d}$，向量 $u, v \in \R^d$，
+且 $1 + v^\top A^{-1} u \neq 0$，则：
+\begin{equation}
   (A + uv^\top)^{-1} = A^{-1} - \frac{A^{-1} u v^\top A^{-1}}{1 + v^\top A^{-1} u}
-\]
+  \label{eq:sherman_morrison}
+\end{equation}
+\end{theorem}
 
-\textbf{核心用途}：在线岭回归高效更新逆协方差矩阵（第 \ref{ch:unified} 章）。
+\subsection*{推导要点}
 
-\section{梯度下降}
+设 $B = A + uv^\top$，令 $B^{-1} = A^{-1} + C$（待定修正项）。
 
-\subsection*{标量函数}
+由 $B B^{-1} = I$：
+\begin{align}
+  (A + uv^\top)(A^{-1} + C) &= I \\
+  I + AC + uv^\top A^{-1} + uv^\top C &= I \\
+  AC &= -u v^\top A^{-1} - u v^\top C \\
+  AC &= -u(v^\top A^{-1} + v^\top C)
+\end{align}
 
-$f: \R \to \R$，一步梯度下降：$x^{(t+1)} = x^{(t)} - \eta f'(x^{(t)})$
+猜测 $C$ 的形式为 $C = \alpha \cdot A^{-1} u v^\top A^{-1}$（秩 1），
+代入求解 $\alpha = -\frac{1}{1 + v^\top A^{-1} u}$，即得证。
 
-\subsection*{矩阵函数：外积梯度}
+\textbf{核心用途}：
+在 RLS 中，$A = P_{t-1}^{-1}$，$u = v = x_t$。
+每次新增一个样本，只需 $O(d^2)$ 的矩阵向量乘法
+就能更新逆矩阵，无需 $O(d^3)$ 求逆。
 
-设 $L(W) = \|Wx - y\|^2$，则：
+%═════════════════════════════════════════════
+\section{矩阵微积分基础}
+\label{sec:app_matrix_calc}
+%═════════════════════════════════════════════
+
+\subsection{标量对矩阵的梯度}
+
+设 $L(W) = \frac{1}{2}\|Wx - y\|_2^2$，其中 $W \in \R^{m \times d}$。
+
+展开：
+\begin{align}
+  L(W) &= \frac{1}{2}(Wx - y)^\top(Wx - y) \\
+  \nabla_W L &= (Wx - y) x^\top \in \R^{m \times d}
+  \label{eq:matrix_gradient}
+\end{align}
+
+这是一个\textbf{外积}：误差向量 $(Wx - y)$ 乘以输入 $x^\top$。
+这就是为什么本书中梯度步和快权重更新在代数上完全一样。
+
+\subsection{链式法则（矩阵版本）}
+
+设 $L = g(f(W))$，其中 $f: \R^{m \times d} \to \R^{p}$，$g: \R^p \to \R$。
+则：
 \[
-  \nabla_W L = (Wx - y) x^\top
+  \frac{\partial L}{\partial W_{ij}} = \sum_k \frac{\partial g}{\partial f_k} \cdot \frac{\partial f_k}{\partial W_{ij}}
 \]
-这是一个外积形式——这解释了为什么快权重更新和梯度步都有外积结构。
 
-\section{双层优化}
+在 MAML（第~\ref{ch:bilevel}~章）中，
+外循环梯度需要对``内循环结果相对于初始化参数''求导，
+这涉及的链式法则包含 Hessian 矩阵（见下一小节）。
 
-设外循环参数 $\theta$，内循环通过 $k$ 步梯度下降生成 $\phi(\theta)$：
+\subsection{Jacobian 与 Hessian}
+
+\textbf{Jacobian}：$J = \frac{\partial f}{\partial x} \in \R^{m \times d}$，
+函数 $f: \R^d \to \R^m$ 的一阶导数矩阵。
+第 $i$ 行 $j$ 列是 $\frac{\partial f_i}{\partial x_j}$。
+
+\textbf{Hessian}：$H = \frac{\partial^2 L}{\partial x^2} \in \R^{d \times d}$，
+标量函数 $L: \R^d \to \R$ 的二阶导数矩阵。
+
+\subsection{预处理（Preconditioning）}
+
+标准梯度下降 $x \leftarrow x - \eta \nabla L$ 在高曲率方向上振荡。
+预处理梯度下降用 $H^{-1}$（或其近似）来校正：
 \[
-  \nabla_\theta \mathcal{L}_{\text{outer}}(\phi(\theta)) = 
-  \nabla_\phi \mathcal{L}_{\text{outer}} \cdot \frac{\partial \phi}{\partial \theta}
-\]
-后者包含 Hessian 信息（二阶偏导）。一阶近似（FOMAML）省略这一项：
-\[
-  \nabla_\theta^\text{FOMAML} \approx \nabla_\phi \mathcal{L}_{\text{outer}}\big|_{\phi = \theta - \alpha g}
+  x \leftarrow x - \eta H^{-1} \nabla L
 \]
 
+这使得高曲率方向上的步长自动缩小，低曲率方向上自动放大。
+在第~\ref{ch:icl}~章中，Transformer 的 FFN 被解释为
+在近似计算 $H^{-1}$，从而实现了隐式的预处理梯度下降。
+
+%═════════════════════════════════════════════
 \section{在线学习与遗憾（Regret）}
+\label{sec:app_online}
+%═════════════════════════════════════════════
 
-在在线学习设置下，学习器在每个时步做预测，然后看到损失。
-累积遗憾定义为：
-\[
-  \text{Regret}(T) = \sum_{t=1}^T \ell_t(\hat y_t) - \min_y \sum_{t=1}^T \ell_t(y)
-\]
-大部分本书讨论的模型（线性注意力、TTT-Linear、OLS）都与某种经典在线学习算法的遗憾界有正式联系。
+\subsection{设定}
+
+在在线学习中，学习器与数据流交互：
+\begin{enumerate}
+  \item 时步 $t$：学习器做预测 $\hat{y}_t$
+  \item 环境揭示真实值 $y_t$
+  \item 学习器承受损失 $\ell_t(\hat{y}_t)$ 并更新策略
+\end{enumerate}
+
+\subsection{累积遗憾}
+
+\begin{equation}
+  \text{Regret}(T) = \sum_{t=1}^T \ell_t(\hat{y}_t)
+  - \min_{y^*} \sum_{t=1}^T \ell_t(y^*)
+  \label{eq:regret}
+\end{equation}
+
+第一项是学习器的累积损失，第二项是``事后诸葛亮最优''的累积损失。
+好的在线算法的遗憾增长率为 $O(\sqrt{T})$（次线性），
+意味着平均每步遗憾趋向零。
+
+\subsection{Worked Example：Follow-the-Leader}
+
+设 $\ell_t(w) = (w - y_t)^2$，标量情形。
+Follow-the-Leader (FTL) 策略：$\hat{w}_t = \frac{1}{t-1}\sum_{i=1}^{t-1} y_i$（历史均值）。
+
+对于 $T$ 步，FTL 的遗憾为 $O(\log T)$——
+非常好，因为 $\log T \ll T$。
+
+\textbf{与本书的联系}：
+线性注意力的外积累积 $\mS_t = \sum_{i \leq t} v_i k_i^\top$
+可以被视为一种加权的 Follow-the-Leader 策略。
+TTT-Layer 的在线 SGD 更新
+对应于 Online Gradient Descent，其遗憾为 $O(\sqrt{T})$。
+
+%═════════════════════════════════════════════
+\section{常用符号对照表}
+\label{sec:app_notation}
+%═════════════════════════════════════════════
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{符号} & \textbf{含义} & \textbf{首次出现} \\
+\midrule
+$\theta$ & 慢权重 / 全局参数 & 第~\ref{ch:intro}~章 \\
+$\mS_t$ & 快权重 / 隐状态矩阵 & 第~\ref{ch:fastweights}~章 \\
+$W_t^{\text{inner}}$ & 内层学习器参数 & 第~\ref{ch:ttt_bridge}~章 \\
+$k_t, v_t, q_t$ & 键、值、查询向量 & 第~\ref{ch:attention}~章 \\
+$\eta$ & 学习率 & 第~\ref{ch:bilevel}~章 \\
+$\ell^{(l)}$ & 第 $l$ 层局部目标函数 & 第~\ref{ch:nested}~章 \\
+$T^{(l)}$ & 第 $l$ 层的时间尺度 & 第~\ref{ch:nested}~章 \\
+$\lambda$ & 遗忘因子 / 衰减率 & 第~\ref{ch:attention}~章 \\
+\bottomrule
+\end{tabular}
+\end{center}
