@@ -124,6 +124,112 @@
 没有外部的 \texttt{.backward()} 调用。
 模型的\textbf{持久化参数 $\theta$ 不变}；变化的是每次推断的隐状态。这就是第 1 层更新。
 
+%─────────────────────────────────────────────
+\section{术语对照表}
+\label{sec:intro_terminology}
+%─────────────────────────────────────────────
+
+本书涉及多个研究社区的术语，它们有时指代相同的概念。
+以下对照表帮助读者在不同章节之间保持术语一致。
+
+\begin{center}
+\begin{tabular}{p{3.5cm} p{3.5cm} p{5cm}}
+\toprule
+\textbf{术语} & \textbf{同义词 / 近义词} & \textbf{本书中的含义} \\
+\midrule
+预训练（Pretraining）
+& 外循环训练
+& 在大规模数据集上学习 $\theta$ \\
+微调（Fine-tuning）
+& 适应（Adaptation）
+& 在目标任务上进一步优化 $\theta$ \\
+测试时训练 / TTT
+& 测试时适应
+& 在推断时对参数或状态执行优化步 \\
+上下文学习（ICL）
+& In-context learning
+& 仅通过前向传播利用上下文示例 \\
+内循环（Inner loop）
+& 快适应、测试时更新
+& 对 $\mS_t$ 或 $\theta$ 的序列级更新 \\
+外循环（Outer loop）
+& 元训练、预训练
+& 对 $\theta$ 的数据集级更新 \\
+慢权重（Slow weights）
+& 全局参数 $\theta$
+& 推断时冻结的持久化参数 \\
+快权重（Fast weights）
+& 隐状态 $\mS_t$
+& 推断时实时更新的临时状态 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%─────────────────────────────────────────────
+\section{时间尺度与符号总览}
+\label{sec:intro_notation}
+%─────────────────────────────────────────────
+
+本书的核心论点是：``学习''发生在多个时间尺度上。
+以下表格总结了不同时间尺度对应的变量和章节。
+
+\begin{center}
+\begin{tabular}{p{2.5cm} p{2cm} p{3.5cm} p{4cm}}
+\toprule
+\textbf{时间尺度} & \textbf{符号} & \textbf{更新频率} & \textbf{首次出现} \\
+\midrule
+最慢：预训练
+& $\theta$
+& 整个数据集（数周）
+& 本章 \\
+中等：元适应
+& $\eta, W_K, W_V$
+& 任务级别
+& 第~\ref{ch:bilevel}~章 \\
+快：逐 token
+& $\mS_t$
+& 每个时间步
+& 第~\ref{ch:fastweights}~章 \\
+最快：窗口注意力
+& KV cache
+& 窗口内的精细检索
+& 第~\ref{ch:titans}~章 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%─────────────────────────────────────────────
+\section{后续章节中反复出现的主题}
+\label{sec:intro_themes}
+%─────────────────────────────────────────────
+
+以下概念将在全书11章中反复出现。
+在这里先建立预期，后续遇到时可以回溯本节。
+
+\begin{enumerate}
+  \item \textbf{外积更新}（$vk^\top$）：
+    第~\ref{ch:fastweights}~章引入，
+    在第~\ref{ch:attention}、\ref{ch:icl}、\ref{ch:unified}~章反复出现。
+    是联想记忆、梯度步、快权重更新的统一数学形式。
+
+  \item \textbf{双层优化}（内循环 + 外循环）：
+    第~\ref{ch:bilevel}~章引入，
+    在第~\ref{ch:ttt_bridge}、\ref{ch:nested}~章推广为多层嵌套。
+
+  \item \textbf{``查询-键-值''三元组}（$q, k, v$）：
+    第~\ref{ch:attention}~章引入，
+    贯穿所有后续章节。
+
+  \item \textbf{``隐状态是参数''的观点}：
+    第~\ref{ch:ttt_bridge}~章首次出现，
+    在第~\ref{ch:ttt_layers}、\ref{ch:titans}、\ref{ch:nested}~章中
+    成为核心架构设计原则。
+
+  \item \textbf{``机制等价 vs.\ 解释性视角''的区分}：
+    第~\ref{ch:icl}~章引入，
+    在第~\ref{ch:unified}、\ref{ch:nested}~章成为学术诚信的核心议题。
+\end{enumerate}
+
 \section{代表文献指路}
 \label{sec:intro_papers}
 

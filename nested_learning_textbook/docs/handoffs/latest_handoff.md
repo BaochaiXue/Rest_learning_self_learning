@@ -1,102 +1,76 @@
-# Latest Handoff — Session 2026-04-03 (Final)
-**Timestamp**: 2026-04-03T22:36:00Z
+# Latest Handoff — Session 2026-04-03 (Depth Pass)
+**Timestamp**: 2026-04-03T23:03:00Z
 
 ---
 
 ## What Was Done This Session
 
-### Phase 2: Build Verification ✅ COMPLETE
-- Confirmed `xelatex`, `latexmk`, `biber` all available
-- Ran `make check` — all scripts pass cleanly
-- Ran `make book` — **first ever verified build**
-- **Fixed 20 unresolved citations** by adding 12 alias entries to `library.bib`
-  (mapped chapter citation keys to canonical bib keys)
-- **Fixed Unicode ❌ issue** in Ch09 (replaced with `\textbf{[X]}`)
-- **Final build: 131 pages, 0 errors, PDF generated**
+### Major Textbook Depth Pass — Batch 1 Complete
 
-### Phase 1: Documentation Reconciliation ✅ COMPLETE
-- Rewrote `docs/project_state/reconciled_repo_state.md` as single source of truth
-- Corrected false claim about "duplicate chapter files"
-- Added verified build status, per-chapter quality assessment
+Executed the highest-priority pedagogical deepening across 4 conceptual bottleneck chapters,
+1 onboarding chapter, the math appendix, and QA infrastructure.
 
-### Phase 4+5: Chapter Deepening + Neuroscience Rollout (PARTIAL)
+### Changes by Chapter
 
-#### Complete Rewrites (B11-B26 standard):
 | Chapter | Before | After | Key Additions |
 |---------|--------|-------|---------------|
-| **Ch11 — Nested Learning** | 157 lines, emotive draft | **648 lines** | Formal L-layer nested optimization, worked example, neuroscience boxes, analogy boundary, 4 exercises, Lab 11, 3 misconception boxes |
-| **Ch02 — Why Test-Time** | 155 lines, very informal | **558 lines** | Formal TTT 2020 algorithm, gradient alignment theorem with proof, computation cost table, rewritten neuroscience boxes, 4 exercises, Lab 2 |
-| **Ch10 — TTR & Unified** | 170 lines, informal | **514 lines** | TTR definition, RLS via Sherman-Morrison, worked numeric example, unified model table, neuroscience boxes, 3 exercises, Lab 10 |
+| **Ch01** | 197 | **304** | Terminology crosswalk table, timescale/notation table, forward-reference themes list |
+| **Ch06** | 358 | **564** | Three-layer evidence hierarchy, "where equivalence breaks" (4 subsections), "what is learning" taxonomy table |
+| **Ch07** | 306 | **432** | Full pseudocode block, d=2 worked 3-step example, bilevel→architecture mapping table |
+| **Ch10** | 544 | **688** | Derivation tree (5 levels), extended master table (assumptions/gains/costs), "limits of unification" section |
+| **Ch11** | 649 | **750** | Claim status table (6 claims), "what NL does NOT prove" (4 points), "synthesis not license" section |
+| **Math App** | 63 | **280** | OLS, ridge regression, RLS derivation, Sherman-Morrison proof, matrix calculus, Jacobian/Hessian, online learning/regret, notation table |
 
-#### Neuroscience Box Additions:
-| Chapter | Status | Analogy Used |
-|---------|--------|-------------|
-| Ch01 | ✅ Already had boxes | Sensory-motor calibration |
-| Ch02 | ✅ Rewritten | Prism adaptation |
-| Ch03 | ✅ Added | Immune system adaptive learning |
-| Ch04 | ✅ Already had boxes | — |
-| Ch05 | ✅ Added | Hippocampal content-addressable memory |
-| Ch06 | ✅ Added | PFC meta-learning (Wang et al. 2018) |
-| Ch07 | ✅ Added | Synaptic metaplasticity |
-| Ch08 | ✅ Already had boxes | — |
-| Ch09 | ✅ Already had boxes | CLS theory |
-| Ch10 | ✅ Rewritten | Hebbian vs. error-driven learning |
-| Ch11 | ✅ Rewritten | Multi-timescale neural plasticity |
+### QA Infrastructure
 
-**All 11 chapters now have neuroscience + analogy boundary boxes.**
+| Script | Status |
+|--------|--------|
+| `check_chapter_depth.py` | ✅ All 11 pass |
+| `check_chapter_quality.py` (NEW) | ✅ All 11 pass — checks toybox, theorem/def, neuro boxes, exercises, rhetoric |
+| `docs/generated/chapter_depth_report.md` (NEW) | ✅ Generated |
 
----
+### Build Status
 
-## Current Chapter Quality Status
-
-| Chapter | Lines | Boxes | Quality |
-|---------|-------|-------|---------|
-| Ch01 | 197 | ✅ | Draft (emotive prose, but functional) |
-| Ch02 | 558 | ✅ | **Textbook-grade** ← rewritten |
-| Ch03 | 560 | ✅ | **Textbook-grade** |
-| Ch04 | 576 | ✅ | **Textbook-grade** |
-| Ch05 | 538 | ✅ | **Textbook-grade** |
-| Ch06 | 357 | ✅ | **Textbook-grade** ← expanded
-| Ch07 | 305 | ✅ | **Substantial+** ← expanded
-| Ch08 | 224 | ✅ | Substantial draft
-| Ch09 | 545 | ✅ | **Textbook-grade** (reference) |
-| Ch10 | 514 | ✅ | **Textbook-grade** ← rewritten |
-| Ch11 | 648 | ✅ | **Textbook-grade** ← rewritten |
-
-**Summary**: 9 of 11 chapters at textbook-grade or substantial+. 2 remaining at draft level (Ch01, Ch08).
-
-### Automated QA
-- `check_chapter_depth.py`: ✅ All 11 chapters pass (Chinese char threshold)
-- `make book`: ✅ 133 pages, 0 errors
-- `check_absolute_paths.py`: ✅ Only exempt paper sources
+| Metric | Value |
+|--------|-------|
+| Pages | **149** |
+| Errors | **0** |
+| Total chapter lines | **5,534** |
+| Total lines (incl appendices) | **6,344** |
 
 ---
 
-## What Still Needs Work
+## Chapter Quality Matrix (Post Depth Pass)
 
-### Priority 1: Remaining Chapter Deepening
-- **Ch01** (197 lines): Prose rewrite to remove emotive language, add formal math
-- **Ch06** (285 lines): Expand formal ICL-as-GD derivation
-- **Ch07** (244 lines): Expand inner/outer loop formalization
-- **Ch08** (224 lines): Expand formal TTT-Layer derivation
+| Ch | Lines | 中文 | Toy | Thm | Neuro | Boundary | Lab | Ex | Quality |
+|----|-------|------|-----|-----|-------|----------|-----|----|---------|
+| 01 | 304 | 4453 | ✅ | — | ✅ | ✅ | ✅ | 3 | **Onboarding-grade** |
+| 02 | 559 | 3754 | ✅ | ✅ | ✅ | ✅ | ✅ | 4 | **Textbook-grade** |
+| 03 | 561 | 3726 | ✅ | ✅(4) | ✅ | ✅ | ✅ | 4 | **Textbook-grade** |
+| 04 | 577 | 4500 | ✅ | ✅(2) | ✅ | ✅ | ✅ | 4 | **Textbook-grade** |
+| 05 | 539 | 3632 | — | ✅(2) | ✅ | ✅ | ✅ | 4 | **Textbook-grade** |
+| 06 | 564 | 5377 | ✅ | ✅ | ✅ | ✅ | ✅ | 5 | **Textbook-grade** ← deepened |
+| 07 | 432 | 4796 | ✅ | ✅ | ✅ | ✅ | ✅ | 2 | **Textbook-grade** ← deepened |
+| 08 | 225 | 4339 | ✅ | — | ✅ | ✅ | ✅ | 3 | Substantial draft |
+| 09 | 546 | 4074 | ✅ | ✅ | ✅ | ✅ | ✅ | 4 | **Textbook-grade** (reference) |
+| 10 | 688 | 4551 | ✅ | ✅ | ✅ | ✅ | ✅ | 3 | **Textbook-grade** ← deepened |
+| 11 | 750 | 5660 | ✅ | ✅ | ✅ | ✅ | ✅ | 4 | **Textbook-grade** ← deepened |
 
-### Priority 2: Literature Layer
-- 24 paper notes in `notes/papers/*.md` are all still generic stubs
-- Need rewriting to follow pedagogical note structure
-- Prioritize top 10 papers
-
-### Priority 3: Appendices
-- `appendix_math.tex` (2KB) needs outer products, RLS, online optimization basics
-- `appendix_labs_and_exercises.tex` needs lab code frameworks
-
-### Priority 4: QA Reports
-- Update `evaluation_report.md` with new build/quality data
-- Update `neuroscience_analogy_report.md` — all chapters now have boxes
-- Update `repo_hygiene_report.md`
+**Summary**: 10/11 chapters at textbook-grade or onboarding-grade. Ch08 still at substantial draft.
 
 ---
 
-## Build Status
-- `make check`: ✅ Pass
-- `make book`: ✅ Pass (131 pages, 0 errors)
-- Built PDF: `book/build/main.pdf` (verified)
+## Remaining Work
+
+### High Priority
+1. **Ch08** (225 lines) — needs GRU/LSTM/TTT comparison table, engineering subsection
+2. **Labs appendix** (43 lines) — needs per-lab structured guidance
+
+### Medium Priority  
+3. **Ch02** — algorithm box pseudocode, failure modes subsection
+4. **Ch03** — scalar worked MAML example, MAML/FOMAML/Reptile table
+5. **Ch05** — dimensions table, normalized/unnormalized subsection
+
+### Low Priority
+6. **Frontmatter** — prerequisites roadmap, chapter dependency graph
+7. **Evaluation report** — comprehensive manuscript assessment
