@@ -1,0 +1,9 @@
+## latexmkrc — latexmk configuration for this book
+## Run from book/ directory: latexmk -xelatex main.tex
+
+$pdf_mode = 5;           # use xelatex
+$xelatex = 'xelatex -interaction=nonstopmode -halt-on-error %O %S';
+$bibtex_use = 2;         # use biber
+$biber = 'biber %O %S';
+$out_dir = 'build';      # output to build/ subdirectory
+$clean_ext = 'aux bbl bcf blg fdb_latexmk fls log out run.xml synctex.gz toc';

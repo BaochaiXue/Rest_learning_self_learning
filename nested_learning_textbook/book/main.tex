@@ -1,0 +1,38 @@
+% main.tex — Inference-Time Learning: From TTT to Nested Learning
+% Canonical LaTeX manuscript. Compiled with: latexmk -xelatex main.tex
+% See README.md and ../docs/design-docs/latex_architecture.md for build instructions.
+
+\input{preamble}
+
+% ─── Front Matter ───────────────────────────────────────
+\frontmatter
+\input{frontmatter/title_page}
+\input{frontmatter/preface}
+\input{frontmatter/how_to_read_this_book}
+\tableofcontents
+
+% ─── Main Matter ────────────────────────────────────────
+\mainmatter
+\input{chapters/01_terminology_and_map}
+\input{chapters/02_why_models_can_learn_at_test_time}
+\input{chapters/03_bilevel_optimization_and_meta_learning}
+\input{chapters/04_fast_weights_memory_and_timescales}
+\input{chapters/05_attention_linear_attention_and_recurrence}
+\input{chapters/06_is_in_context_learning_really_learning}
+\input{chapters/07_learning_to_learn_at_test_time}
+\input{chapters/08_ttt_layers_hidden_state_as_learner}
+\input{chapters/09_titans_multi_timescale_memory}
+\input{chapters/10_test_time_regression_and_unified_views}
+\input{chapters/11_nested_learning}
+
+% ─── Back Matter ────────────────────────────────────────
+\backmatter
+\appendix
+\input{appendices/appendix_math}
+\input{appendices/appendix_labs_and_exercises}
+\input{appendices/glossary}
+
+% ─── Bibliography ───────────────────────────────────────
+\printbibliography[heading=bibintoc,title={参考文献}]
+
+\end{document}

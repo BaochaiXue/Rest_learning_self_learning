@@ -1,0 +1,131 @@
+% preamble.tex — Shared preamble for the textbook.
+% Stack: ctexbook + xelatex + biblatex/biber
+% Designed for Chinese prose + English paper titles + math.
+
+\documentclass[a4paper,12pt,openany]{ctexbook}
+
+% ─── Encoding & Fonts ────────────────────────────────────
+\usepackage{fontspec}
+% Use system fonts for CJK and Latin
+% On macOS: Songti SC / STSong for Chinese; falls back to system default
+% On Linux: install fonts-noto-cjk
+\setCJKmainfont[BoldFont=STHeiti,ItalicFont=STKaiti]{STSong}
+\setCJKsansfont{STHeiti}
+\setCJKmonofont{STFangsong}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Courier New}
+
+% ─── Math ────────────────────────────────────────────────
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}           % bold math
+\usepackage{nicefrac}     % compact 1/2 etc.
+
+% ─── Theorem Environments ────────────────────────────────
+\newtheorem{theorem}{定理}[chapter]
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+\newtheorem{proposition}[theorem]{命题}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{定义}
+\newtheorem{example}[theorem]{例子}
+\newtheorem{exercise}{练习}[chapter]
+\theoremstyle{remark}
+\newtheorem*{remark}{注}
+\newtheorem*{insight}{视角}      % for interpretive claims
+\newtheorem*{openproblem}{开放问题}  % for speculative claims
+
+% ─── Bibliography ────────────────────────────────────────
+\usepackage[
+  backend=biber,
+  style=authoryear-comp,
+  sorting=nyt,
+  maxbibnames=99,
+  maxcitenames=2,
+  uniquelist=false,
+  uniquename=false,
+]{biblatex}
+\addbibresource{bibliography/library.bib}
+
+% ─── Layout ──────────────────────────────────────────────
+\usepackage[
+  a4paper,
+  top=2.5cm,bottom=2.5cm,
+  left=3cm,right=3cm,
+]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ─── Figures & Tables ────────────────────────────────────
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{subcaption}
+\usepackage{float}
+
+% ─── Code & Algorithms ───────────────────────────────────
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  language=Python,
+}
+\usepackage{algorithm,algpseudocode}
+
+% ─── Hyperlinks ──────────────────────────────────────────
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=teal,urlcolor=teal]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+% ─── Custom Notation ─────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\inner}[2]{\langle #1,\, #2 \rangle}
+\newcommand{\norm}[1]{\left\| #1 \right\|}
+\newcommand{\mb}[1]{\boldsymbol{#1}}
+\newcommand{\vx}{\boldsymbol{x}}
+\newcommand{\vy}{\boldsymbol{y}}
+\newcommand{\vq}{\boldsymbol{q}}
+\newcommand{\vk}{\boldsymbol{k}}
+\newcommand{\vv}{\boldsymbol{v}}
+\newcommand{\mW}{\boldsymbol{W}}
+\newcommand{\mS}{\boldsymbol{S}}
+% TTT-specific
+\newcommand{\tttloss}{\mathcal{L}_{\mathrm{TTT}}}
+\newcommand{\innerloop}{\mathcal{L}_{\mathrm{inner}}}
+\newcommand{\outerloop}{\mathcal{L}_{\mathrm{outer}}}
+
+% ─── Custom Boxes ────────────────────────────────────────
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable,skins}
+\newtcolorbox{toybox}[1][]{
+  title={\textbf{玩具问题}},
+  colback=blue!3,colframe=blue!40!black,
+  fonttitle=\bfseries, breakable, #1
+}
+\newtcolorbox{misconceptionbox}[1][]{
+  title={\textbf{常见误解}},
+  colback=orange!5,colframe=orange!60!black,
+  fonttitle=\bfseries, breakable, #1
+}
+\newtcolorbox{labbox}[1][]{
+  title={\textbf{动手实验}},
+  colback=green!3,colframe=green!40!black,
+  fonttitle=\bfseries, breakable, #1
+}
+\newtcolorbox{viewpointbox}[1][]{
+  title={\textbf{视角（非定论）}},
+  colback=purple!3,colframe=purple!40!black,
+  fonttitle=\bfseries, breakable, #1
+}
+
+% ─── Chapter/Section Formatting ──────────────────────────
+\usepackage{titlesec}
+% (ctexbook handles most CJK chapter formatting automatically)
+
+% ─── Other Utilities ─────────────────────────────────────
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{epigraph}

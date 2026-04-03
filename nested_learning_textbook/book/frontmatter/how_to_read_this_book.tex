@@ -1,0 +1,49 @@
+% frontmatter/how_to_read_this_book.tex
+\chapter*{如何阅读本书}
+\addcontentsline{toc}{chapter}{如何阅读本书}
+
+\section*{章节结构}
+
+每一章都围绕\textbf{一个核心问题}组织，而不是从论文名词出发。
+每章的固定结构如下：
+
+\begin{enumerate}
+  \item \textbf{本章想回答什么问题} — 用一句话点明本章的核心驱动问题
+  \item \textbf{最小例子} — 用最简单的具体情境引入
+  \item \textbf{直觉解释} — 以自然语言说清楚机制
+  \item \textbf{数学形式化} — 给出最低必要的数学
+  \item \textbf{代表论文} — 如何读懂关键文献
+  \item \textbf{和前后章节的关系} — 明确位置
+  \item \textbf{动手实验} — 可以在 $\leq 200$ 行代码内完成的小实验
+  \item \textbf{常见误解} — 学生最容易犯的错误
+  \item \textbf{练习题} — 至少 3 道
+  \item \textbf{本章小结} — 核心要点
+\end{enumerate}
+
+\section*{两个贯穿全书的玩具问题}
+
+为了保持叙事连贯性，全书反复使用以下两个极简模型：
+
+\begin{toybox}
+\textbf{玩具问题 A：在线线性回归 / 联想记忆}
+
+给定流式输入 $(x_t, y_t)$，目标是学习线性映射 $\hat{y} = W x$。
+这个问题可以用来讲 ICL、梯度下降等价、TTT 更新、在线优化。
+\end{toybox}
+
+\begin{toybox}
+\textbf{玩具问题 B：键值检索 / MQAR}
+
+给定键值对 $(k_i, v_i)$ 序列，测试时给出查询 $q$，要求返回匹配的 $v_i$。
+这个问题可以用来讲 Attention、Linear Attention、Fast Weights、Titans 的记忆能力。
+\end{toybox}
+
+\section*{学术诚实约定}
+
+本书在涉及具有争议性的机制解释时，会明确使用以下标记：
+
+\begin{itemize}
+  \item \textbf{定理/定义}：经过严格数学证明的结论
+  \item \textbf{视角}：一种富有启发性的解释，有一定实验支撑，但不是严格等价
+  \item \textbf{开放问题}：仍在研究中，不应作为定论引用
+\end{itemize}

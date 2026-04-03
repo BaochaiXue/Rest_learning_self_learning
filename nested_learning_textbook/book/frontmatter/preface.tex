@@ -1,0 +1,45 @@
+% frontmatter/preface.tex
+\chapter*{前言}
+\addcontentsline{toc}{chapter}{前言}
+
+\epigraph{%
+  ``A model is not just a function — it is a learning system operating at multiple timescales.''
+}{--- 教材编者归纳}
+
+\section*{本书想回答什么问题}
+
+如果一个深度学习模型在训练完成之后被部署上线，它的参数就固定了。
+面对新的测试数据，它只能做一件事：前向传播。
+但是，这真的是全部吗？
+
+过去几年的研究正在逐步打破这一直觉。
+一系列工作表明，在某种意义上，模型可以在推断（inference）阶段继续"学习"：
+通过更新隐藏状态、通过注意力机制隐式执行梯度下降、或者通过专门设计的 TTT 层在测试时持续调整内部参数。
+
+本书旨在系统讲述这条演化路径：
+\begin{quote}
+  \textbf{Test-Time Training (2020)} \textrightarrow{} 双层优化与元学习 \textrightarrow{}\\
+  快权重与外部记忆 \textrightarrow{} 线性注意力与 Fast Weights 的统一 \textrightarrow{}\\
+  In-Context Learning 作为隐式优化 \textrightarrow{} TTT Layers \textrightarrow{}\\
+  Titans 多时间尺度记忆 \textrightarrow{} Nested Learning 统一视角
+\end{quote}
+
+\section*{本书不是什么}
+
+本书\textbf{不是}又一本 Transformer 调参指南，也不是系统的统计学习理论教材。
+读者不需要掌握 PAC 学习、VC 维或 Rademacher 复杂度。
+所需的数学背景在附录A中说明，大致是：线性代数、多元微积分、概率统计、梯度下降。
+
+本书也\textbf{不把 Nested Learning 当作已被整个社区确认的终极框架}。
+Nested Learning 作为最后一章的统一视角被仔细介绍，
+但全书始终明确区分哪些是机制性共识、哪些是解释视角、哪些是开放问题。
+
+\section*{目标读者}
+
+本书面向计算机科学或相关专业的高年级本科生，
+要求有使用 PyTorch 等框架进行基本模型训练的经验，
+了解梯度下降和基本的前馈神经网络结构。
+
+\section*{致谢}
+
+（待补充）

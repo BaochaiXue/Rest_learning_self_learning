@@ -1,0 +1,170 @@
+% chapters/02_why_models_can_learn_at_test_time.tex
+\chapter{为什么模型能在测试时学习？}
+\label{ch:why_test_time}
+
+\section{本章想回答什么问题}
+
+一个训练完毕、参数固定的模型，遇到与训练集分布不同的测试数据时，为什么会失效？
+面对这个失效，有没有比"重新收集数据、重新训练"更轻量的解决方案？
+这一章给出第一个具体的答案：\textbf{利用测试样本本身做自监督微调}。
+
+\section{最小例子：分布偏移下的线性回归}
+
+\begin{toybox}[title=玩具问题 A 实例：截距偷移]
+假设训练数据来自 $y = 3x + 0 + \epsilon$，
+测试数据来自 $y = 3x + 5 + \epsilon$（截距发生了偏移）。
+
+用训练集拟合的模型 $\hat{y} = 3x$ 在测试集上误差约为 $5^2 = 25$（均方误差）。
+
+如果我们能在测试时看到一些 $(x_\text{test}, y_\text{test})$ 对，
+并用它们做一步梯度更新，截距就会自动向 $5$ 靠拢，误差大幅降低。
+
+但实际测试场景中，我们\textbf{没有标注 $y_\text{test}$}。
+怎么办？
+\end{toybox}
+
+\section{直觉解释}
+
+\subsection*{分布偏移的根本问题}
+
+机器学习的标准假设是训练数据和测试数据来自同一分布（IID 假设）。
+但现实中，这个假设经常被违反：
+\begin{itemize}
+  \item 图像分类：训练用晴天照片，测试遇到雨天图像
+  \item 语言模型：训练在 2023 年数据，测试时出现 2025 年新词
+  \item 医学影像：不同医院的成像设备使图像风格不同
+\end{itemize}
+
+标准的前向传播完全"看不见"分布偏移——它只会根据固定参数作出预测。
+
+\subsection*{Test-Time Training 的核心思路}
+
+\citet{sun2020ttt} 的思路非常直接：
+虽然我们没有测试时的\textbf{主任务标签}，
+但我们可以为测试样本设计一个\textbf{辅助自监督任务}，
+利用这个任务产生的梯度来更新模型参数。
+
+经典的辅助任务示例：
+\begin{itemize}
+  \item 图像旋转预测：将图像随机旋转 0°、90°、180°、270°，预测旋转角度
+  \item 遮挡掩码重建：随机遮挡图像一部分，预测被遮挡的像素
+  \item 对比学习：使同一图像的不同增广在特征空间中靠近
+\end{itemize}
+
+这些辅助任务的标签可以由测试样本本身生成，不需要人工标注。
+
+\section{数学形式化}
+
+\subsection*{模型架构}
+
+将模型分为两部分：
+\begin{itemize}
+  \item 共享特征提取器 $f_\theta$：提取与任务相关的表示
+  \item 主任务头 $g_\phi$：从表示预测主任务输出
+  \item 辅助任务头 $h_\psi$：从表示执行自监督辅助任务
+\end{itemize}
+
+\subsection*{训练阶段（多任务联合训练）}
+
+\begin{equation}
+  \min_{\theta, \phi, \psi}\ \E_{(x,y)\sim P_\text{train}}
+  \left[ \mathcal{L}_\text{main}(g_\phi(f_\theta(x)), y)
+  + \lambda \mathcal{L}_\text{aux}(h_\psi(f_\theta(x)), \tilde{y}(x)) \right]
+\end{equation}
+
+其中 $\tilde{y}(x)$ 是从 $x$ 自动生成的辅助标签（如旋转角度），$\lambda$ 是权重。
+
+\subsection*{测试阶段（TTT 核心步骤）}
+
+对于每个测试样本 $x_\text{test}$：
+\begin{equation}
+  \theta^* = \theta - \alpha \nabla_\theta \mathcal{L}_\text{aux}(h_\psi(f_\theta(x_\text{test})), \tilde{y}(x_\text{test}))
+  \label{eq:ttt_update}
+\end{equation}
+
+然后用更新后的参数做主任务预测：
+\begin{equation}
+  \hat{y} = g_\phi(f_{\theta^*}(x_\text{test}))
+\end{equation}
+
+关键：式 \eqref{eq:ttt_update} 需要对 $x_\text{test}$ 做反向传播。
+这是一个\textbf{真实的梯度步骤}，会改变持久化参数 $\theta$（通常只改变部分层）。
+
+\subsection*{动态评估（更早的相关工作）}
+
+\citet{krause2018dynamiceval} 提出了语言模型上的动态评估（Dynamic Evaluation）：
+在测试时，每读一段文本，就对语言模型做一步在线更新，
+使模型适应当前文档的话题和风格。
+形式上类似于 TTT，但使用主任务损失（下一词预测）而非辅助任务。
+
+\section{代表论文如何解决这个问题}
+
+\paragraph{Sun et al. (2020)：TTT with Self-Supervision}
+这篇文章的关键贡献在于：
+(1) 证明辅助任务必须与主任务\emph{共享表示}才能真正帮助泛化；
+(2) 在 CIFAR-100-C 等基准上验证了显著的性能提升。
+
+\paragraph{Krause et al. (2018)：Dynamic Evaluation}
+提供了 TTT 思路在语言模型上的早期版本，
+说明对语言来说，"主任务就是自监督任务"，不需要单独设计辅助目标。
+
+\section{和前后章节的关系}
+
+本章建立了"测试时参数更新"的合法性基础。
+一个自然的追问是：我们能否\textbf{在训练阶段就让模型做好准备，以便在测试时更好地被微调}？
+这正是第 \ref{ch:bilevel} 章元学习的出发点。
+
+\begin{labbox}
+\textbf{Lab 2：截距偷移实验}
+
+\begin{enumerate}
+  \item 生成训练数据：$(x, y) \sim y = 3x + \epsilon$，$x \in \mathcal{N}(0,1)$
+  \item 训练一个单层线性回归 $\hat{y} = wx$，拟合梯度 $w \approx 3$
+  \item 生成测试数据：$y = 3x + 5 + \epsilon$（截距偏移 5）
+  \item 设计辅助任务：预测输入经过一次随机线性变换后的结果
+  \item 在测试时执行式 \eqref{eq:ttt_update}，记录每步后的主任务 MSE
+  \item 绘制"更新步数 vs MSE"曲线，与不做 TTT 的基线对比
+\end{enumerate}
+
+预期观察：即使辅助任务与主任务不完全匹配，
+共享的表示层依然能从测试时更新中受益。
+\end{labbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解}：TTT 在测试时每个样本都要做梯度下降，一定很慢，没有实用价值。
+
+\textbf{纠正}：
+(1) TTT 每样本只需少量梯度步（通常 1--10 步），延迟可接受；
+(2) 可以只更新部分层（如 BN 层或最后几层），大幅减少计算；
+(3) 对于批量测试场景（如医疗图像院间迁移），TTT 的提升可以非常显著。
+真正的慢在于必须调用 \texttt{backward()}——这在第 \ref{ch:ttt_layers} 章的 TTT-Layer 中被彻底解决。
+\end{misconceptionbox}
+
+\section{练习题}
+
+\begin{exercise}
+如果辅助任务与主任务完全无关（例如，在分类任务上用一个随机噪声预测任务作为辅助），
+TTT 还会有帮助吗？请给出理论分析和直觉解释。
+\end{exercise}
+
+\begin{exercise}
+如果测试数据以批次到达（batch TTT），而非单样本，
+式 \eqref{eq:ttt_update} 应如何修改？
+批次大小对性能有什么影响？
+\end{exercise}
+
+\begin{exercise}
+动态评估（\citeauthor{krause2018dynamiceval}）的更新方向会导致语言模型
+"过拟合"当前文档的风格吗？
+如果是，这在测试集上是否仍然有益？为什么？
+\end{exercise}
+
+\section{本章小结}
+
+\begin{itemize}
+  \item \textbf{分布偏移}是静态模型失效的根本原因。
+  \item \textbf{TTT 2020 方案}：设计自监督辅助任务，在测试时对该任务做梯度更新，再做主任务预测。
+  \item 核心要求：辅助任务必须与主任务\textbf{共享表示}，否则更新无益。
+  \item 代价：每个测试样本需要调用一次反向传播，有延迟。
+  \item 下一步：如何训练模型，使其天然适合被快速微调？ $\to$ 第 \ref{ch:bilevel} 章。
+\end{itemize}
