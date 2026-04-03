@@ -143,7 +143,19 @@ For each of the 11 chapters, the following must be present:
 
 ---
 
+## Dimension 12: Neuroscience Analogy Discipline
+
+| Check | Pass Criteria | Tool |
+|---|---|---|
+| Analogy Usefulness | The analogy clarifies the math/mechanism rather than obfuscating it. | Manual |
+| Strict Separation | Both `\begin{neurosciencebox}` and `\begin{analogyboundarybox}` exist. | `check_chapter_completeness.py` |
+| Mechanism != Metaphor | The text never claims "models are brains". Limitations explicitly listed. | Manual |
+| Frontmatter Guide | `frontmatter/how_to_use_neuroscience_analogies.tex` is present. | Manual |
+| Glossary Coverage | ML terms mapping to bio terms are defined to prevent confusion. | Manual |
+
+---
+
 ## Overall Pass/Fail
 
 **Minimum to call a phase "done"**: All ✅ checks in dimensions 1–5 must pass.  
-**To call book "draft complete"**: All dimensions 1–11 must pass mechanically.
+**To call book "draft complete"**: All dimensions 1–12 must pass mechanically and manually.
