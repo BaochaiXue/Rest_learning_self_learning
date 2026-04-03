@@ -38,6 +38,8 @@ def check_file(path):
         "Context/Bridges": r"和前后章节的关系",
         "Lab Assignment": r"实验|Lab |\\begin\{labbox",
         "Misconceptions": r"常见误解|\\begin\{misconceptionbox",
+        "Neuroscience Analogy": r"\\begin\{neurosciencebox\}",
+        "Analogy Boundary": r"\\begin\{analogyboundarybox\}",
         "Exercises": r"练习题|\\begin\{exercise\}",
         "Summary": r"小结",
         "Learning Objectives": r"读完本章|你应该能够|你现在应该会"
