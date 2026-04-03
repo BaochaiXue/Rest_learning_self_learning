@@ -165,6 +165,132 @@ Learning to TTT 保留了预测反馈项，
 这也是为什么 TTT-Layer 在长序列上常常优于线性注意力。
 \end{remark}
 
+\subsection*{伪代码：单序列的前向推断}
+
+以下伪代码展示了一个 Learning to TTT 层
+在推断时处理长度为 $T$ 的序列的完整流程。
+注意：$\theta$ 在推断时完全冻结，
+所有的``学习''都发生在 $W^{\text{inner}}$ 的更新中。
+
+\begin{algorithm}
+\textbf{输入}：序列 $x_1, x_2, \ldots, x_T$，
+慢参数 $\theta = \{W_K, W_V, W_Q, \eta\}$ \\
+\textbf{初始化}：$W_0^{\text{inner}} \gets 0_{d \times d}$
+（或由 $\theta$ 提供的初始化）
+
+\medskip
+\textbf{for} $t = 1$ \textbf{to} $T$ \textbf{do}：
+\begin{enumerate}
+  \item \textbf{投影}：$k_t = W_K x_t$，$v_t = W_V x_t$，$q_t = W_Q x_t$
+  \item \textbf{内层损失}：
+    $\ell_t = \frac{1}{2}\|W_{t-1}^{\text{inner}} k_t - v_t\|_2^2$
+  \item \textbf{内层梯度}：
+    $g_t = (W_{t-1}^{\text{inner}} k_t - v_t) k_t^\top$
+  \item \textbf{状态更新}：
+    $W_t^{\text{inner}} = W_{t-1}^{\text{inner}} - \eta \cdot g_t$
+  \item \textbf{输出}：
+    $y_t = q_t^\top W_t^{\text{inner}} k_t + x_t$
+    （残差连接）
+\end{enumerate}
+\textbf{end for}
+\end{algorithm}
+
+\textbf{关键观察}：
+\begin{itemize}
+  \item 步骤 1--5 全部是前向计算，没有调用 \texttt{.backward()}。
+  \item 步骤 3 的``梯度''是对 $W^{\text{inner}}$ 的解析表达式，
+    不需要构建计算图。
+  \item 步骤 4 是唯一的``学习''操作——
+    它修改了隐状态 $W^{\text{inner}}$，
+    等价于在线回归的一步 SGD。
+  \item 每一步的计算量为 $O(d^2)$，与序列长度无关。
+\end{itemize}
+
+\subsection*{Worked Example：$d=2$ 的 3 步状态追踪}
+
+\begin{example}[手动追踪 3 步 Learning to TTT]
+设 $d = 2$，$\eta = 0.5$，$W_0^{\text{inner}} = 0$。
+假设慢参数已经将输入投影为以下键值对：
+
+\medskip
+\begin{center}
+\begin{tabular}{cccc}
+\toprule
+$t$ & $k_t$ & $v_t$ & 目标：$W^{\text{inner}} k_t \approx v_t$ \\
+\midrule
+1 & $(1, 0)^\top$ & $(3, 0)^\top$ & 第一列应趋近 $(3, 0)$ \\
+2 & $(0, 1)^\top$ & $(0, 5)^\top$ & 第二列应趋近 $(0, 5)$ \\
+3 & $(1, 1)^\top$ & $(3, 5)^\top$ & 应输出两列之和 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Step 1}（$t=1$）：
+\begin{align}
+  \text{预测} &= W_0 k_1 = 0 \cdot (1,0)^\top = (0, 0)^\top \\
+  \text{残差} &= (0,0)^\top - (3,0)^\top = (-3, 0)^\top \\
+  g_1 &= (-3, 0)^\top (1, 0) = \begin{pmatrix} -3 & 0 \\ 0 & 0 \end{pmatrix} \\
+  W_1 &= 0 - 0.5 \cdot g_1 = \begin{pmatrix} 1.5 & 0 \\ 0 & 0 \end{pmatrix}
+\end{align}
+
+\textbf{Step 2}（$t=2$）：
+\begin{align}
+  \text{预测} &= W_1 k_2 = \begin{pmatrix} 1.5 & 0 \\ 0 & 0 \end{pmatrix}
+  (0,1)^\top = (0, 0)^\top \\
+  \text{残差} &= (0,0)^\top - (0,5)^\top = (0, -5)^\top \\
+  g_2 &= (0, -5)^\top (0, 1) = \begin{pmatrix} 0 & 0 \\ 0 & -5 \end{pmatrix} \\
+  W_2 &= \begin{pmatrix} 1.5 & 0 \\ 0 & 0 \end{pmatrix}
+  - 0.5 \cdot \begin{pmatrix} 0 & 0 \\ 0 & -5 \end{pmatrix}
+  = \begin{pmatrix} 1.5 & 0 \\ 0 & 2.5 \end{pmatrix}
+\end{align}
+
+\textbf{Step 3}（$t=3$）：
+\begin{align}
+  \text{预测} &= W_2 k_3 = \begin{pmatrix} 1.5 & 0 \\ 0 & 2.5 \end{pmatrix}
+  (1,1)^\top = (1.5, 2.5)^\top \\
+  \text{目标} &= (3, 5)^\top \\
+  \text{相对误差} &= \frac{\|(1.5, 2.5) - (3, 5)\|}{\|(3, 5)\|}
+  = \frac{\sqrt{1.5^2 + 2.5^2}}{\sqrt{34}} \approx 0.50
+\end{align}
+
+\textbf{观察}：经过 3 步，$W^{\text{inner}}$ 已经``学到了''
+部分目标映射（对角矩阵的一半）。
+如果用 $\eta = 1.0$，第 3 步的预测误差将更小。
+如果继续更多步或使用更大的内层模型（MLP），
+误差会进一步降低——
+这就是 TTT-MLP 优于 TTT-Linear 的原因。
+
+\textbf{对比固定 RNN}：一个传统 GRU 在同样的 3 步中
+只会对 $d=2$ 的隐状态向量执行门控操作。
+它的``记忆容量''是 $d = 2$ 个标量。
+而 Learning to TTT 的 $W^{\text{inner}}$ 有 $d^2 = 4$ 个参数。
+这就是``隐状态是参数''带来的容量优势。
+\end{example}
+
+\subsection*{从双层优化到架构设计的映射}
+
+本章的核心概念转变可以通过以下对应关系总结：
+
+\begin{center}
+\begin{tabular}{p{4.5cm} p{4.5cm} p{3.5cm}}
+\toprule
+\textbf{双层优化概念} & \textbf{架构对应物} & \textbf{来源章节} \\
+\midrule
+内层参数 $\phi$ & 隐层状态 $W^{\text{inner}}_t$ & 本章 \\
+内层损失 $\ell_{\text{inner}}$ & 序列局部重建损失 & 本章 \\
+内层优化器 & 状态更新规则（SGD/外积） & Ch.~5, 8 \\
+外层参数 $\theta$ & 全局投影矩阵 $W_K, W_V, W_Q$ & Ch.~3 \\
+外层梯度 & 通过展开的内循环反向传播 & Ch.~3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+这个映射揭示了 Learning to TTT 的方法论意义：
+它把第~\ref{ch:bilevel}~章中``令人费解的嵌套优化''
+转化为了``可以直接在 GPU 上高效执行的网络层''。
+双层优化不再是一种训练技巧，
+而是成为了\textbf{序列模型的设计原理}。
+
 \section{代表论文精读}
 \label{sec:l2l_papers}
 
