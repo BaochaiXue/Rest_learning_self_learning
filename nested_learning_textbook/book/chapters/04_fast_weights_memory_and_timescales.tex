@@ -1,0 +1,119 @@
+% chapters/04_fast_weights_memory_and_timescales.tex
+\chapter{快权重、外部记忆与时间尺度}
+\label{ch:fastweights}
+
+\section{本章想回答什么问题}
+
+是否存在一种"记忆矩阵"，能够在不调用反向传播的情况下，
+\textbf{纯粹通过前向计算}来存储和检索近期输入的关联信息？
+这就是 Fast Weights（快权重）的核心思想。
+
+\section{最小例子}
+
+\begin{toybox}[title=玩具问题 B 实例：键值联想记忆]
+给定三对键值：$(k_1, v_1)$，$(k_2, v_2)$，$(k_3, v_3)$。
+查询 $q \approx k_2$ 时，输出应该接近 $v_2$。
+
+朴素方案：用一个查找表。
+但如果键是连续向量，如何在矩阵运算中完成模糊匹配？
+\end{toybox}
+
+\section{直觉解释：外积作为记忆写入}
+
+将记忆矩阵初始化为零：$\mW_0 = \mathbf{0} \in \R^{d \times d}$。
+
+每遇到一个键值对 $(k_t, v_t)$，用\textbf{外积（outer product）}更新：
+\begin{equation}
+  \mW_t = \lambda \mW_{t-1} + \eta\, v_t k_t^\top
+  \label{eq:fastweight_update}
+\end{equation}
+
+查询时，用查询向量 $q$ 左乘记忆矩阵：
+\begin{equation}
+  \text{output} = \mW_t q = \left(\sum_{s \le t} \lambda^{t-s} v_s k_s^\top \right) q
+  = \sum_{s \le t} \lambda^{t-s} v_s (k_s^\top q)
+  \label{eq:fastweight_query}
+\end{equation}
+
+注意：内积 $k_s^\top q$ 对匹配的键给出大值，对不匹配的键给出小值。
+这就实现了模糊键值检索！
+
+\section{数学形式化：时间尺度的层次}
+
+\begin{definition}[慢权重与快权重]
+\begin{itemize}
+  \item \textbf{慢权重（Slow Weights）$\theta$}：通过大规模训练数据上的梯度下降学习，
+        代表长期知识。在推断时不改变。
+  \item \textbf{快权重（Fast Weights）$\mW_t$}：在推断时由输入动态生成，
+        代表短期关联上下文。每次输入到来时更新，处理完毕后可以丢弃。
+\end{itemize}
+\end{definition}
+
+遗忘因子 $\lambda \in (0, 1]$ 控制不同时间尺度：
+$\lambda = 1$：均等记住所有历史；$\lambda < 1$：偏好近期信息。
+
+\section{代表论文}
+
+\paragraph{\citet{ba2016fastweights}}
+提出了"快权重注意器（Fast Weight Attention）"，
+用递归的外积更新来实现情景记忆，证明这种结构能够加速少样本学习。
+
+\paragraph{\citet{ha2016hypernetworks}}
+HyperNetworks 更进一步：用一个\textbf{主网络}动态生成\textbf{另一个网络的权重}。
+快权重从"当前输入决定记忆"演变为"大网络决定小网络"。
+这是"网络即参数生成器"这一思路的早期形式。
+
+\section{和前后章节的关系}
+
+快权重在这里出现的原因是：它揭示了一种\textbf{不用反向传播就能更新记忆}的机制。
+下一章将揭示这个机制与 Transformer 注意力之间的数学等价性——
+这是本书最重要的一个洞见。
+
+\begin{labbox}
+\textbf{Lab 4：手写外积联想记忆}
+
+\begin{enumerate}
+  \item 生成 3 组随机 $(k_i, v_i) \in \R^{64}$
+  \item 用式 \eqref{eq:fastweight_update} 逐步更新 $\mW$（$\lambda=0.9$）
+  \item 查询：输入 $q = k_2 + 0.1 \cdot \epsilon$（轻微扰动），
+        计算 $\hat{v} = \mW q$，验证 $\hat{v}$ 与 $v_2$ 的余弦相似度
+  \item 分析：当 $d=64$、20 个键值对写入后，干扰项对查询的影响有多大？
+\end{enumerate}
+\end{labbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解}：快权重就是模型中用于存储激活值的隐藏层。
+
+\textbf{纠正}：激活值（$h_t$）是一个向量，随每个词/帧刷新；
+快权重（$\mW_t$）是一个\textbf{矩阵}，能够并行容纳多个关联关系。
+维度是 $d \times d$，大得多，也更丰富。
+\end{misconceptionbox}
+
+\section{练习题}
+
+\begin{exercise}
+证明：如果连续写入 $N$ 个键值对，且键两两正交
+（$k_i^\top k_j = 0$ 对 $i \ne j$），
+则查询 $q = k_s$ 的输出精确等于 $v_s$（忽略遗忘因子）。
+\end{exercise}
+
+\begin{exercise}
+当键不正交时，会发生"干扰（interference）"。
+设 $k_1$ 和 $k_2$ 夹角为 $45°$，推导查询 $q=k_1$ 时
+$v_2$ 分量的污染程度。
+\end{exercise}
+
+\begin{exercise}
+HyperNetworks 让一个网络去生成另一个网络的权重。
+这与快权重的"上下文决定记忆矩阵"思路有何共同之处？
+有何本质不同？
+\end{exercise}
+
+\section{本章小结}
+
+\begin{itemize}
+  \item 快权重通过\textbf{外积积累}实现无反向传播的动态记忆写入与读取。
+  \item 遗忘因子 $\lambda$ 控制记忆的时间尺度：$\lambda \to 1$ 等权历史，$\lambda < 1$ 偏重近期。
+  \item HyperNetworks 把这种思路推广为"网络生成网络"，为后续 TTT-Layer 埋下伏笔。
+  \item 下一章的关键发现：线性注意力层\textbf{数学上等同}于一个不断被外积更新的快权重矩阵。
+\end{itemize}

@@ -1,0 +1,155 @@
+% chapters/05_attention_linear_attention_and_recurrence.tex
+\chapter{Attention、Linear Attention 与递推视角}
+\label{ch:attention}
+
+\section{本章想回答什么问题}
+
+Transformer 的自注意力需要 $O(N^2)$ 内存——对于长序列是灾难性的。
+能否将其重写为线性递推，同时保持等价计算结果？
+如果可以，这个递推形式\textbf{精确等价于第 \ref{ch:fastweights} 章的快权重更新}吗？
+
+\section{最小例子：结合律的魔术}
+
+\begin{toybox}[title=玩具问题 B：键值检索的三种写法]
+设查询为 $q$，键序列 $k_1, \ldots, k_N$，值序列 $v_1, \ldots, v_N$。
+
+\textbf{写法 1（标准注意力，$O(N^2)$）}：
+$y = \sum_{j} \text{softmax}_j(q^\top k_j) \cdot v_j$
+
+\textbf{写法 2（线性注意力，去掉 softmax）}：
+$y = \sum_j (\phi(q)^\top \phi(k_j)) \cdot v_j$
+
+\textbf{写法 3（矩阵结合律，$O(Nd^2)$递推）}：
+$y = \phi(q)^\top \underbrace{\left[\sum_j \phi(k_j) v_j^\top\right]}_{=\mW}$
+
+第 3 种写法中，括号内的 $\mW$ 可以逐步积累，
+每来一个新的 $(k, v)$，做一次外积：$\mW \mathrel{+}= \phi(k) v^\top$。
+\end{toybox}
+
+\section{直觉解释}
+
+\subsection*{Softmax 的必要性与代价}
+
+标准注意力：$y_i = \text{softmax}(Q K^\top)_i \cdot V$。
+
+Softmax 中的指数归一化使得 $y_i$ 对于不同的 $q_i$ 是\textbf{全局相关的}——
+无法把求和拆分成独立的内积乘积组合。
+这是 $O(N^2)$ 的根源。
+
+\subsection*{线性核分解}
+
+如果用某个特征映射 $\phi: \R^d \to \R^{d'}$ 替代 $e^{q^\top k / \sqrt{d}}$，
+使得 $\text{sim}(q, k) \approx \phi(q)^\top \phi(k)$，
+那么求和即可分解：
+
+\begin{equation}
+  y_i = \frac{\sum_{j \le i} \phi(q_i)^\top \phi(k_j) \cdot v_j}{\sum_{j \le i} \phi(q_i)^\top \phi(k_j)}
+  \approx \phi(q_i)^\top \left[\sum_{j \le i} \phi(k_j) v_j^\top\right] \phi(q_i) / Z_i
+\end{equation}
+
+\section{数学形式化}
+
+\subsection*{线性注意力的递推形式}
+
+定义累积记忆矩阵（忽略归一化）：
+\begin{align}
+  \mS_t &= \mS_{t-1} + \phi(k_t) v_t^\top \label{eq:linear_attn_update} \\
+  y_t   &= \phi(q_t)^\top \mS_t \label{eq:linear_attn_query}
+\end{align}
+
+对比快权重更新式 \eqref{eq:fastweight_update}（$\lambda=1$ 版本）：
+\begin{equation}
+  \mW_t = \mW_{t-1} + v_t k_t^\top
+\end{equation}
+
+两者在形式上完全等同（$\phi(k) = k$, $\mS = \mW^{\top}$ 时即一致）。
+这正是 \citet{schlag2021linear} 的核心发现。
+
+\begin{insight}[线性注意力 = 快权重（机制共识）]
+在使用线性核（去掉 Softmax）的情况下，因果自注意力层在数学上
+\textbf{精确等价于}一个被外积顺序更新的快权重矩阵。
+这是一个形式等价结论，适用于线性近似范围内。
+\end{insight}
+
+\subsection*{Softmax 版本为何不同}
+
+带 Softmax 的注意力：$\text{sim}(q, k_j) = \exp(q^\top k_j / \sqrt{d})$，
+这个相似度函数\textbf{无法写成内积形式}，
+因此无法应用矩阵结合律。
+
+\begin{viewpointbox}
+完整的 Softmax 注意力也可以从"联想记忆"视角理解，
+但需要更复杂的框架（如能量函数视角）。
+这种解读是一种解释视角，并非如线性情况那样的严格等价。
+\end{viewpointbox}
+
+\section{代表论文}
+
+\paragraph{\citet{katharopoulos2020rnn}}
+\textit{Transformers are RNNs} 首次明确推导出线性注意力的递推形式，
+并展示其在长序列上的速度优势。
+
+\paragraph{\citet{schlag2021linear}}
+\textit{Linear Transformers Are Secretly Fast Weight Programmers}
+建立了线性注意力和快权重的严格数学等价关系，
+为后续 TTT-Layer 的设计提供了理论基础。
+
+\section{和前后章节的关系}
+
+本章刚好处于快权重（第 \ref{ch:fastweights} 章）和
+ICL-as-optimization（第 \ref{ch:icl} 章）之间的桥梁位置：
+\begin{itemize}
+  \item 快权重 $\xrightarrow{\text{等价于}}$ 线性注意力
+  \item 线性注意力 $\xrightarrow{\text{解释为}}$ 隐式执行梯度下降（第 \ref{ch:icl} 章）
+\end{itemize}
+
+\begin{labbox}
+\textbf{Lab 5：线性注意力速度对比}（约 30 行 PyTorch）
+
+\begin{enumerate}
+  \item 生成随机 $Q, K, V \in \R^{N \times d}$（$N=1024, d=64$）
+  \item 实现标准线性注意力（无 Softmax）：\texttt{(Q @ K.T) @ V}
+  \item 实现递推版本：循环更新 $S \mathrel{+}= k_t v_t^\top$，输出 $q_t S$
+  \item 验证两种输出数值相同（绝对误差 $< 10^{-5}$）
+  \item 测量运行时间，展示递推版本在推断阶段的内存优势
+\end{enumerate}
+\end{labbox}
+
+\begin{misconceptionbox}
+\textbf{常见误解}：线性注意力去掉了 Softmax，所以性能一定远差于标准注意力。
+
+\textbf{纠正}：对于\textbf{需要长上下文和快速推断}的应用场景（如语言模型在线部署），
+线性注意力的权衡往往是合理的。
+现代改进（如 RetNet、Mamba 等）在线性注意力框架上进一步引入了门控和选择机制，
+大幅缩小了与标准注意力的性能差距。
+\end{misconceptionbox}
+
+\section{练习题}
+
+\begin{exercise}
+推导：当 $\phi(k) = k$（恒等映射）时，
+递推式 \eqref{eq:linear_attn_update} 和 \eqref{eq:linear_attn_query}
+与外积快权重式 \eqref{eq:fastweight_update}（$\lambda=1, \eta=1$）是否等价？
+给出详细的代数推导，注意矩阵转置的方向。
+\end{exercise}
+
+\begin{exercise}
+在有因果掩码（causal masking）的情况下，
+式 \eqref{eq:linear_attn_update} 的递推版本和非递推版本在计算量上的差异是什么？
+对于长度为 $N$ 的序列，分别高是 $O(N^2 d)$ 还是 $O(N d^2)$？
+\end{exercise}
+
+\begin{exercise}
+引入遗忘因子 $\lambda$，修改递推为：
+$\mS_t = \lambda \mS_{t-1} + \phi(k_t) v_t^\top$。
+这相当于对注意力权重做什么样的加权？这种修改使注意力更加"局部"，还是"全局"？
+\end{exercise}
+
+\section{本章小结}
+
+\begin{itemize}
+  \item 去掉 Softmax 后，自注意力可以被写成矩阵递推形式，从 $O(N^2)$ 降至 $O(Nd^2)$。
+  \item 这种递推形式与快权重的外积更新\textbf{数学等价}（在线性核下）。
+  \item 这一等价揭示了：注意力不只是"选择性聚焦"，也是"在线更新的联想记忆"。
+  \item 下一章：这种递推记忆更新与梯度下降有多近？ICL 是不是真的在"学习"？
+\end{itemize}
