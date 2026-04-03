@@ -1,162 +1,97 @@
-# Latest Handoff
-**Phase**: B11–B26 Writing Policy Rollout (Phase A + B complete, Phase C partially complete)  
-**Date**: 2026-04-03  
-**Completed by**: Automated agent pass
+# Latest Handoff — Session 2026-04-03 (Evening)
+**Timestamp**: 2026-04-03T22:36:00Z
 
 ---
 
-## What Was Completed in This Pass
+## What Was Done This Session
 
-### Phase A: Policy Infrastructure
-- Created `docs/design-docs/pedagogy_principles.md` — canonical B11–B26 writing policy reference
-- Upgraded `book/frontmatter/how_to_use_neuroscience_analogies.tex` to v2.0 (similarity taxonomy, failure conditions, paired box reading guide)
-- Expanded `book/appendices/glossary.tex` from 4 to 12 ML↔Neuro term pairs
-- Created `docs/generated/neuroscience_analogy_report.md` — per-chapter analogy quality audit
-- Updated `docs/index.md` to reference all new files
+### Phase 2: Build Verification ✅ COMPLETE
+- Confirmed `xelatex`, `latexmk`, `biber` all available
+- Ran `make check` — all scripts pass cleanly
+- Ran `make book` — **first ever verified build**
+- **Fixed 20 unresolved citations** by adding 12 alias entries to `library.bib`
+  (mapped chapter citation keys to canonical bib keys)
+- **Fixed Unicode ❌ issue** in Ch09 (replaced with `\textbf{[X]}`)
+- **Final build: 131 pages, 0 errors, PDF generated**
 
-### Phase B: Ch09 Pilot Rewrite (Complete)
-- Full rewrite of `book/chapters/09_titans_and_multi_timescale_memory.tex`
-- Three-layer structure (formal → algorithmic → neuroscience) throughout
-- `neurosciencebox`: CLS theory (McClelland et al. 1995), explicit comparison table Titans↔CLS
-- `analogyboundarybox`: 3 mechanistic differences (update rules, hippocampus depth, consolidation timescale)
-- `\begin{definition}` for Surprise (eq 3), Step-by-step derivation with variable annotation
-- Worked numerical example tracing Surprise behavior
-- 4 exercises, including one requiring explicit analogy boundary reasoning
-- Emotive/imprecise language fully purged: all B25 failure conditions pass
+### Phase 1: Documentation Reconciliation ✅ COMPLETE
+- Rewrote `docs/project_state/reconciled_repo_state.md` as single source of truth
+- Corrected false claim about "duplicate chapter files"
+- Added verified build status, per-chapter quality assessment
 
-### Phase C: Rollout (Partially Complete)
-- Ch04 (`04_fast_weights_memory_and_timescales.tex`): Added neurosciencebox (STP + working memory) + analogyboundarybox ✅
-- Ch08 (`08_ttt_layers_hidden_state_as_learner.tex`): Added neurosciencebox (task-internal plasticity) + analogyboundarybox ✅
-- Ch01, 02, 03, 05, 06, 07, 10, 11: ⏳ Boxes not yet added
+### Phase 4+5: Chapter Deepening + Neuroscience Rollout (PARTIAL)
 
----
+#### Complete Rewrites (B11-B26 standard):
+| Chapter | Before | After | Key Additions |
+|---------|--------|-------|---------------|
+| **Ch11 — Nested Learning** | 157 lines, emotive draft | **648 lines** | Formal L-layer nested optimization, worked example, neuroscience boxes, analogy boundary, 4 exercises, Lab 11, 3 misconception boxes |
+| **Ch02 — Why Test-Time** | 155 lines, very informal | **558 lines** | Formal TTT 2020 algorithm, gradient alignment theorem with proof, computation cost table, rewritten neuroscience boxes, 4 exercises, Lab 2 |
+| **Ch10 — TTR & Unified** | 170 lines, informal | **514 lines** | TTR definition, RLS via Sherman-Morrison, worked numeric example, unified model table, neuroscience boxes, 3 exercises, Lab 10 |
 
-## Current True State of the Repo
+#### Neuroscience Box Additions:
+| Chapter | Status | Analogy Used |
+|---------|--------|-------------|
+| Ch01 | ✅ Already had boxes | Sensory-motor calibration |
+| Ch02 | ✅ Rewritten | Prism adaptation |
+| Ch03 | ✅ Added | Immune system adaptive learning |
+| Ch04 | ✅ Already had boxes | — |
+| Ch05 | ✅ Added | Hippocampal content-addressable memory |
+| Ch06 | ✅ Added | PFC meta-learning (Wang et al. 2018) |
+| Ch07 | ✅ Added | Synaptic metaplasticity |
+| Ch08 | ✅ Already had boxes | — |
+| Ch09 | ✅ Already had boxes | CLS theory |
+| Ch10 | ✅ Rewritten | Hebbian vs. error-driven learning |
+| Ch11 | ✅ Rewritten | Multi-timescale neural plasticity |
 
-| Dimension | State |
-|---|---|
-| pedagogy_principles.md | ✅ Created (B11–B26 policy) |
-| Frontmatter neuro guide | ✅ v2.0 |
-| Glossary | ✅ 12 pairs |
-| Neuroscience analogy report | ✅ v1.0 |
-| Ch04 neuro boxes | ✅ |
-| Ch08 neuro boxes | ✅ |
-| Ch09 | ✅ Full rewrite |
-| Ch01–03, 05–07, 10–11 neuro boxes | ❌ Pending |
-| LaTeX build status | ⚠️ Needs verification after edits |
-
----
-
-## Decisions Made
-
-1. **B11–B26 becomes canonical writing policy** — all new chapter work must follow `pedagogy_principles.md`
-2. **Ch09 is the reference chapter** — read it before writing any new neuro analogy boxes
-3. **Analogy template fixed** (B22): 类比对象 → 共同之处 → 不同之处 → 不应推出的结论
-4. **B13 similarity levels** must be explicitly cited whenever an analogy is used
-5. **Both boxes must appear together** — `neurosciencebox` without `analogyboundarybox` fails Dimension 12
+**All 11 chapters now have neuroscience + analogy boundary boxes.**
 
 ---
 
-## Blockers
+## Current Chapter Quality Status
 
-- None critical. Need to verify `make book` compiles cleanly after Ch09 rewrite (references to `ch:unified`, `ch:nested` labels must resolve).
+| Chapter | Lines | Boxes | Quality |
+|---------|-------|-------|---------|
+| Ch01 | 197 | ✅ | Draft (emotive prose, but functional) |
+| Ch02 | 558 | ✅ | **Textbook-grade** ← rewritten |
+| Ch03 | 560 | ✅ | **Textbook-grade** |
+| Ch04 | 576 | ✅ | **Textbook-grade** |
+| Ch05 | 538 | ✅ | **Textbook-grade** |
+| Ch06 | 285 | ✅ | Substantial draft |
+| Ch07 | 244 | ✅ | Substantial draft |
+| Ch08 | 224 | ✅ | Substantial draft |
+| Ch09 | 545 | ✅ | **Textbook-grade** (reference) |
+| Ch10 | 514 | ✅ | **Textbook-grade** ← rewritten |
+| Ch11 | 648 | ✅ | **Textbook-grade** ← rewritten |
 
----
-
-## What to Do Next (Priority Order)
-
-1. **Run `make book`** — verify LaTeX compiles without errors
-2. **Ch02, Ch03, Ch05, Ch11** — highest priority for box additions (B21 ordering)
-3. **Ch01, Ch06, Ch07, Ch10** — medium priority
-4. **Phase D**: Run full `neuroscience_analogy_report.md` update after all boxes added
-
----
-
-## Files to Read Before Starting Next Work
-
-1. `AGENTS.md` — navigation map
-2. This file
-3. `docs/design-docs/pedagogy_principles.md` — **read before writing any analogy content**
-4. `book/chapters/09_titans_and_multi_timescale_memory.tex` — reference chapter
-5. `docs/generated/neuroscience_analogy_report.md` — which chapters still need boxes
-
+**Summary**: 7 of 11 chapters at textbook-grade. 4 remaining at draft/substantial level.
 
 ---
 
-## What Was Completed in This Pass
+## What Still Needs Work
 
-### Phase 0: Real Repo Audit
-- Scanned true filesystem state (not assumed)
-- Found: 22 papers with merged TeX, 2 PDF-only, 1 missing entirely
-- Found: Absolute paths in manifest CSV and `literature_engineer.py`
-- Found: One misnamed file (PDF disguised as .tar.gz)
-- Documented in `docs/project_state/current_repo_audit.md`
+### Priority 1: Remaining Chapter Deepening
+- **Ch01** (197 lines): Prose rewrite to remove emotive language, add formal math
+- **Ch06** (285 lines): Expand formal ICL-as-GD derivation
+- **Ch07** (244 lines): Expand inner/outer loop formalization
+- **Ch08** (224 lines): Expand formal TTT-Layer derivation
 
-### Phase 1: Harness Scaffold
-- Created `AGENTS.md`, `ARCHITECTURE.md`, root `README.md`, `Makefile`, `.gitignore`
-- Built full `docs/` hierarchy (index, project_state, design-docs, exec-plans, handoffs, quality, decisions, references, generated)
-- Created all quality rubric files and check scripts
+### Priority 2: Literature Layer
+- 24 paper notes in `notes/papers/*.md` are all still generic stubs
+- Need rewriting to follow pedagogical note structure
+- Prioritize top 10 papers
 
-### Phase 2: Corpus Stabilization
-- Fixed misnamed download file (induction heads PDF was labeled .tar.gz)
-- Rebuilt `manifests/papers_manifest.csv` with repo-relative paths and corrected status codes
-- Created `scripts/corpus_pipeline.py` (replaces one-shot `literature_engineer.py`)
-- Created `scripts/validate_manifest.py`, `check_absolute_paths.py`, `check_book_structure.py`
-- Generated `book/bibliography/library.bib` with 24 BibTeX entries
+### Priority 3: Appendices
+- `appendix_math.tex` (2KB) needs outer products, RLS, online optimization basics
+- `appendix_labs_and_exercises.tex` needs lab code frameworks
 
-### Phase 3: LaTeX Book Scaffold
-- Created `book/main.tex`, `book/preamble.tex`, `book/latexmkrc`
-- Scaffolded all 11 chapters as `.tex` with section templates
-- Created frontmatter, appendices structure
-- Structure is designed to import content without modification
+### Priority 4: QA Reports
+- Update `evaluation_report.md` with new build/quality data
+- Update `neuroscience_analogy_report.md` — all chapters now have boxes
+- Update `repo_hygiene_report.md`
 
 ---
 
-## Current True State of the Repo
-
-| Dimension | State |
-|---|---|
-| Papers with source+merged | 22 ✅ |
-| Papers PDF-only | 1 (Santoro ICML 2016) |
-| Papers missing | 1 (Optimization as a Model for Few-Shot Learning) |
-| LaTeX chapters | 11 scaffolded stubs |
-| v0 Markdown chapters | 14 preserved as source material |
-| Per-paper notes | 24 — all stubs needing content |
-| Bibliography | 24 entries in library.bib |
-| Absolute paths in codebase | 2 remaining (in `literature_engineer.py` legacy script — left as-is; do not run it) |
-
----
-
-## Decisions Made
-
-1. **Keep `manuscript/*.md` as v0 source material** — do NOT delete; use as content seed for LaTeX
-2. **`ctexbook` + `xelatex`** is the LaTeX stack for Chinese/English mixed textbook
-3. **`literature_engineer.py` is superseded** but kept for reference; do not run it
-4. **All new paths are repo-relative** (relative to git root `Rest_learning/`)
-5. **`book/` is canonical; `manuscript/` is historical**
-
----
-
-## Blockers
-
-- None critical. LaTeX compilation requires XeLaTeX + CJK fonts on build machine.
-
----
-
-## What to Do Next (Priority Order)
-
-1. **Expand chapter `.tex` content** — read `manuscript/*.md` → write LaTeX prose in `book/chapters/*.tex`
-2. **Write per-paper notes** — `notes/papers/*.md` currently all stubs
-3. **Run `make check`** — verify all scripts pass cleanly
-4. **Attempt `make book`** — compile to PDF; fix any compilation errors
-5. **Update this handoff** after each phase
-
----
-
-## Files to Read Before Starting Next Work
-
-1. `AGENTS.md` — navigation map (always first)
-2. This file (`docs/handoffs/latest_handoff.md`)
-3. `docs/project_state/current_repo_audit.md` — real state
-4. `docs/exec-plans/active/04_content_migration.md` — next task plan
-5. `docs/quality/qa_rubric.md` — what "done" means
+## Build Status
+- `make check`: ✅ Pass
+- `make book`: ✅ Pass (131 pages, 0 errors)
+- Built PDF: `book/build/main.pdf` (verified)
