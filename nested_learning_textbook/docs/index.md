@@ -12,7 +12,7 @@
 | File | Purpose |
 |---|---|
 | [`design-docs/book_scope.md`](design-docs/book_scope.md) | Book positioning, audience, what it is and isn't |
-| [`design-docs/pedagogy_principles.md`](design-docs/pedagogy_principles.md) | Teaching philosophy and chapter structure rules |
+| [`design-docs/pedagogy_principles.md`](design-docs/pedagogy_principles.md) | **Canonical writing policy** — B11–B26 three-layer structure, analogy template, failure conditions |
 | [`design-docs/math_prerequisites.md`](design-docs/math_prerequisites.md) | Minimum math required; what to skip |
 | [`design-docs/learning_theory_scope.md`](design-docs/learning_theory_scope.md) | Why we skip PAC/VC and use online optimization intuition |
 | [`design-docs/latex_architecture.md`](design-docs/latex_architecture.md) | LaTeX stack decisions and build setup |
@@ -55,3 +55,4 @@
 | [`generated/corpus_audit.md`](generated/corpus_audit.md) | Auto-generated corpus state report |
 | [`generated/repo_hygiene_report.md`](generated/repo_hygiene_report.md) | Path and structure hygiene scan |
 | [`generated/evaluation_report.md`](generated/evaluation_report.md) | Evaluator-perspective QA report |
+| [`generated/neuroscience_analogy_report.md`](generated/neuroscience_analogy_report.md) | Per-chapter analogy quality assessment (B24) |

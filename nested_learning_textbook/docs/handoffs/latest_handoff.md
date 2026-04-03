@@ -1,7 +1,85 @@
 # Latest Handoff
-**Phase**: 1–3 Complete (Harness Scaffold + Corpus Stabilization + LaTeX Scaffold)  
+**Phase**: B11–B26 Writing Policy Rollout (Phase A + B complete, Phase C partially complete)  
 **Date**: 2026-04-03  
-**Completed by**: Automated harness migration pass
+**Completed by**: Automated agent pass
+
+---
+
+## What Was Completed in This Pass
+
+### Phase A: Policy Infrastructure
+- Created `docs/design-docs/pedagogy_principles.md` — canonical B11–B26 writing policy reference
+- Upgraded `book/frontmatter/how_to_use_neuroscience_analogies.tex` to v2.0 (similarity taxonomy, failure conditions, paired box reading guide)
+- Expanded `book/appendices/glossary.tex` from 4 to 12 ML↔Neuro term pairs
+- Created `docs/generated/neuroscience_analogy_report.md` — per-chapter analogy quality audit
+- Updated `docs/index.md` to reference all new files
+
+### Phase B: Ch09 Pilot Rewrite (Complete)
+- Full rewrite of `book/chapters/09_titans_and_multi_timescale_memory.tex`
+- Three-layer structure (formal → algorithmic → neuroscience) throughout
+- `neurosciencebox`: CLS theory (McClelland et al. 1995), explicit comparison table Titans↔CLS
+- `analogyboundarybox`: 3 mechanistic differences (update rules, hippocampus depth, consolidation timescale)
+- `\begin{definition}` for Surprise (eq 3), Step-by-step derivation with variable annotation
+- Worked numerical example tracing Surprise behavior
+- 4 exercises, including one requiring explicit analogy boundary reasoning
+- Emotive/imprecise language fully purged: all B25 failure conditions pass
+
+### Phase C: Rollout (Partially Complete)
+- Ch04 (`04_fast_weights_memory_and_timescales.tex`): Added neurosciencebox (STP + working memory) + analogyboundarybox ✅
+- Ch08 (`08_ttt_layers_hidden_state_as_learner.tex`): Added neurosciencebox (task-internal plasticity) + analogyboundarybox ✅
+- Ch01, 02, 03, 05, 06, 07, 10, 11: ⏳ Boxes not yet added
+
+---
+
+## Current True State of the Repo
+
+| Dimension | State |
+|---|---|
+| pedagogy_principles.md | ✅ Created (B11–B26 policy) |
+| Frontmatter neuro guide | ✅ v2.0 |
+| Glossary | ✅ 12 pairs |
+| Neuroscience analogy report | ✅ v1.0 |
+| Ch04 neuro boxes | ✅ |
+| Ch08 neuro boxes | ✅ |
+| Ch09 | ✅ Full rewrite |
+| Ch01–03, 05–07, 10–11 neuro boxes | ❌ Pending |
+| LaTeX build status | ⚠️ Needs verification after edits |
+
+---
+
+## Decisions Made
+
+1. **B11–B26 becomes canonical writing policy** — all new chapter work must follow `pedagogy_principles.md`
+2. **Ch09 is the reference chapter** — read it before writing any new neuro analogy boxes
+3. **Analogy template fixed** (B22): 类比对象 → 共同之处 → 不同之处 → 不应推出的结论
+4. **B13 similarity levels** must be explicitly cited whenever an analogy is used
+5. **Both boxes must appear together** — `neurosciencebox` without `analogyboundarybox` fails Dimension 12
+
+---
+
+## Blockers
+
+- None critical. Need to verify `make book` compiles cleanly after Ch09 rewrite (references to `ch:unified`, `ch:nested` labels must resolve).
+
+---
+
+## What to Do Next (Priority Order)
+
+1. **Run `make book`** — verify LaTeX compiles without errors
+2. **Ch02, Ch03, Ch05, Ch11** — highest priority for box additions (B21 ordering)
+3. **Ch01, Ch06, Ch07, Ch10** — medium priority
+4. **Phase D**: Run full `neuroscience_analogy_report.md` update after all boxes added
+
+---
+
+## Files to Read Before Starting Next Work
+
+1. `AGENTS.md` — navigation map
+2. This file
+3. `docs/design-docs/pedagogy_principles.md` — **read before writing any analogy content**
+4. `book/chapters/09_titans_and_multi_timescale_memory.tex` — reference chapter
+5. `docs/generated/neuroscience_analogy_report.md` — which chapters still need boxes
+
 
 ---
 
