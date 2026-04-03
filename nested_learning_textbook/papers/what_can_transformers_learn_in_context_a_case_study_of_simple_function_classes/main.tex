@@ -1,0 +1,185 @@
+\documentclass{article}
+
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2022
+
+
+% neurips
+%\PassOptionsToPackage{numbers, square}{natbib}
+%\usepackage{neurips_2022}
+%\renewcommand{\paragraph}{\textbf}
+
+% arxiv
+\usepackage{natbib}
+\usepackage{fullpage}
+\usepackage{mathpazo}
+
+
+\usepackage{dsfont}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\bibliographystyle{plainnat}
+
+%\newcommand\todo[1]{\textcolor{red}{#1}}
+\usepackage[textsize=scriptsize]{todonotes}
+\newcommand{\dt}[1]{\todo[color=red!40]{DT: #1}}
+\newcommand{\sg}[1]{\todo[color=green!40]{SG: #1}}
+\newcommand{\pl}[1]{\todo[color=blue!40]{PL: #1}}
+\newcommand{\gv}[1]{\todo[color=yellow!40]{GV: #1}}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+%     \usepackage[preprint]{neurips_2022}
+
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+%     \usepackage[final]{neurips_2022}
+
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2022}
+
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+\usepackage{subcaption}
+
+\title{What Can Transformers Learn In-Context? \\
+A Case Study of Simple Function Classes}
+%\title{What Function Classes Can Models Learn In-Context? \\
+%A Case Study on Transformers and LSTMs}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+\def\AND{%
+        \end{tabular}\hfil\linebreak[4]\hfil%
+        \begin{tabular}[t]{c}\ignorespaces%
+}
+
+\date{}
+\author{
+  Shivam Garg\thanks{Equal contribution.} \\
+  Stanford University\\
+  \texttt{shivamg@cs.stanford.edu} \\
+  \and
+  Dimitris Tsipras\footnotemark[1] \\
+  Stanford University\\
+  \texttt{tsipras@stanford.edu} \\ 
+  \AND
+  Percy Liang\\
+  Stanford University\\
+  \texttt{pliang@cs.stanford.edu} \\ 
+  \and
+  Gregory Valiant \\
+  Stanford University\\
+  \texttt{valiant@stanford.edu}
+  % examples of more authors
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \AND
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+  % \And
+  % Coauthor \\
+  % Affiliation \\
+  % Address \\
+  % \texttt{email} \\
+}
+
+
+\begin{document}
+
+
+\maketitle
+
+
+\begin{abstract}
+ \input{sections/abstract}
+\end{abstract}
+
+\section{Introduction}
+\input{sections/intro}
+
+\section{Training models for in-context learning}
+\label{sec:setting}
+\input{sections/setting}
+
+\section{In-context learning of linear functions}
+\label{sec:linear_functions}
+\input{sections/linear_functions}
+
+
+\section{Extrapolating beyond the training distribution}
+\label{sec:distribution_shifts}
+
+\input{sections/distribution_shift}
+
+\section{More complex function classes}
+\label{sec:beyond_linear}
+\input{sections/beyond_linear}
+
+\section{Investigating what matters for in-context learning}
+\label{sec:factors}
+\input{sections/factors}
+
+\section{Related work}
+\label{sec:related}
+\input{sections/related}
+
+\section{Discussion}
+\label{sec:discussion}
+\input{sections/discussion}
+
+\section*{Acknowledgements}
+\input{sections/ack}
+
+\bibliography{refs}
+
+%\clearpage
+%\input{sections/checklist}
+
+
+\clearpage
+\appendix
+
+\section{Experimental setup}
+\label{app:setup}
+\input{sections/setup}
+
+\clearpage
+\section{Additional experimental results}
+\label{app:extra}
+\input{sections/extra}
+
+\end{document}

@@ -1,0 +1,411 @@
+\documentclass{article}
+
+\PassOptionsToPackage{table}{xcolor}
+\usepackage{etoolbox}       %
+\usepackage[utf8]{inputenc} % allow utf-8 input
+
+\usepackage{graphicx}  %
+
+\usepackage[parfill]{parskip}
+\usepackage{amsmath,amsthm}
+\usepackage{mathtools}  %
+\usepackage{adjustbox}
+\newcommand{\ols}[1]{\mskip.5\thinmuskip\overline{\mskip-.5\thinmuskip {#1} \mskip-.5\thinmuskip}\mskip.5\thinmuskip} % overline short
+\newcommand{\olsi}[1]{\,\overline{\!{#1}}} % overline short italic
+\newtoggle{arxiv}
+\toggletrue{arxiv}
+
+\newcommand{\vv}{\mathbf{v}}
+
+\newcommand{\meisam}[1]{{\textbf{\color{red}meisam: #1}}}
+\newcommand{\ali}[1]{{\textbf{\color{purple}ali: #1}}}
+
+
+  \usepackage[parfill]{parskip}
+  \usepackage[citestyle=authoryear-comp, uniquename=false, uniquelist=false,sorting=ynt, maxbibnames=99, maxcitenames=1, backend=biber]{biblatex}
+  \newcommand{\citep}{\parencite}
+  \newcommand{\citeyearpar}{\citeyear}
+  \newcommand{\citet}{\textcite}
+  \addbibresource{main.bib}  %
+
+  \setlength{\textwidth}{6.8in}  %
+  \setlength{\textheight}{9in}
+  \setlength{\oddsidemargin}{0in}
+  \setlength{\evensidemargin}{0in}
+  \setlength{\topmargin}{-0.5in}
+  \newlength{\defbaselineskip}
+  \setlength{\defbaselineskip}{\baselineskip}
+  \setlength{\marginparwidth}{0.8in}
+  \setlength{\parskip}{6pt}%
+  \setlength{\parindent}{0pt}%
+
+  \RequirePackage[T1]{fontenc}
+  \RequirePackage[tt=false, type1=true]{libertine}
+  \RequirePackage[varqu]{zi4}
+  \RequirePackage[libertine]{newtxmath}
+
+
+\usepackage{bm}
+
+
+\usepackage[inline]{enumitem}
+\usepackage{booktabs}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{algorithm,algorithmicx,algpseudocode}
+\usepackage{nicematrix}
+
+\usepackage[frozencache,cachedir=.]{minted} %
+
+
+
+\usepackage{import}
+\usepackage{lettrine}
+
+\newtheorem{theorem}{Theorem}  %
+\newtheorem{corollary}[theorem]{Corollary}  %
+
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{prop}{Proposition}
+\newtheorem{dfn}{Definition}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{remark}{Remark}
+
+\usepackage{pifont}%
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\usepackage[T1]{fontenc}
+
+\usepackage{thm-restate}
+
+
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+
+\usepackage{wrapfig}
+
+
+\usepackage{caption}
+\usepackage{capt-of}
+\usepackage{lipsum}
+
+\usepackage[colorlinks]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+
+\usepackage{threeparttable}
+
+\definecolor{c7}{HTML}{6C7869}
+\definecolor{c6}{HTML}{FBE7B4}
+\definecolor{c5}{HTML}{9B5353}
+\definecolor{c1}{HTML}{586770}
+\definecolor{c4}{HTML}{2a4a67}
+\definecolor{c3}{HTML}{6d2a58}
+\definecolor{c2}{HTML}{34142a}
+\hypersetup{colorlinks=true, citecolor=c3, linkcolor=c2, urlcolor=c2}
+
+\definecolor{mydarkred}{HTML}{9B5353}
+\definecolor{mydarkpurple}{HTML}{65657E}
+\definecolor{mydarkgreen}{HTML}{6C7869}
+\definecolor{darkred}{HTML}{a70c0c}
+\definecolor{darkblue}{HTML}{4D5B9C}
+
+
+\definecolor{myblue}{HTML}{FDF5E0} 
+\definecolor{mygray}{HTML}{DBE2E9} 
+\definecolor{mygreen}{HTML}{E6F3FC} 
+
+
+\definecolor{dark2orange}{rgb}{0.9, 0.4, 0.}
+\definecolor{dark2purple}{rgb}{0.4, 0.4, 0.8}
+
+
+
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=c1,
+    citecolor=c1,
+}
+
+
+
+\usepackage{multirow}
+
+
+
+
+
+\renewcommand{\figureautorefname}{Figure}
+\renewcommand{\tableautorefname}{Table}
+\renewcommand{\sectionautorefname}{Section}
+\renewcommand{\subsectionautorefname}{Section}
+
+
+
+
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\newcommand{\undermath}[2]{\underset{#1}{\underbrace{#2}}}
+
+
+\newcommand{\R}[0]{\mathbb{R}}
+\newcommand{\ttt}[0]{t}
+\newcommand{\inner}[2]{\langle #1, #2 \rangle}
+
+\newcommand{\M}[0]{\mathcal{M}}
+
+\newcommand{\head}[1]{\vspace{1.7mm}\noindent{{\textcolor{c4}{\bf #1.}}}}
+\newcommand{\headred}[1]{\vspace{1.7mm}\noindent{{\textcolor{c5}{\bf #1.}}}}
+\newcommand{\headdot}[1]{\vspace{1.7mm}\noindent{{\textcolor{c4}{\bf #1}}}}
+
+
+\newcommand{\model}[0]{\textsc{Hope}}
+\newcommand{\workingmemory}[0]{\textsc{Srt}} % Self Modifying Titan
+\newcommand{\modelss}[0]{?}
+\newcommand{\mb}[1]{\boldsymbol{#1}}
+
+\newcommand{\SSS}{\mathcal{S}}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\usepackage{tikz}
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,draw,inner sep=0.3pt, fill=c2] (char) {\textcolor{white}{#1}};}}
+
+\newcommand\circledcolor[2]{\textcolor{#1}{\circled{#2}}}
+
+
+\newcommand{\cL}{\mathcal{L}}
+\newcommand{\e}{\mathbf{e}}
+\newcommand{\rank}{\operatorname{rank}}
+
+
+\usepackage{authblk}
+\usepackage{epigraph}
+\usepackage{soul}
+
+\usepackage{dsfont}
+
+\newcommand{\vk}{\boldsymbol{k}}
+\newcommand{\vq}{\boldsymbol{q}}
+\renewcommand{\vv}{\boldsymbol{v}}
+\newcommand{\vu}{\boldsymbol{u}}
+\newcommand{\vx}{\boldsymbol{x}}
+\newcommand{\vy}{\boldsymbol{y}}
+\newcommand{\vw}{\boldsymbol{W}}
+\newcommand{\vg}{\boldsymbol{g}}
+\newcommand{\vm}{\boldsymbol{m}}
+\newcommand{\vo}{\boldsymbol{O}}
+\newcommand{\vp}{\boldsymbol{P}}
+
+
+
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable}
+\usepackage{xcolor}
+\usepackage{lettrine,Zallman}
+\newtcolorbox{c4box}{boxrule=0.75pt, left=3pt,right=3pt, colback=c4!3!white,colframe=c4!70!white}
+\newtcolorbox{c3box}{boxrule=1pt, colback=c3!5!white,colframe=c3!50!white}
+\newtcolorbox{c2box}{boxrule=1pt, colback=c2!5!white,colframe=c2!50!white}
+\newtcolorbox{c1box}{boxrule=1pt, colback=c1!5!white,colframe=c1!50!white}
+
+
+
+\usepackage[framemethod=tikz]{mdframed}
+\mdfdefinestyle{mystyle}{%
+  rightline=true,
+  innerleftmargin=10,
+  innerrightmargin=10,
+  outerlinewidth=3pt,
+  topline=false,
+  rightline=true,
+  bottomline=false,
+  skipabove=\topsep,
+  skipbelow=\topsep
+}
+
+\newtcolorbox{myboxi}[1][]{
+  breakable,
+  title=#1,
+  colback=c4!5,
+  colbacktitle=c4!5,
+  coltitle=black,
+  fonttitle=\bfseries,
+  bottomrule=0pt,
+  toprule=0pt,
+  leftrule=2pt,
+  rightrule=2pt,
+  titlerule=0pt,
+  arc=0pt,
+  outer arc=0pt,
+  colframe=c4,
+}
+
+\newtcolorbox{myboxismall}[1][]{
+  breakable,
+  title=#1,
+  colback=c5!5,
+  colbacktitle=c5!5,
+  coltitle=black,
+  fonttitle=\bfseries,
+  bottomrule=0pt,
+  toprule=0pt,
+  leftrule=2pt,
+  rightrule=2pt,
+  titlerule=0pt,
+  arc=0pt,
+  outer arc=0pt,
+  colframe=c5,
+}
+
+
+\newtcolorbox{myboxismallyellow}[1][]{
+  breakable,
+  title=#1,
+  colback=c6!5,
+  colbacktitle=c6!5,
+  coltitle=black,
+  fonttitle=\bfseries,
+  bottomrule=0pt,
+  toprule=0pt,
+  leftrule=2pt,
+  rightrule=2pt,
+  titlerule=0pt,
+  arc=0pt,
+  outer arc=0pt,
+  colframe=c6,
+}
+
+
+\newtcolorbox{myboxismallgreen}[1][]{
+  breakable,
+  title=#1,
+  colback=c7!5,
+  colbacktitle=c7!5,
+  coltitle=black,
+  fonttitle=\bfseries,
+  bottomrule=0pt,
+  toprule=0pt,
+  leftrule=2pt,
+  rightrule=2pt,
+  titlerule=0pt,
+  arc=0pt,
+  outer arc=0pt,
+  colframe=c7,
+}
+
+
+\newtcolorbox{myboxnote}[1][]{
+  breakable,
+  title=#1,
+  colback=orange!0,
+  colbacktitle=orange!0,
+  coltitle=black,
+  fonttitle=\bfseries,
+  bottomrule=0pt,
+  toprule=0pt,
+  leftrule=2pt,
+  rightrule=2pt,
+  titlerule=0pt,
+  arc=0pt,
+  outer arc=0pt,
+  colframe=orange,
+}
+
+
+
+\newcommand{\nsam}{\texttt{NSAM}}
+
+\renewcommand{\LettrineFontHook}{\Zallmanfamily}
+
+
+\newcommand\bllfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{1}%
+  \endgroup
+}
+
+\newcommand\blfootnote[1]{%
+  \begingroup
+    \addtocounter{footnote}{3}%
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-4}%
+  \endgroup
+}
+\newcommand\blfootnotee[1]{%
+   \addtocounter{footnote}{6}%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \endgroup
+}
+
+
+\usepackage{authblk}
+\usepackage{epigraph}
+
+\usepackage{lettrine,Zallman}
+
+
+\title{\vspace{-5ex} Nested Learning: The Illusion of Deep Learning Architecture} 
+
+
+\author{Ali Behrouz \protect \blfootnote{Correspondence
+to: \texttt{\{alibehrouz,~razaviyayn,~mirrokni\}@google.com} \: and \: \texttt{peilin.zhong@columbia.edu}.}}
+\author{Meisam Razaviyayn}
+\author{Peilin Zhong}
+\author{Vahab Mirrokni \protect \blfootnote{A version of this work is published at Neural Information Processing Systems (NeurIPS) 2025.}}
+ 
+
+\affil[]{\protect \includegraphics[width=40mm]{Images/logo-research.png}} 
+% \affil[]{}
+\vspace{-13ex}
+\date{}
+
+
+
+\begin{document}
+
+\maketitle
+
+
+
+
+
+\vspace{-3ex}
+\begin{abstract}
+Over the last decades, developing more powerful neural architectures and simultaneously designing optimization algorithms to effectively train them have been the core of research efforts to enhance the capability of machine learning models. Despite the recent progresses, particularly in developing Language Models (LMs), there are fundamental challenges and unanswered questions about how such models can \emph{continually learn/memorize, self-improve, and find effective solutions}. In this paper, we present a new learning paradigm, called Nested Learning (NL), that coherently represents a machine learning model with a set of nested, multi-level, and/or parallel optimization problems, each of which with its own ``\emph{context flow}''. Through the lenses of NL,  existing deep learning methods learns from data through \emph{compressing} their own context flow, and  \emph{in-context learning} naturally emerges in large models. NL suggests a philosophy  to design more expressive learning algorithms with more ``\emph{levels}'', resulting in higher-order in-context learning and potentially unlocking effective continual learning capabilities. In addition to its neuro-scientific motivation,  we advocate for NL by presenting three core contributions: (1) Expressive Optimizers: We show that  known gradient-based optimizers, such as Adam, SGD with Momentum, etc., are in fact associative memory modules that aim to compress the gradients' information (by gradient descent). Building on this insight, we present other ``more expressive" optimizers with deep memory and/or more powerful learning rules; (2) Self-Modifying Learning Module: Taking advantage of NL's insights on learning algorithms, we present a  sequence model that learns how to modify itself by learning its own update algorithm; and (3) Continuum Memory System: We present a new formulation for memory system that generalizes the traditional viewpoint of ``long-term/short-term memory''. Combining our self-modifying sequence model with the continuum memory system, we present a continual learning module, called \model, showing promising results in language modeling, knowledge incorporation, and few-shot generalization tasks, continual learning, and~long-context~reasoning~tasks.   
+\end{abstract}
+
+
+\input{MainText/Intro}
+\input{MainText/Background}
+\input{MainText/Methods}
+\input{MainText/Experiments}
+\input{MainText/Conclusion}
+
+
+\newpage
+\printbibliography
+\newpage
+\appendix
+
+\input{Appendix/RelatedWork}
+
+
+\end{document}
+
+
+
+
+

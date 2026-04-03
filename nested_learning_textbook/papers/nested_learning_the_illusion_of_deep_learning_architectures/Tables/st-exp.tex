@@ -1,0 +1,24 @@
+\begin{table*}[t]
+    \centering
+    \small
+    \caption{Accuracies of various models on the formal language recognition tasks.}
+    \label{tab:formal-language}
+    \resizebox{0.95\linewidth}{!}{
+        \begin{tabular}{l c rrrrrrrrrrrrr}
+        \toprule
+         & & \multicolumn{6}{c}{Non-Star-Free Regular} & \multicolumn{6}{c}{\textcolor{black!40!white}{Counter}} \\  \cmidrule(r{.45em} l{.50em}){3-8}  \cmidrule(r{.45em} l{.50em}){9-14}
+         & Parallel & \multicolumn{2}{c}{Parity} & \multicolumn{2}{c}{$(aa)^*$}  & \multicolumn{2}{c}{$(abab)^*$} & \multicolumn{2}{c}{\textcolor{black!40!white}{$a^nb^n$}} & \multicolumn{2}{c}{\textcolor{black!40!white}{$a^nb^nc^n$}} & \multicolumn{2}{c}{\textcolor{black!40!white}{Shuffle-2}}\\  \cmidrule(r{.45em} l{.50em}){3-8}  \cmidrule(r{.45em} l{.50em}){9-14}
+        Model & Training & Bin0 & Bin1 & Bin0 & Bin1 & Bin0 & Bin1 & \textcolor{black!40!white}{Bin0} & \textcolor{black!40!white}{Bin1} & \textcolor{black!40!white}{Bin0} & \textcolor{black!40!white}{Bin1} & \textcolor{black!40!white}{Bin0} & \textcolor{black!40!white}{Bin1} 
+         \\
+        \midrule
+        LSTM & \xmark & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} \\
+        Transformer & \checkmark & 46.4 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} \\ \midrule
+        Linear & \checkmark & 78.1 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}}  \\
+        DeltaNet & \checkmark & 98.2 &  10.1 & 0.0 & 0.0 & 0.0 & 0.0 & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} \\
+        SRWM & \xmark & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}}  \\
+        \midrule
+          \rowcolor{mygray} \model & \checkmark & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textbf{100.0} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} & \textcolor{black!40!white}{\textbf{100.0}} \\
+        \bottomrule
+        \end{tabular}
+}
+\end{table*}

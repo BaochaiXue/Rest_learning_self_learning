@@ -1,0 +1,348 @@
+\section{Alternative Proofs}
+
+\subsection{Alternative Proof to \Cref{lemma:sum}}
+\begin{proof}
+    We zero-pad these hidden states by $\bh_j' = \begin{bmatrix}
+        \bh_j \\ \zero_d \\ \zero_d
+    \end{bmatrix}$. Then we apply the operations given by Proposition \ref{prop:akyrek} as follows
+\begin{equation}
+\begin{aligned}
+&\begin{bmatrix}
+    \bh_1 & \bh_2 & \bh_3 &\cdots & \bh_n \\
+    \zero_d & \zero_d & \zero_d & \cdots & \zero_d \\
+    \zero_d & \zero_d & \zero_d & \cdots & \zero_d 
+\end{bmatrix} \overset{\mathrm{mov}}{\longrightarrow} \begin{bmatrix}
+    \bh_1 & \bh_2 & \bh_3 &\cdots & \bh_n \\
+    \zero_d & \bh_1 & \zero_d & \cdots & \zero_d \\
+    \zero_d & \zero_d & \zero_d & \cdots & \zero_d 
+\end{bmatrix} \overset{\mathrm{aff}}{\longrightarrow} \begin{bmatrix}
+    \bh_1 & \bh_2 & \bh_3 &\cdots & \bh_n \\
+    \zero_d & \bh_1 & \zero_d & \cdots & \zero_d \\
+    \zero_d & \bh_1 + \bh_2 & \zero_d & \cdots & \zero_d  
+\end{bmatrix} \\
+\overset{\mathrm{mov}}{\longrightarrow} &\begin{bmatrix}
+    \bh_1 & \bh_2 & \bh_3 &\cdots & \bh_n \\
+    \zero_d & \bh_1 & \bh_1 + \bh_2 & \cdots & \zero_d \\
+    \zero_d & \bh_1 + \bh_2 & \zero_d & \cdots & \zero_d  
+\end{bmatrix} \overset{\mathrm{aff}}{\longrightarrow}
+\begin{bmatrix}
+    \bh_1 & \bh_2 & \bh_3 &\cdots & \bh_n \\
+    \zero_d & \bh_1 & \bh_1 + \bh_2 & \cdots & \zero_d \\
+    \zero_d & \bh_1 + \bh_2 & \bh_1 + \bh_2 + \bh_3 & \cdots & \zero_d  
+\end{bmatrix}  \\
+\vdots \\
+\overset{\mathrm{mov}}{\longrightarrow} & \begin{bmatrix}[1.5]
+    \bh_1 & \bh_2 & \bh_3 &\cdots & \bh_n \\
+    \zero_d & \bh_1 & \bh_1 + \bh_2 & \cdots & \sum_{j=1}^{n-1} \bh_j \\
+    \zero_d & \bh_1 + \bh_2 & \bh_1 + \bh_2 + \bh_3 & \cdots & \zero_d  
+\end{bmatrix} \\
+\overset{\mathrm{aff}}{\longrightarrow}
+&\begin{bmatrix}[1.5]
+    \bh_1 & \bh_2 & \bh_3 &\cdots & \bh_n \\
+    \zero_d & \bh_1 & \bh_1 + \bh_2 & \cdots & \sum_{j=1}^{n-1} \bh_j \\
+    \zero_d & \bh_1 + \bh_2 & \bh_1 + \bh_2 + \bh_3 & \cdots & \boxed{\sum_{j=1}^{n} \bh_j}
+\end{bmatrix} 
+\end{aligned}
+\end{equation}
+Hence with $\mathcal O(n)$ operations, we ends up with the sum of hidden states $\sum_{j=1}^{n} \bh_j$ at position $n$.
+\end{proof}
+
+\begin{cor}\label{cor:count}
+    Given hidden states $\{\bh_1, \cdots, \bh_n\}$, there exists Transformers weights to count the total number of hidden states $n$. 
+\end{cor}
+\begin{proof}
+    We first pad each hidden state with 0 and 1: $
+        \bh_j' = \begin{bmatrix}
+            \bh_j \\ 0 \\ 1 \\ 0
+        \end{bmatrix}
+    $. Then counting the total number of hidden states is the same as counting the number $\bh_j$'s. We apply Proposition \ref{prop:akyrek} as follows
+\begin{equation}
+\begin{aligned}
+    & \begin{bmatrix}
+        \bh_1 & \bh_2 & \cdots & \bh_n \\
+        0 & 0 & \cdots & 0 \\
+        1 & 1 & \cdots & 1 \\
+        0 & 0 & \cdots & 0 
+    \end{bmatrix} 
+    \overset{\mathrm{mov}}{\longrightarrow} \begin{bmatrix}
+        \bh_1 & \bh_2 & \cdots &  \bh_n \\
+        0 & 0 & \cdots & 0 \\
+        1 & 1 & \cdots & 1 \\
+        1 & 0 & \cdots & 0 
+    \end{bmatrix}  \overset{\mathrm{mov}}{\longrightarrow} \begin{bmatrix}
+        \bh_1 & \bh_2 & \cdots &  \bh_n \\
+        0 & 1 & \cdots & 0 \\
+        1 & 1 & \cdots & 1 \\
+        0 & 0 & \cdots & 0 
+    \end{bmatrix} \\
+    \overset{\mathrm{aff}}{\longrightarrow} & \begin{bmatrix}
+        \bh_1 & \bh_2 & \cdots &  \bh_n \\
+        0 & 1 & \cdots & 0 \\
+        1 & 1 & \cdots & 1 \\
+        0 & 2 & \cdots & 0 
+    \end{bmatrix} \overset{\mathrm{mov}}{\longrightarrow} \begin{bmatrix}
+        \bh_1 & \bh_2 & \bh_3 &\cdots &  \bh_n \\
+        0 & 1 & 2 & \cdots & 0 \\
+        1 & 1 & 1 & \cdots & 1 \\
+        0 & 2 & 0 &\cdots & 0 
+    \end{bmatrix} \\
+    \overset{\mathrm{aff}}{\longrightarrow} & \begin{bmatrix}
+        \bh_1 & \bh_2 &\bh_3 & \cdots &  \bh_n \\
+        0 & 1 & 2 & \cdots & 0 \\
+        1 & 1 & 1 & \cdots & 1 \\
+        0 & 2 & 3 & \cdots & 0 
+    \end{bmatrix} \rightarrow \cdots \rightarrow \begin{bmatrix}
+        \bh_1 & \bh_2 &\bh_3 & \cdots &  \bh_n \\
+        0 & 1 & 2 & \cdots & n-1 \\
+        1 & 1 & 1 & \cdots & 1 \\
+        0 & 2 & 3 & \cdots & n
+    \end{bmatrix}
+\end{aligned}
+\end{equation}
+In the end, with $\mathcal O(n)$ operations, we will have the output at position $n$ becomes $
+    \tilde{\bh}_n = \begin{bmatrix}
+    \bh_n \\ n-1  \\ 1 \\ \boxed{n}
+    \end{bmatrix}$, where the total number of hidden states $n$ is counted. 
+\end{proof}
+
+\subsection{Alternative Proof of Theorem~\ref{thm:transformers_newton}}
+\TransformersNewton*
+\begin{proof} We break the proof into parts. Let's denote the empirical covariance matrix $\hSigma = \frac{1}{n} \bS$. 
+
+\textbf{Transformers Implement Initialization $\bT^{(0)}  = \alpha \hSigma$.} \\
+Given input sequence $\bH := \{\bx_1, \cdots, \bx_n\}$, with $\bx_i \in \mathbb R^d$,  we first apply the \verb|mov| operations given by Proposition~\ref{prop:akyrek} (similar to \cite{Akyrek2022WhatLA}, we show only non-zero rows when applying these operations):
+\begin{equation}
+    \begin{bmatrix}
+        \bx_1 & \cdots & \bx_n \\
+        & & 
+    \end{bmatrix} \overset{\mathrm{mov}}{\longrightarrow} \begin{bmatrix}
+        \bx_1 & \cdots & \bx_n  \\
+        \bx_1 & \cdots & \bx_n 
+    \end{bmatrix}
+\end{equation}
+
+
+
+We call each column after \verb|mov| as $\bh_j$. With an full attention layer, one can  two heads with query and value matrices of the form $\bQ_1^\top \bK_1 = -\bQ_2^\top \bK_2 = \begin{bmatrix}
+    \bI_{d \times d} & \bO_{d \times d} \\
+    \bO_{d \times d} & \bO_{d \times d}
+\end{bmatrix}$ such that for any $t \in [n]$, we have 
+\begin{equation}
+    \sum_{m=1}^2 \mathrm{ReLU} \left(\inner{\bQ_m \bh_t, \bK_m \bh_j}\right) = \mathrm{ReLU}(\bx_t^\top \bx_j) +  \mathrm{ReLU}(-\bx_t^\top \bx_j) = \inner{\bx_t, \bx_j}
+\end{equation}
+Let all value matrices $\bV_m =\alpha \begin{bmatrix}
+    \bI_{d \times d} & \bO_{d \times d} \\
+    \bO_{d \times d} & \bO_{d \times d}
+\end{bmatrix}$ for some $\alpha \in \mathbb R$. Combining the skip connections, we have 
+\begin{equation}
+    \tilde{\bh}_t = \begin{bmatrix}
+        \bx_t \\ \bx_t
+    \end{bmatrix} + \frac{1}{n} \sum_{j=1}^n \inner {\bx_t, \bx_j} \alpha \begin{bmatrix}
+        \bx_j \\ \zero 
+    \end{bmatrix}  = \begin{bmatrix}
+        \bx_t \\ \bx_t
+    \end{bmatrix} + \begin{bmatrix}
+       \alpha \left(\frac{1}{n} \sum_{j=1}^n \bx_j \bx_j^\top \right) \bx_t \\ \zero
+    \end{bmatrix} = \begin{bmatrix}
+        \bx_t + \alpha \hSigma \bx_t \\ \bx_t
+    \end{bmatrix} 
+\end{equation}
+Now we can use the \verb|aff| operator to make subtractions and then
+\begin{equation}
+    \begin{bmatrix}
+        \bx_t + \alpha \hSigma \bx_t \\ \bx_t
+    \end{bmatrix}  \overset{\mathrm{aff}}{\longrightarrow}\begin{bmatrix}
+        (\bx_t + \alpha \hSigma \bx_t) - \bx_t  \\ \bx_t
+    \end{bmatrix}  = \begin{bmatrix}
+         \alpha \hSigma \bx_t \\ \bx_t
+    \end{bmatrix}
+\end{equation}
+
+We call this transformed hidden states as $\bH^{(0)}$ and denote $\bT^{(0)} = \alpha \hSigma$:
+\begin{equation}
+        \bH^{(0)} = \begin{bmatrix}
+            \bh_1^{(0)} & \cdots & \bh_n^{(0)}
+        \end{bmatrix} = \begin{bmatrix}
+            \bT^{(0)} \bx_1 & \cdots & \bT^{(0)} \bx_n \\
+            \bx_1 & \cdots & \bx_n
+        \end{bmatrix} 
+\label{eqn:input_prompt}
+\end{equation}
+Notice that $\hSigma$ is symmetric and thereafter $\bT^{(0)}$ is also symmetric.
+
+\textbf{Transformers implement Newton Iteration.} \\
+Let the input prompt be the same as \Cref{eqn:input_prompt}, 
+    \begin{equation}
+        \bH^{(0)} = \begin{bmatrix}
+            \bh_1^{(0)} & \cdots & \bh_n^{(0)}
+        \end{bmatrix} = \begin{bmatrix}
+            \bT^{(0)} \bx_1 & \cdots & \bT^{(0)} \bx_n \\
+            \bx_1 & \cdots & \bx_n
+        \end{bmatrix} 
+    \end{equation}
+    We claim that the $\ell$'s hidden states can be of the similar form 
+    \begin{equation}
+        \bH^{(\ell)} = \begin{bmatrix}
+            \bh_1^{(\ell)} & \cdots & \bh_n^{(\ell)}
+        \end{bmatrix} = \begin{bmatrix}
+            \bT^{(\ell)} \bx_1 & \cdots & \bT^{(\ell)} \bx_n \\
+            \bx_1 & \cdots & \bx_n
+        \end{bmatrix} 
+    \end{equation}
+    We prove by induction that assuming our claim is true for $\ell$, we work on $\ell + 1$:
+
+    Let $\bQ_m = \tilde{\bQ}_m \underbrace{\begin{bmatrix}
+        \bO_d & -\frac{1}{2} \bI_d \\
+        \bO_d & \bO_d 
+    \end{bmatrix}}_{\bG} , \bK_m = \tilde{\bK}_m \underbrace{\begin{bmatrix}
+        \bI_d & \bO_d \\
+        \bO_d & \bO_d 
+    \end{bmatrix}}_{\bJ}$ where $\tilde{\bQ}_1^\top \tilde{\bK}_1 : = \bI$, $\tilde{\bQ}_2^\top \tilde{\bK}_2 : = -\bI$ and $\bV_1 = \bV_2 = \underbrace{\begin{bmatrix}
+        \bI_d & \bO_d \\
+        \bO_d & \bO_d 
+    \end{bmatrix}}_{\bJ}$. A 2-head self-attention layer, with ReLU attentions, can be written has 
+    \begin{equation}
+        \bh_t^{(\ell+1)} = [\mathrm{Attn}(\bH^{(\ell)})]_t = \bh_t^{(\ell)}+ \frac{1}{n} \sum_{m=1}^2 \sum_{j=1}^n \mathrm{ReLU} \left(\inner{\bQ_m \bh_t^{(\ell)}, \bK_m \bh_j^{(\ell)}}\right) \cdot \bV_m \bh_j^{(\ell)}
+    \end{equation}
+    where 
+    \begin{equation}
+    \begin{aligned}
+        & \sum_{m=1}^2\mathrm{ReLU} \left(\inner{\bQ_m \bh_t^{(\ell)}, \bK_m \bh_j^{(\ell)}}\right) \cdot \bV_m \bh_j^{(\ell)} \\
+        &=  \Big[\mathrm{ReLU} \Big((\bG \bh_t^{(\ell)})^\top \underbrace{\tilde{\bQ}_1^\top \tilde{\bK}_1}_{\bI} (\bJ \bh_j^{(\ell)})\Big)  + \mathrm{ReLU} \Big((\bG \bh_t^{(\ell)})^\top \underbrace{\tilde{\bQ}_2^\top \tilde{\bK}_2}_{-\bI} (\bJ \bh_j^{(\ell)})\Big)  \Big] \cdot (\bJ \bh_j^{(\ell)})\\
+        &=  \Big[\mathrm{ReLU} ((\bG \bh_t^{(\ell)})^\top (\bJ \bh_j^{(\ell)})) + \mathrm{ReLU} (-(\bG \bh_t^{(\ell)})^\top  (\bJ \bh_j^{(\ell)})) \Big] \cdot  (\bJ \bh_j^{(\ell)})  \\
+        &= (\bG \bh_t^{(\ell)})^\top (\bJ \bh_j^{(\ell)}) (\bJ \bh_j^{(\ell)}) \\
+        &=  (\bJ \bh_j^{(\ell)}) (\bJ \bh_j^{(\ell)})^\top (\bG \bh_t^{(\ell)})
+    \end{aligned} 
+    \end{equation}
+    Plug in our assumptions that $\bh_j^{(\ell)} = \begin{bmatrix}
+        \bT^{(\ell)} \bx_j \\ \bx_j 
+    \end{bmatrix}$, we have $\bJ \bh_j^{(\ell)} = \begin{bmatrix}
+        \bT^{(\ell)} \bx_j \\ \zero_d 
+    \end{bmatrix}$ and $\bG \bh_t^{(\ell)} = \begin{bmatrix}
+       -\frac{1}{2} \bx_t \\ \zero_d 
+    \end{bmatrix}$, 
+    we have 
+    \begin{equation}
+        \begin{aligned}
+\bh_t^{(\ell+1)} &= \begin{bmatrix}
+        \bT^{(\ell)} \bx_t \\ \bx_t 
+    \end{bmatrix} + \frac{1}{n} \sum_{j=1}^n \begin{bmatrix}
+        \bT^{(\ell)} \bx_j \\ \zero_d 
+    \end{bmatrix} \begin{bmatrix}
+        \bT^{(\ell)} \bx_j \\ \zero_d 
+    \end{bmatrix}^\top  \begin{bmatrix}
+         -\frac{1}{2} \bx_t \\ \zero_d 
+    \end{bmatrix} \\
+    &= \begin{bmatrix}
+        \bT^{(\ell)} \bx_t - \frac{1}{2n} \sum_{j=1}^n  (\bT^{(\ell)} \bx_j) (\bT^{(\ell)} \bx_j)^\top  \bx_t \\ \bx_t  
+    \end{bmatrix} \\
+    &= \begin{bmatrix}
+        \bT^{(\ell)} \bx_t - \frac{1}{2} \bT^{(\ell)} \left(\frac{1}{n}\sum_{j=1}^n \bx_j  \bx_j^\top\right)  {\bT^{(\ell)}}^\top \bx_t \\ \bx_t  
+    \end{bmatrix} \\
+    &= \begin{bmatrix}
+        \left(\bT^{(\ell)} - \frac{1}{2} \bT^{(\ell)} \hSigma {\bT^{(\ell)}}^\top \right) \bx_t \\ \bx_t 
+    \end{bmatrix}
+        \end{aligned}
+    \end{equation}
+    Now we pass over an MLP layer with
+    \begin{equation}
+        \bh_t^{(\ell+1)} \leftarrow \bh_t^{(\ell+1)} + \begin{bmatrix}
+            \bI_d & \bO_d \\ 
+            \bO_d & \bO_d 
+        \end{bmatrix} \bh_t^{(\ell+1)} = \begin{bmatrix}
+        \left(2\bT^{(\ell)} -  \bT^{(\ell)} \hSigma {\bT^{(\ell)}}^\top \right) \bx_t \\ \bx_t 
+    \end{bmatrix}
+    \end{equation}
+    Now we denote the iteration
+    \begin{equation}
+        \bT^{(\ell+1)} = 2\bT^{(\ell)} -  \bT^{(\ell)} \hSigma {\bT^{(\ell)}}^\top
+    \end{equation}
+    We find that ${\bT^{(\ell+1)}}^\top =  \bT^{(\ell+1)}$ since $ \bT^{(\ell)}$ and $\bS$ are both symmetric. It reduces to 
+    \begin{equation}
+        \bT^{(\ell+1)} = 2\bT^{(\ell)} -  \bT^{(\ell)} \hSigma {\bT^{(\ell)}}
+    \end{equation}
+    This is exactly the same as the Newton iteration, but with $\hSigma = \frac{1}{n} \bS$ instead of $\bS$. This doesn't matter because it's only the a difference choice of scaling. Once can run \newton's method for $\hSigma^\dagger$ (where we call the intermediate matrices $\bM'_k$) so that $\lim_{k \rightarrow \infty} \bM'_k = \hSigma^\dagger = n \bS^\dagger$ and make the multiplication of $n$ with $M'_k$ after $k$ steps, and the final predictor will become $n \bM'_k \bX^\top \by = \bM_k \bX^\top \by$. We'll prove next this modification is applicable by Transformers. 
+
+
+\textbf{Transformers can implement $\hat{\bw}_\ell^\mathrm{TF} = n\bT^{(\ell)} \bX^\top \by = \bM_\ell \bX^\top \by$.}\\
+Going back to the empirical prompt format $\{\bx_1, y_1, \cdots, \bx_n, y_n\}$. We can let parameters be zero for positions of $y$'s and only rely on the skip connection up to layer $\ell$, and the $\bH^{(\ell)}$ is then $\begin{bmatrix}
+           \bT^{(\ell)} \bx_j & \zero  \\
+            \bx_j &  \zero \\
+            0 & y_j
+        \end{bmatrix}_{j=1}^n $. We again apply operations from Proposition~\ref{prop:akyrek}:
+\begin{equation}
+    \begin{bmatrix}
+           \bT^{(\ell)} \bx_j & \zero  \\
+            \bx_j &  \zero \\
+            0 & y_j
+        \end{bmatrix}_{j=1}^n \overset{\mathrm{mov}}{\longrightarrow} \begin{bmatrix}
+           \bT^{(\ell)} \bx_j & \bT^{(\ell)} \bx_j  \\
+            \bx_j & \zero \\
+            0 & y_j
+        \end{bmatrix}_{j=1}^n \overset{\mathrm{mul}}{\longrightarrow} \begin{bmatrix}
+            \bT^{(\ell)} \bx_j & \bT^{(\ell)}\bx_j  \\
+             \bx_j & \zero \\
+             0 & y_j \\
+        \zero & \bT^{(\ell)} y_j \bx_j 
+        \end{bmatrix}_{j=1}^n 
+\label{eqn:Tyjxj}
+\end{equation}
+Now we apply \Cref{lemma:sum} over all even columns in \Cref{eqn:Tyjxj} and we have 
+\begin{equation}
+    \mathrm{Output} = \sum_{j=1}^n \begin{bmatrix}
+         \bT^{(\ell)}\bx_j \\ \zero \\ y_j \\  \bT^{(\ell)} y_j \bx_j 
+    \end{bmatrix} = \begin{bmatrix}
+        \bxi \\ \bT^{(\ell)} \sum_{j=1}^n y_j \bx_j 
+    \end{bmatrix} = \begin{bmatrix}
+        \bxi \\ \bT^{(\ell)} \bX^\top \by 
+    \end{bmatrix}
+\end{equation}
+Applying the counting Corollary \ref{cor:count}, we can pad the final output at position $n$ with the count of hidden states $n$ and end up with $\begin{bmatrix}
+    \bxi  \\ \bT^{(\ell)} \bX^\top \by  \\ n
+\end{bmatrix}$ at position $n$. We further apply Proposition \ref{prop:akyrek} as follows
+\begin{equation}
+    \begin{bmatrix}
+    \bxi  \\ \bT^{(\ell)} \bX^\top \by  \\ n \\ ~
+\end{bmatrix} \overset{\mathrm{mul}}{\longrightarrow} \begin{bmatrix}
+    \bxi  \\ \bT^{(\ell)} \bX^\top \by  \\ n \\ n \bT^{(\ell)} \bX^\top \by
+\end{bmatrix}
+\end{equation} 
+
+where $\bxi$ denotes irrelevant quantities. Note that the resulting $n\bT^{(\ell)} \bX^\top \by $ is also the same as \newton's predictor $\hat{\bw}_k = \bM_k \bX^\top \by$ after $k$ iterations. We denote $\hat{\bw}_\ell^\mathrm{TF} = n\bT^{(\ell)} \bX^\top \by$.
+
+\textbf{Transformers can make predictions on $\bx_{test}$ by $\inner{\hat{\bw}_\ell^\mathrm{TF}, \bx_\mathrm{test}}$.}
+
+Let $\bxi' = [\bxi,\bT^{(\ell)} \bX^\top \by,n ]^\top \in \mathbb R^{2d+1}$. Now we can make predictions on text query $\bx_\mathrm{test}$:
+\begin{equation}
+    \begin{bmatrix}
+        \bxi' &  [\zero_{d+1}, \bx_\mathrm{test}^\top]^\top \\
+        \hat{\bw}_\ell^\mathrm{TF} & \bx_\mathrm{test}
+    \end{bmatrix} \overset{\mathrm{mov}}{\longrightarrow} \begin{bmatrix}
+        \bxi' &  [\zero_{d+1}, \bx_\mathrm{test}^\top]^\top \\
+        \hat{\bw}_\ell^\mathrm{TF} & \bx_\mathrm{test} \\
+        \zero & \hat{\bw}_\ell^\mathrm{TF}
+    \end{bmatrix} \overset{\mathrm{mul}}{\longrightarrow} \begin{bmatrix}
+        \bxi' &  [\zero_{d+1}, \bx_\mathrm{test}^\top]^\top \\
+        \hat{\bw}_\ell^\mathrm{TF} & \bx_\mathrm{test} \\
+        \zero & \hat{\bw}_\ell^\mathrm{TF} \\
+        0 & \inner{\hat{\bw}_\ell^\mathrm{TF}, \bx_\mathrm{test}}
+    \end{bmatrix}
+\end{equation}
+
+Finally, we can have an readout layer $\bbeta_\mathrm{ReadOut} = \{\bu, v\}$ applied (see \cref{def:readout}) with $\bu = \begin{bmatrix}
+    \zero_{4d+1} & 1 
+\end{bmatrix}^\top$ and $v = 0$ to extract the prediction $ \inner{\hat{\bw}_\ell^\mathrm{TF}, \bx_\mathrm{test}}$ at the last location, given by $\bx_\mathrm{test}$. This is exactly how \newton\ makes predictions. 
+
+\textbf{To Perform $k$ steps of Newton's iterations, Transformers need $\mathcal O(k)$ layers.}
+
+Let's count the layers:
+\begin{itemize}
+    \item \textbf{Initialization}: \verb|mov| needs $\mathcal O(1)$ layer; gathering $\alpha \hSigma$ needs $\mathcal O(1)$ layer; and \verb|aff| needs $\mathcal O(1)$ layer. In total, Transformers need $\mathcal O(1)$ layers for initialization. 
+    \item \textbf{Newton Iteration}: each exact Newton's iteration requires $\mathcal O(1)$ layer. Implementing $k$ iterations requires $\mathcal O(k)$ layers.
+    \item \textbf{Implementing $\hat{\bw}_\ell^\mathrm{TF}$}: We need one operation of \verb|mov| and \verb|mul| each, requiring $\mathcal O(1)$ layer each. Apply \Cref{lemma:sum} and Corollary \ref{cor:count} for summation also requires $\mathcal O(n)$ layer, where $n$ is independent of $k$; so if we only count dependency on  iteration steps $k$, it's still $\mathcal O(1)$ layer. 
+    \item \textbf{Making prediction on test query}:  We need one operation of \verb|mov| and \verb|mul| each, requiring $\mathcal O(1)$ layer each.
+\end{itemize}
+Hence, in total, Transformers can implement $k$-step \newton\ and make predictions accordingly using $\mathcal{O}(k)$ layers. 
+
+
+\end{proof}

@@ -1,0 +1,865 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{iclr2024_conference,times}
+
+% Optional math commands from https://github.com/goodfeli/dlbook_notation.
+\input{math_commands.tex}
+
+\usepackage{hyperref}
+\usepackage{xcolor}
+\hypersetup{
+    colorlinks,
+    linkcolor={blue!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!50!black}
+}
+\usepackage{url}
+\usepackage{caption}
+\usepackage{inconsolata}
+\usepackage{sidecap}
+\usepackage{booktabs}
+
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+
+\renewcommand{\arraystretch}{1.2}
+\usepackage{multirow}
+
+\input{notations}
+\title{Learning to (Learn at Test Time)}
+
+% Authors must not appear in the submitted version. They should be hidden
+% as long as the \iclrfinalcopy macro remains commented out below.
+% Non-anonymous submissions will be rejected without review.
+
+\author{
+Yu Sun\,\thanks{Equal technical contribution.
+                ~$^\dag$\,Project lead.
+                ~$^\ddag$\,Equal advising.}~~$^\dag$$^1$,
+~~Xinhao Li\,$^*$$^2$,
+~~Karan Dalal\,$^3$,
+~~Chloe Hsu\,$^3$,
+~~Sanmi Koyejo\,$^1$,\\
+\textbf{
+Carlos Guestrin\,$^1$,
+~~Xiaolong Wang\,$^2$,
+~~Tatsunori Hashimoto\,$^\ddag$$^1$,
+~~Xinlei Chen\,$^\ddag$$^4$
+}\\
+$^1$ Stanford University, 
+~$^2$ UC San Diego, 
+~$^3$ UC Berkeley, 
+~$^4$ Meta AI
+}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to \LaTeX{} to determine where to break
+% the lines. Using \AND forces a linebreak at that point. So, if \LaTeX{}
+% puts 3 of 4 authors names on the first line, and the last on the second
+% line, try using \AND instead of \And before the third author name.
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+\newcommand{\xinlei}[1]{\textcolor{orange}{XC: #1}}
+\newcommand{\yusun}[1]{\textcolor{blue}{YS: #1}}
+
+\iclrfinalcopy % Uncomment for camera-ready version, but NOT for submission.
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We reformulate the problem of supervised learning as learning to learn with two nested loops (\textit{i.e.} learning problems).
+The inner loop learns on each individual instance with self-supervision before final prediction.
+The outer loop learns the self-supervised task used by the inner loop, such that its final prediction improves.
+Our inner loop turns out to be equivalent to linear attention when the inner-loop learner is only a linear model, and to self-attention when it is a kernel estimator.
+For practical comparison with linear or self-attention layers, we replace each of them in a transformer with an inner loop, so our outer loop is equivalent to training the architecture.
+When each inner-loop learner is a neural network, our approach vastly outperforms transformers with linear attention on ImageNet from $224\times 224$ raw pixels in both accuracy and FLOPs, while (regular) transformers cannot run.\footnote{
+Code release: \url{https://github.com/test-time-training/mttt}.
+% Our inner loop mirrors regular (non-meta) learning in both algorithmic design and empirical behavior.
+% Given the historic success of neural networks over linear models and kernels, we believe they will have more potential in our inner loop with more data and compute.
+}
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+Test-time training (TTT) is an algorithmic framework for machine learning.
+The core idea is that each test instance defines its own learning problem, with its own target of generalization~\citep{sun2020test}.
+Since the test instance comes without its label, TTT is performed with a self-supervised task such as reconstruction.
+Performance should improve on this particular instance for the self-supervised task, because that is the objective optimized by TTT.
+But will such a process lead to better performance for the main task we actually care about?
+
+If improvement for a self-supervised task transfers to a given main task, we say the two tasks are \emph{aligned}~\citep{sun2020test}.
+In prior work, task alignment has been an art, combining ingenuity with trial and error \citep{ttt-mae, wang2023test}.
+Crucially, the amount of ingenuity in task design does not scale with more data and compute.
+Our main approach is to learn an aligned self-supervised task from data, instead of handcrafting it from human priors.
+Specifically, we learn a self-supervised task such that TTT on it actually improves performance on the main task.
+
+Since TTT already defines a learning problem, learning its self-supervised task is a form of \emph{learning to learn}, \textit{i.e.} meta-learning or bi-level optimization~\citep{schmidhuber1987evolutionary}.
+The literature refers to the two nested learning problems as the inner and outer loop.
+At training time, the \emph{inner loop} learns with self-supervision on each training instance individually, as if it were a test instance. The \emph{outer loop} learns to align the self-supervised task with the main task on the entire training set.
+At test time, we only invoke the inner loop, \emph{i.e.} TTT.
+We name our algorithm MTTT, with M for meta.
+
+To better understand MTTT, we look at its simplest nontrivial instantiation, 
+where all components are linear models, and the inner loop takes only one gradient step.
+Given fixed outer-loop parameters, the inner loop turns out to be equivalent to forward inference with linear attention, \textit{i.e.} self-attention without softmax~\citep{katharopoulos2020transformers}.
+For a linear transformer, \textit{i.e.} transformer with only linear attention layers, we can replace each with an inner loop.
+Nesting multiple such inner loops into one outer loop, the most naive case of MTTT is equivalent to training a linear transformer.
+
+It also turns out that our inner loop with a particular kernel estimator is theoretically equivalent to self-attention (with softmax), so MTTT with multiple such inner loops is equivalent to training a transformer.
+This suggests that our framework is compatible with existing, successful architectures.
+To extend beyond existing equivalences, we investigate TTT with neural networks.
+This performs much better than TTT with linear models (\textit{i.e.} linear transformers), in settings where transformers run out of memory and time.
+Given the freedom inside our inner loop, we can augment it with heuristics like output normalization and stochastic gradient descent that improve results even more.
+
+Our inner loop \emph{mirrors} regular (non-meta) learning in design, because it breaks each instance into pieces, \textit{i.e.} tokens, that are explicitly treated as data.
+This perspective is further validated by our empirical evidence, which is not explained through any existing perspective for architecture design.
+Given the historic success of deep learning over kernels and linear models, we conjecture that such success can potentially be replicated in our inner loop, with more compute and data under MTTT.
+
+\section{Inner Loop: Test-Time Training with Reconstruction}
+\label{sec:background}
+The architecture for TTT has a shared feature extractor with two output heads.
+The self-supervised task has a head $g$, and the main task has a head $h$.
+At test time, the model can only learn from the self-supervised task, so the heads share a feature extractor $f$. This way, TTT can update the shared features, thus helping the main task if it uses the same kind of features as the self-supervised task.
+Altogether, this architecture looks like the letter `Y', where $f$ is the stem, $g$ and $h$ are the branches. 
+
+In principle, TTT is compatible with any choice of self-supervised task.
+Here we focus on one general-purpose and domain-agnostic family of self-supervised tasks -- reconstruction, since it has been highly effective in prior work~\citep{denoisingautoencoder, pathak2016context, brown2020language, beit, mae}. 
+For reconstruction, the feature extractor $f$ is also known as the encoder, and the self-supervised head $g$ as the decoder; $g\circ f$ together is called an autoencoder.
+
+Following a standard process called tokenization, each instance is always broken into a sequence of $n$ tokens, so we denote both the instance and sequence by $X = (x_1, \dots, x_n)$, with token $x_i\in\R^d$.\footnote{
+To be precise, $x_i\in\R^d$ is actually the token's embedding, not the token itself. 
+For $X$ a paragraph of text, each token is usually a (sub-)word; for $X$ an image, each token is usually a patch or pixel.
+While the type of tokens can potentially be non-numeric, standard techniques are available to embed them into vectors.
+}
+Our basic unit of reconstruction is each individual token $x_i$.
+The reconstruction target is $x_i$ itself, but the input is transformed by a given function $\phi$, such as adding noise~\citep{denoisingautoencoder} and random masking~\citep{mae}.
+For each $X$, we optimize the parameters of $f$, denoted by $W$.
+Overall, the self-supervised loss is
+\begin{equation}
+\label{eq:smalll}
+\ell(W; X) 
+= \frac{1}{2n} \sum_{i=1}^n \big\| g \circ f\left(\phi(x_i); W\right) -  x_i \big\|^2.
+\end{equation}
+Note that the decoder $g$ is also considered given within the scope of TTT, which only updates $W$.\footnote{
+While the decoder $g$ also contains learnable parameters, we do not optimize them during TTT in this paper.
+Our choice, although nonstandard for autoencoders, makes learning to learn conceptually easier in Section~\ref{sec:method}. 
+Moreover, \cite{sun2020test} and \cite{ttt-mae} have shown that whether or not $g$ is optimized during TTT makes little empirical difference.
+In fact, for $T=1$ (using notations defined for Equation~\ref{eq:grad}), whether or not a gradient step is taken on $g$ does not matter at all, because $g$ affects the final prediction only through $W_1$.
+}
+Optimization is performed with $T$ gradient steps.
+For each $t = 1,\dots, T$,
+\begin{equation}
+\label{eq:grad}
+W_t = W_{t-1} - \eta \nabla \ell(W_{t-1} ; X),
+\end{equation}
+where the initial value $W_0$ and the learning rate $\eta$ are given, like $\phi$ and $g$.
+
+For the main task, we also transform its input $x_i$ by a given function $\psi$, in the spirit of symmetry to $\phi$ for the self-supervised task.
+In prior work, $\psi$ has mostly been the identity transform, but Section~\ref{sec:method} will make $\psi$ nontrivial, adding expressiveness to the outer loop.
+Next, we produce the main task outputs by applying $h\circ f$ individually on each $\psi(x_i)$.
+For convenience, we overload $h, f$ and $\phi$ so they can produce an output sequence from an input sequence:
+\begin{equation}
+\label{eq:output}
+X_\text{out} = h\circ f\left(\psi(X); W_T\right) 
+= \bigg( h\circ f\left(\psi(x_1); W_T\right), \dots, h\circ f\left(\psi(x_n); W_T\right) \bigg).
+\end{equation}
+Equation~\ref{eq:output} could be the last step for main tasks that require $n$ predictions (\textit{e.g.} language modeling), but for other tasks that require a single prediction (\textit{e.g.} object recognition), 
+it is standard to apply an aggregation function across the output sequence, predicting $\hat y = \texttt{aggregate}(X_\text{out})$ in the end.
+
+\subsection{Context Window as a Dataset}
+\label{subsec:context}
+In standard terminology, $X = (x_1, \dots, x_n)$ is called the context window, and $n$ the window length.
+But for TTT, $X$ is a dataset of size $n$, where each token $x_i$ is actually a non-independent and non-identically distributed piece of data.
+This intuition is consistent with our algorithm: Equation~\ref{eq:smalll} simply sums the losses individually across tokens, just like across pieces of data;
+Equation~\ref{eq:output} also processes each $x_i$ individually as a ``test token", like how a fixed model processes each test instance.
+% in the traditional sense.
+% To reinforce our intuition, we will call $X$ the \emph{test-time training set} -- in fact, it is also the \emph{test-time test set}, since each token is first used for training, then testing.
+ 
+Tokenization enables us to reuse $f$ on $n$ different parts (tokens) of $X$, by treating them as pieces of data, and $X$ as a dataset.
+It brings the units of operation for TTT ``one level below'' their traditional sense in machine learning, where $X$ is a piece of data, and a collection of $X$s is a dataset.
+TTT can be applied without tokenization, but then $X$ would be singleton, unless augmentations are used to create an artificial batch like in \cite{sun2020test}.
+
+% Prior work~\citep{brown2020language} has discovered an emergent phenomenon called \emph{in-context learning} -- very large models seem to improve their predictions dramatically, if a few ``training instances" are given in $X$ at test time.
+% TTT makes in-context learning explicit even on unlabeled instances.
+
+\section{Outer Loop: Learning the Self-Supervised Task for TTT}
+\label{sec:method}
+As noted above, TTT does not modify 
+the initialization $W_0$ for encoder $f$, 
+the transformations $\phi$ and $\psi$, or the decoder $g$ and main task head $h$.
+Altogether, these important components must be determined outside of the scope of TTT.
+Prior work has tried various heuristics, discussed in Subsection~\ref{subsec:rel-ttt}.
+Here we take the more principled approach of directly optimizing the final prediction loss on the main task after $T$ steps of TTT.
+
+We first explicitly express the learnable parameters that were hidden in Section~\ref{sec:background} because they were considered given within the scope of the inner loop.
+These are the parameters of $g, h$, $\phi$ and $\psi$, denoted by $\theta_g$, $\theta_h$, $\theta_\phi$ and $\theta_\psi$. 
+We group them together with $W_0$ into $\boldsymbol{\theta} = (\theta_g, \theta_h, \theta_\phi, \theta_\psi, W_0)$, since they will all be learned in the outer loop.
+Technically, $\boldsymbol{\theta}$ should also contain the learnable parameters of \texttt{aggregate}, which we omit for convenience.
+
+Now we derive the outer-loop objective $\scrL_T$.
+Denote the main task loss by $\scrL$, \textit{e.g.} the cross-entropy loss.
+In the trivial case, for $T=0$, \textit{i.e.} without TTT, the final prediction loss is exactly $\scrL$.
+To be precise, for each instance $X$ with unknown label $y$,
+\begin{equation}
+\scrL_0 \big( \boldsymbol{\theta}; X, y \big) 
+= \scrL \big( h\circ f(\psi(X); W_0), y \big).
+\end{equation}
+For $T=1$, the parameters of $f$ become $W_1 = W_0 - \eta\nabla\ell(W_0; X)$, as defined in Equation~\ref{eq:smalll}.
+Therefore, the final prediction loss for the main task is
+\begin{equation}
+\label{eq:bigl}
+\scrL_1\big( \boldsymbol{\theta}; X, y \big) = 
+\scrL\big( h\circ f\left(\psi(X); W_1\right), y \big)
+= \scrL\big( h\circ f\left(\psi(X); W_0 - \eta\nabla\ell(W_0; X)\right), y \big).
+\end{equation}
+For any $T\geq 1$, $\theta_g$ and $\theta_\phi$ implicitly determine the inner-loop loss function $\ell$ defined in Equation~\ref{eq:smalll}, therefore affect $\scrL_T$ through $\nabla\ell$.
+In other words, $\theta_g$ and $\theta_\phi$ parameterize the self-supervised task.\footnote{Note that even though $\theta_g$ and $\theta_\phi$ are included as arguments of $\scrL_T$ for all values of $T$, they do not actually matter for $\scrL_0$.
+When the inner loop is trivial, \textit{i.e} runs for 0 iteration, learning to learn collapses to regular (non-meta) learning, and the self-supervised task does not matter.
+}
+Going further, for $T \geq 2$, 
+\begin{equation}
+    \scrL_T \big( \boldsymbol{\theta}; X, y \big) =
+    \scrL\big( h\circ f\left(\psi(X); W_T\right), y \big)
+\end{equation}
+would be cumbersome to write out in terms of $W_0$, but can be expressed recursively, with $W_t$ defined in Equation~\ref{eq:grad} for each $t=1,\dots,T$.
+% Informally, we first pretend that $X$ is a test instance and perform TTT, but since $X$ here actually comes with a label, we can calculate and optimize its final prediction loss.
+
+At training time, the outer loop calculates $\scrL_T$ individually for each labeled training instance $X$, then optimizes the average $\scrL_T$ on the entire training set with (a variant of) stochastic gradient descent. 
+Calculating $\nabla\scrL(\boldsymbol{\theta}; X, y)$ requires taking gradients through $\nabla \ell(W_t; X)$ for $t=0,\dots,T-1$.
+, since the latter is implicitly a function of $W_0$, $\theta_g$ and $\theta_\phi$.
+This turns out to be easily programmable in JAX, and surprisingly efficient in practice, as we will show in Section~\ref{sec:exp}.
+
+\section{Choice of Learner for Inner Loop}
+While our inner loop is a sequence of forward and backward operations, it can also be represented as a single forward operation on its unrolled computation graph, so the outer loop becomes regular (non-meta) learning using this graph as a fixed model.
+It turns out that for simple choices of the inner-loop learner, this equivalent graph can be interpreted through the lens of architecture design.
+
+\label{sec:learner}
+\subsection{TTT with Linear Models: Equivalence to Linear Attention}
+\label{subsec:linear}
+The simplest choice for the feature extractor $f$ is a linear model:
+\begin{equation}
+f(x; W) = W x.
+\end{equation}
+And the outer-loop components $g$, $h$, $\phi$ and $\psi$ are linear as well. Specifically, 
+\begin{equation}
+g(x; \theta_g) = \theta_g^T x,~~
+h(x; \theta_h) = \theta_h x,~~
+\phi(x; \theta_\phi) = \theta_\phi x,~~
+\psi(x; \theta_\psi) = \theta_\psi x.
+\end{equation}
+To make the math even simpler, we always initialize the feature extractor with $W_0 = 0$.
+Under this construction, the self-supervised loss in Equation~\ref{eq:smalll} becomes
+\begin{equation}
+\label{eq:tokl}
+\ell\big( W; X \big) 
+= \frac{1}{2n} \sum_{i=1}^n\| g \circ f\left(\phi(x_i); W\right) -  x_i \|^2 
+= \frac{1}{2n} \sum_{i=1}^n \|\theta_g^TW \theta_\phi x_i - x_i\|^2.
+\end{equation}
+For $W_0 = 0$, one gradient step with learning rate $\eta=1$ produces
+\begin{equation}
+W_1 = W_0 - \nabla \ell\left(W_0; X\right) 
+= \frac{1}{n} \sum_{i=1}^n (\theta_g x_i) (\theta_\phi x_i)^T.
+\end{equation}
+Using $W_1$ as the updated weights for the feature extractor, the updated features for each token $x_j$, $j=1,\dots,n$, becomes
+\begin{equation}
+f\left(\psi(x_j); W_1\right)
+ = \frac{1}{n} \sum_{i=1}^n (\theta_g x_i) (\theta_\phi x_i)^T \theta_\psi x_j.
+\end{equation}
+This happens to be linear attention (explained in Appendix~\ref{app:linear-attention}), where $\theta_\phi$, $\theta_\psi$, $\theta_g$ are the key, query, value weights.
+$h$ is the projection operation used for multi-head attention, discussed in Appendix~\ref{app:multi}.
+
+\subsection{TTT with Kernels: Equivalence to Self-Attention}
+\label{subsec:kernel}
+So far, we have considered $f$ with explicit parameters.
+But machine learning is more than just parametric models and gradient-based optimization.
+Here we consider $f$ as a non-parametric learner.
+
+Recall that non-parametric learning produces an algorithmic function controlled by the training data $x_1, \dots, x_n$, without explicit parameters of a fixed shape.
+So our notation for the encoder changes from $f(x; W)$ to $f(x; x_1, \dots, x_n)$.
+For example, the nearest neighbor $f(x; x_1, \dots, x_n)$ simply looks for the most similar piece of training data.
+Some other non-parametric learners are: support vector machines (SVMs), radial basis function networks, and kernel ridge regression.
+
+But unlike most cases of non-parametric learning, our data for TTT come without labels, since $x_1, \dots, x_n$ are just tokens of an unlabeled test instance $X$. 
+Analogous to parametric learners, non-parametric ones can also learn with self-supervision to produce better features for a main task downstream.
+So for each $i=1,\dots,n$, we create each label $z_i = \theta_V x_i$ from the unlabeled input $x_i$ itself, where $\theta_V$ is an outer-loop parameter like $\theta_g$ in the parametric case.
+
+The popular self-attention (with softmax) is equivalent to TTT with $f$ as the time-honored Nadaraya-Watson estimator~\citep{bierens1988nadaraya, cai2001weighted}, which outputs a locally weighted average of labels $z_i$, $i=1,\dots,n$, using a kernel $\kappa$ as the weighting function:
+\begin{equation}
+\label{eq:nwe}
+    f(x; x_1, \dots, x_n) = \frac{1}{\sum_{i=1}^n \kappa(x, x_i)} \sum_{i=1}^n \kappa(x, x_i) ~z_i.
+\end{equation}
+See Appendix~\ref{app:nwk} for a detailed derivation of this estimator.
+We choose the kernel $\kappa$ to be
+\begin{equation}
+\label{eq:kernel}
+\kappa(x, x'; \theta_K, \theta_Q) \propto e^{(\theta_Kx)^T \theta_Qx'}
+\end{equation}
+where $\theta_K$ and $\theta_Q$ are known as bandwidth hyper-parameters for kernels. But for MTTT, they are outer-loop parameters like $\theta_V$.
+As detailed in Appendix~\ref{app:nwk},
+asymmetric kernels like our $\kappa$ above have enjoyed a long tradition~\citep{breiman1977variable,chen2017tutorial}.
+Altogether, Equation~\ref{eq:nwe} and \ref{eq:kernel} combined is the same as self-attention, where $\theta_K, \theta_Q$, $\theta_V$ are the key, query, value weights.
+
+Unlike the parametric case, TTT with kernels does not solve an optimization problem, therefore does not produce a different implementation from self-attention.
+While our equivalence here only provides an alternative interpretation, the fact that both linear models and kernels are empirically effective as inner-loop learners suggests that other learners might also be effective.
+
+\subsection{TTT with Neural Networks}
+\label{subsec:neuralnetwork}
+From the past three decades of progress in machine learning, we observe that the performance of 
+\begin{equation*}
+\label{eq:ineq}
+\textit{deep~learning} ~>~ \textit{kernels} ~>~ \textit{linear models}
+\end{equation*}
+given enough data and compute.
+In Subsection~\ref{subsec:context}, we discussed the perspective that our inner loop mirrors regular (non-meta) learning, at least in terms of algorithmic design.
+To collect empirical evidence for this perspective, we investigate if the ordering above is preserved within our inner loop.
+
+It is well known that transformers with self-attention (TTT with kernels) often outperform those with linear attention (TTT with linear models), \textit{i.e.} linear transformers~\citep{katharopoulos2020transformers}. 
+This validates the rightmost link of the ordering within our inner loop.
+But TTT with neural networks has no existing equivalence, so we devote the rest of the paper to taking a small step in this huge search space. 
+We delay implementation details such as architecture and optimization to Section~\ref{sec:exp}, and end this subsection with one remaining conceptual implication.
+
+TTT with neural networks and linear models, or any parametric learner, has complexity linear in $n$ for each test instance $X = (x_1,\dots,x_n)$, since complexity for each token is constant in $n$, and only proportional to the number of parameters.
+TTT with any non-parametric learner, however, cannot have linear complexity by definition, since its complexity for each token cannot be constant in $n$, \textit{i.e.} amount of training data.
+For Nadaraya-Watson, complexity for each token happens to be linear.
+This serves as an alternative explanation for the quadratic complexity of self-attention. 
+
+% Softmax self-attention is known to quadratic complexity: the attention matrix of pairwise similarities between tokens is of size $n\times n$.
+% Linear attention is known to have linear complexity, by swapping the order of matrix multiplication after removing the softmax -- a rather technical procedure. 
+% When both are interpreted as their TTT equivalences, linear attention has linear complexity because TTT with a parametric learner makes each prediction in constant time, so $n$ predictions in total takes linear time.
+
+\section{Experiments}
+\label{sec:exp}
+
+The goal of our experiments is not to be the top on leaderboards, but to evaluate our key perspective, that the inner loop mirrors regular (non-meta) learning, in terms of three qualities.
+1) \emph{Descriptive}: Does our equivalence to linear attention hold in practice?
+2) \emph{Prescriptive}: Does our perspective show a path for new methods with better performance?
+3) \emph{Predictive}: Does our perspective accurately explain the empirical behaviors of new methods?
+
+\paragraph{TTT layers.}
+The cleanest and most practical way to answer these questions is to replace every attention layer in an architecture with a TTT inner loop, because ultimately, attention layers are only used as parts of an architecture.
+Since the inner loop here functions as a \emph{drop-in replacement} for attention, we call it a \emph{TTT layer}, which can also be thought of as an equivalent computation graph (discussed in Section~\ref{sec:learner}).
+After dropping in the TTT layers, the entire architecture can be trained with MTTT, using the same recipe as that with attention layers, without TTT.
+
+\paragraph{Variants of MTTT.}
+We call our method \emph{MTTT-Linear} when encoder $f$ is linear in each TTT layer, and \emph{MTTT-MLP} when $f$ is a multi-layer perception (MLP). 
+We always keep $g, h, \phi, \psi$ linear following Subsection~\ref{subsec:linear}.
+For MTTT-Linear, we always keep $W_0=0$ fixed to ensure equivalence to linear attention, since MTTT-Linear is only used to investigate descriptiveness.
+For MTTT-MLP, we experiment with the two design choices below, to investigate the prescriptive power of our perspective.
+For simplicity, we always set the inner-loop learning rate $\eta=1$. 
+% since the outer-loop parameters should be able to adapt to it.
+
+\paragraph{Inner-loop architecture.} 
+For MTTT-MLP, the MLP architecture simply follows standard design in transformers. 
+Concretely, our MLP has 2 linear layers with GELU activation in between; the input and output dimension are the same, and the hidden dimension is $4\times$ as large.
+The only architectural change, called \emph{Decoder LN}, is that we add a layer norm (LN) after the output of $g$, to normalize the reconstruction outputs, in the spirit of \cite{mae}.
+We explain this design choice in Figure~\ref{fig:dln}, deferred to the appendix due to space constraints.
+
+\paragraph{Inner-loop optimization.}
+When the inner loop takes $T>1$ steps, each gradient step, by default, uses the average loss over all the tokens, defined in Equation~\ref{eq:smalll}.
+But $T$ steps make the inner loop $T\times$ slower.
+Given the popularity of stochastic gradient descent (SGD) in deep learning, we use it for our inner loop.
+Specifically, we randomly split the $n$ tokens into $T$ mini-batches, each of size $T/n$, and take one inner-loop step per mini-batch.
+Therefore, $T$ steps of SGD combined consumes the same amount of compute as a full-batch gradient step over all the $n$ tokens together.
+
+\begin{table*}
+\centering
+\vspace{-1ex}
+\begin{tabular}{|l|c|c|c|}
+\toprule
+Drop-in layer
+& ~Acc. (\%)~
+& {\footnotesize Params. (M)}
+& {\small FLOPs}
+\\
+\midrule
+Linformer~{\tiny \citep{wang2020linformer}}
+& 71.9 & 22.2 & 0.9$\times$\\
+Longformer~{\tiny \citep{beltagy2020longformer}}
+& 76.3 & 27.4 & 1.1$\times$\\
+SOFT~{\tiny \citep{lu2021soft}}
+& 74.6 & 23.5 & 0.9$\times$\\
+Hyena~{\tiny \citep{poli2023hyena}}
+& 74.8 & 23.5 & 1.0$\times$\\
+\midrule
+Self-attn.~{\tiny \citep{beyer2022better}} 
+& 76.5 & 22.1 & 1.1$\times$ \\
+Linear attn.~{\tiny (Katharopoulos et al.)}
+& 73.2 & 22.1 & 1.0$\times$ \\
+Linear attn. identity map
+& 73.0 & 22.1 & 1.0$\times$ \\
+\midrule
+MTTT-Linear 
+& 72.8 & 22.1 & 1.1$\times$ \\
+MTTT-MLP 
+& 74.6 & 24.6 & 1.5$\times$ \\
+\bottomrule
+\end{tabular}
+\caption{
+Results on ImageNet.
+FLOPs are presented as relative to linear attention.
+Our inner-loop dataset is tiny, with $n=196$.
+MTTT-Linear matches linear attention with identity map, as expected. 
+MTTT-MLP outperforms both by a nontrivial margin, but is $1.5\times$ slower than linear attention.
+Also as expected, self-attention, \textit{i.e.} the original ViT performs the best.
+See Subsection~\ref{subsec:pixel} for details.
+}
+\vspace{-1ex}
+\label{tab:patch}
+\end{table*}
+
+\subsection{ImageNet}
+\label{subsec:patch}
+
+We first experiment with the standard setting of ImageNet object recognition~\citep{deng2009imagenet}.
+Our benchmark architecture is Vision Transformer (ViT)~\citep{dosovitskiy2020image}.
+We adopt the well-known recipe of \cite{beyer2022better} by the ViT authors, and their recommended setup for fast research turnaround -- training ViT-Small for 90 epochs.
+With an accuracy of 76.5\%, it is often regarded as a fast and competitive baseline.
+Its recipe splits each image into $14\times 14$ patches, then embeds each patch with a learned projection. 
+So each $X$ becomes $n=196$ tokens.
+
+Thinking of the context window as training data for TTT, a dataset of size 196 is not nearly enough for deep learning, if adequate for a linear model. 
+Since over-parameterized neural networks are known to be able to regularize themselves~\citep{zhang2021understanding}, 
+MTTT-MLP should not do poorly, but might not justify the extra compute.
+In addition, small $n$ means our linear complexity is less of an advantage, in comparison to self-attention (with softmax).
+
+Our results in Table~\ref{tab:patch} confirm those expectations. 
+MTTT-MLP outperforms MTTT-Linear by a small margin, but uses more FLOPs.
+If MTTT-MLP was using a smaller architecture that matches the FLOPs of MTTT-Linear, it would have performed worse.
+Self-attention, for which the training recipe was originally designed, performs the best.
+
+In terms of descriptiveness, MTTT-Linear almost exactly matches linear attention (identity map) -- the 0.2\% difference is likely due to random noise and loss of numeric precision.
+However, MTTT-Linear uses $0.1\times$ more FLOPs as linear attention.
+This extra factor exists because the JAX compiler is unaware that the compiled inner loop will receive $W_0 = 0$ so all those terms involved can be eliminated. We manually calculated the total number of FLOPs for those terms involving $W_0$, and found that it matches the difference in FLOPs between MTTT-Linear and linear attention.
+
+Taking more gradient steps in the inner loop significantly improves accuracy of MTTT-MLP up to $T=4$, as shown in the left panel of Figure~\ref{fig:ablate}.
+However, $T$ steps on the full batch costs $T\times$ number of FLOPs.
+So this improvement is predictive but not practically useful.
+We have experimented with SGD and found that it does not help here.
+Since $n=196$ is already a small batch size, splitting 196 tokens into even smaller mini-batches for SGD is usually considered bad practice for deep learning.
+
+The right panel of Figure~\ref{fig:ablate} shows the average $\ell(W_t; X)$ across the test set, for TTT layer 6 (out of 12 in total).
+The plot for all layers is deferred to Figure~\ref{fig:inner_bgd} in the appendix due to space constraints, but the overall behavior is essentially the same across layers.
+The five lines are for $t=0,\dots,T$, where $T=4$, \textit{i.e.} the optimal choice of $T$ according to the left panel.
+For every epoch of outer-loop learning, average inner-loop loss decreases monotonically with more steps.
+The behavior of this novel inner loop matches that of regular learning with successful optimization.
+
+While MTTT has not been practically useful in this setting, its behavior matches our expectations, indicating that our perspective is predictive on top of descriptive. 
+Note that every hyper-parameter is set according to \cite{beyer2022better}, and we have not changed any to get the expected behavior.
+Our inner-loop learning rate $\eta$ has always been 1, derived from equivalence to linear attention.
+
+In Table~\ref{tab:ablate}, we ablate MTTT-MLP with the four combinations of whether or not to use Decoder LN and train $W_0$ in the outer loop.
+We choose these two factors since Decoder LN is our own design, and training $W_0$ goes a step further from equivalence to linear attention, which requires fixing $W_0=0$.
+Empirically, both components prove to be important for good performance. 
+Therefore, we always keep them for future experiments, without spending more resources to ablate them.
+
+For additional context around our results, we run a few baselines that also have linear complexity. Linear attention as proposed by \cite{katharopoulos2020transformers} uses manually engineered features of the input tokens, instead of the input tokens themselves. We label the former with citation, and the latter with \emph{identity map}. Other baselines have roughly the same accuracy as MTTT-MLP. Longformer stands out with the same accuracy as self-attention, but we find that the default window size for its sliding attention is $512 > 196$, so it happens to be the same as self-attention for $n=196$.
+
+% We find that achieving exact match numerically is almost impossible, even after controlling for all sources of randomness (see Appendix ~\ref{app:match}).
+
+\begin{table*}
+\centering
+\begin{minipage}{\textwidth}
+    \begin{minipage}[t]{0.64\textwidth}
+        \vspace{0pt}
+            \begin{minipage}[t]{0.445\textwidth}
+                \includegraphics[width=\textwidth]{figs/sgd.pdf}
+            \end{minipage}
+            \begin{minipage}[t]{0.555\textwidth}
+                \includegraphics[width=\textwidth]{figs/inner_single.pdf}
+            \end{minipage}
+        \captionof{figure}{\small 
+        More inner-loop steps improve accuracy up to $T=4$ (left).
+        Behavior of inner-loop loss mirrors regular (non-meta) learning (right).
+        }
+        \label{fig:ablate}
+    \end{minipage}
+    \hspace{0.01\textwidth}
+    \begin{minipage}[t]{0.35\textwidth}
+        \vspace{6pt} 
+        \centering
+        \scalebox{0.91}{
+            \begin{tabular}{|c|c|c|}
+            \toprule
+            {\small Dec. LN}
+            & {\small Train $W_0$}
+            & {\small Acc. (\%)} \\
+            \midrule
+            \xmark & \xmark & 72.9 \\
+            \xmark & \cmark  & 73.0 \\
+            \cmark & \xmark & 73.8 \\
+            \cmark & \cmark & 74.6 \\
+            \bottomrule
+            \end{tabular}
+        }
+        \vspace{10pt}
+        \captionof{table}{\small
+        Ablations on ImageNet. \\
+        See Subsection~\ref{subsec:patch} for details.}
+        \label{tab:ablate}
+    \end{minipage}
+\end{minipage}
+\end{table*}
+
+\subsection{ImageNet from $224\times 224$ Raw Pixels}
+\label{subsec:pixel}
+
+To better evaluate our perspective that the inner loop mirrors regular (non-meta) learning, we need a setting where the sequence length $n$, \textit{i.e.} amount of training data for the inner loop, is actually comparable to the amount in typical applications of deep learning.
+Inspired by~\cite{chen2020generative}, we experiment with ImageNet object recognition using raw pixels instead of patches as input tokens.
+This gives us $n = 224 \times 224 = 50,176$.
+
+For \cite{chen2020generative}, the point of using pixels is to eliminate image-specific prior knowledge.\footnote{
+While transformers have already eliminated the locality prior in convolutions, most papers on ImageNet still use patches instead of pixels as input tokens.
+This is equivalent to a first layer of convolutions where the filter size and stride size both equal to the patch size, and is in fact often implemented as such.
+Using raw pixels as input tokens eliminates locality prior completely.
+}
+At a high level, the progress in deep learning over the past decade can be seen as gradually eliminating human priors, in favor of general methods that take advantage of data and compute.
+Following their setting, we use learned positional embeddings, instead of engineered positional encoding.
+Therefore, our entire system is permutation invariant.
+
+While \cite{chen2020generative} do not use any data augmentation, they use a much larger collection of images. 
+We have been able to remove the augmentations except one -- random resize crop~\citep{szegedy2015going}, without which all methods fail to get more than 40\% accuracy. 
+Since random resize crop does not add any synthetic artifact to natural images, we justify it as using more data without actually using another dataset.
+We always use random resize crop for the rest of the subsection.
+
+Experiments in this subsection are conducted with ViT-Tiny unless noted otherwise, because training with 50k tokens per instance is very compute-intensive.
+Every other aspect of our recipe follows \cite{beyer2022better}, like in Subsection~\ref{subsec:patch}.
+Our results are in Table~\ref{tab:pixel}.
+Self-attention, which performed the best with patches, cannot fit in memory. Even if memory was not an issue, it would still need at least $200\times$ more FLOPs than linear attention according to our estimations.
+
+We highlight two results.
+First, taking $T=4$ steps of SGD improves accuracy by 3.3\% on top of MTTT-MLP with $T=1$, without costing extra FLOPs.
+To the best of our knowledge, this improvement cannot be explained through any existing perspective without an explicit inner loop.
+Like in Figure~\ref{fig:ablate}, our inner-loop loss with SGD steps also behaves like regular learning, as shown in Figure~\ref{fig:inner_sgd} of the appendix.
+Second, MTTT-MLP with SGD improves almost 10\% on top of even a ViT-Small with linear attention, which uses more than $3\times$ parameters and $2\times$ FLOPs.
+For SGD, $T=4$ was simply chosen according to the optimal on patches.
+
+These pieces of empirical evidence indicate that our perspective is prescriptive, by showing a path to new methods with better performance. 
+It is also predictive, since expectations derived from regular learning accurately explain novel behaviors of the inner loop, without any hyper-parameter tuning.
+In terms of descriptiveness, MTTT-Linear matches linear attention (identity map) within 0.1\%.
+
+% TODO: Perceiver
+
+\begin{table*}
+\vspace{-1ex}
+\centering
+\begin{tabular}{|l|l|c|c|c|}
+\toprule
+Model
+& Drop-in layer
+& ~Acc. (\%)~
+& {\footnotesize Params. (M)}
+& {\small FLOPs}
+\\
+\midrule
+\multirow{6}{*}{\parbox{1cm}{ViT-Tiny}} 
+& Self-attn.~{\tiny \citep{beyer2022better}} 
+& - & 5.6 & $200\times$ \\
+& Linear attn.~{\tiny (Katharopoulos et al.)}
+& 53.7 & 5.6 & 1.0$\times$ \\
+& Linear attn. identity map
+& 49.9 & 5.6 & 1.0$\times$ \\
+\cmidrule(lr){2-5}
+& MTTT-Linear 
+& 50.0 & 5.6 & 1.1$\times$ \\
+& MTTT-MLP
+& 61.9 & 6.8 & 1.8$\times$ \\
+& MTTT-MLP SGD $T=4$
+& 65.2 & 6.8 & 1.8$\times$ \\
+\midrule
+\multirow{2}{*}{\parbox{1cm}{ViT-Small}} 
+& Linear attn.~{\tiny (Katharopoulos et al.)}
+& 54.4 & 21.8 & 3.9$\times$ \\
+& Linear attn. identity map
+& 55.7 & 21.8 & 3.9$\times$ \\
+\bottomrule
+\end{tabular}
+\caption{
+Results on ImageNet from pixels. FLOPs are presented as relative to linear attention.
+MTTT-MLP with SGD outperforms without by 3.3\%, and does not cost extra FLOPs.
+It improves almost 10\% on top of a ViT-Small with linear attention, which uses more than $3\times$ parameters and $2\times$ FLOPs.
+See Subsection~\ref{subsec:pixel} for details.
+}
+\vspace{-1ex}
+\label{tab:pixel}
+\end{table*}
+
+\section{Related Work}
+\label{sec:rel}
+
+\subsection{In-Context Learning as Explicit Learning}
+\label{subsec:rel-inc}
+
+% \cite{brown2020language} is the first to discover the emergent phenomenon called \emph{in-context learning} -- very large models seem to improve their predictions dramatically, if a few ``training instances" are given in $X$ at test time.
+
+To the best of our knowledge, three pieces of prior work~\citep{akyurek2022learning,dai2022can,von2023transformers}
+have independently proposed the idea that linear transformers can simulate some variant of linear regression on in-context data, as an explanation for in-context learning.
+Take \cite{von2023transformers} as an example. Given a labeled dataset, their work first trains a linear regression model with $T$ gradient steps, then constructs the weights of a $T$-layer linear transformer to produce the same output as the trained linear model.
+
+Our work differs in two main aspects: self-supervision and direction of claims.
+First, prior work focuses on showing that (linear) transformers can simulate learning on specific, supervised objectives, \textit{e.g.} ridge regression, so their constructions rely on labeled pairs of in-context training data.
+If there is a meta-learning component, it is restricted to specific hyper-parameters, \textit{e.g.} the learning rate.
+On the other hand, our inner loop implements a general objective that itself is mostly learned, so it does not need labeled data.
+This makes our inner loop less interpretable but more practical.
+
+At a higher level, transformers are complex models, and linear models are simple. 
+Prior work uses the complex to construct the simple. 
+Our construction takes the converse direction. 
+In prior work, empirical performance of meta-learning with linear regression has been significantly worse than linear transformers, even on labeled in-context data.
+Again, with the goal of explaining transformers, their claims often indicate that linear transformers are superior to meta-learning.
+Our experiments also point towards the converse.
+
+Recently, \cite{mahankali2023one,zhang2023trained,ahn2023transformers} and \cite{tarzanagh2023transformers} have further extended the arguments in prior work, therefore inheriting their two aspects above.
+\cite{tarzanagh2023transformers}, in particular, argues that transformers implement non-parametric learners (SVMs) on labeled data, supporting our intuition in the converse direction.
+In summary, our paper complements prior work, with the different goal of inspiring potentially more powerful systems.
+
+\subsection{Learning at Test Time}
+\label{subsec:rel-ttt}
+
+The idea of learning at test time has a long history in machine learning.
+One of the earliest instantiations of this idea is \cite{bottou1992local}:
+For each test input, train on its neighbors before making a prediction.
+This idea continues to be effective for SVMs~\citep{zhang2006svm} and large language models~\citep{hardt2023test}.
+In computer vision, the general idea of learning at test time has also been applied to specific applications~\citep{jain2011online, shocher2018zero, mullapudi2018online, luo2020consistent, nitzan2022mystyle}.
+
+\emph{Transductive learning}~\citep{Gammerman98learningby} is the first to articulate our philosophy in Section~\ref{sec:intro}.
+As stated by \cite{vapnik2013nature}:
+"Try to get the answer that you really need, but not a more general one."
+Implementation-wise, it uses test data to add constraints to the margin of SVMs~\citep{joachims2002learning, collobert2006large}.
+This is an example of non-parametric learning at test time, similar to our kernel estimator in Subsection~\ref{subsec:kernel}. 
+However, transductive learning usually needs multiple test instances to be practically effective, unlike our method, which only needs a single instance at a time.
+
+Next we have an in-depth discussion of two particular relevant lines of work: TTT and fast weights.
+
+\subsubsection{Test-Time Training with Self-Supervision}
+
+Our inner loop performs TTT with self-supervision, discussed in Section~\ref{sec:background}. 
+This general framework was first proposed by \cite{sun2020test}, with results for supervised learning under distribution shifts.
+Unlike previous lines of work, TTT can be used in principle with any self-supervised task, on any type of data, for any application, making it particularly suitable for deep learning.
+Follow-up work has applied TTT to 
+batches of data~\citep{wang2020tent, liu2021ttt++}, and other main tasks like
+robot manipulation~\citep{hansen2020self} and locomotion~\citep{sun2021online},
+among others.
+
+Particularly relevant to our inner loop, \cite{ttt-mae} performs TTT with reconstruction as the self-supervised task, and \cite{wang2023test} applies this method online to video streams.
+The biggest difference is that our reconstruction task is parameterized for meta-learning.
+In addition, our inner loop obtains multiple units of learning, $x_1,\dots,x_n$, out of a single test instance through tokenization. 
+In prior work, each unit of learning is created through either data augmentations or a randomized $\phi$, such as masking random patches~\citep{mae}.
+
+\subsubsection{Fast Weights}
+\label{subsubsec:fw}
+
+The general idea of \emph{fast weights} is to update the parameters of a ``fast'' model on the most relevant data, as opposed to a ``slow'' model on all data~\citep{hinton1987using, tieleman2009using}, which most people today simply refer to as training or learning.
+The most relevant data can be the test instance itself, where the update is performed without human supervision at test time.
+Our work shares the same general idea, but formulates an explicit learning problem for each inner-loop update, with the goal of generalizing to that test instance. 
+
+To make fast weights ``fast'', \textit{i.e.} efficient, their update rules avoid forming an optimization problem with explicit objectives on the training data, \textit{i.e.} a learning problem.
+For example, given each input $x$, one popular update rule for fast weights is to add $xx^T$ (or some variant thereof)~\citep{ba2016using} like in Hebbian learning and Hopfield networks~\citep{hopfield1982neural}.
+In contrast, our update rule for TTT is an explicit training process as its name suggests.
+
+\emph{Fast weight programmers} (FWPs)~\citep{schmidhuber1992learning} produce the updates to fast weights with a ``slow'' model.
+MTTT's outer loop can be seen as training the ``slow'' model, if its inner loop is viewed as updating fast weights.
+In particular, FWPs with the Hebbian update rule above are equivalent to linear transformers~\citep{schlag2021linear}, therefore also to MTTT with linear models.
+\cite{clark2022meta} add a final layer of fast weights to a transformer and train its initialization with a FWP to improve performance on language modeling.
+
+Given the broadest definition of FWPs, MTTT with parametric models can be seen as a special case~\citep{kirsch2021meta}.
+But the difference in update rules between TTT and fast weights, as discussed, carries over to MTTT and FWPs.
+\cite{irie2021going} have tried ``fast'' networks with weights directly produced as output of a ``slow'' network, without forming a learning problem.
+In contrast, our inner loop mirrors regular (non-meta) learning. This helps us with empirical intuitions like in Figure~\ref{fig:ablate}, and heuristics like output normalization and stochastic gradient descent.
+
+% \emph{Dynamic evaluation}~\citep{krause2018dynamic, krause2019dynamic}, more recently, fine-tunes the language model on the context of the test instance.
+
+\subsection{Learning to Learn}
+% Also known as meta-learning or bi-level optimization, learning to learn has been a dream for machine learning researchers for decades~\citep{schmidhuber1987evolutionary}.
+
+% Some representative choices of outer-loop parameters are: , model initialization~\citep{finn2017model}, and self-supervised task for pre-training~\citep{metz2018meta}.
+% Our outer loop learns self-supervised tasks for TTT, which has not been explored by prior work.
+
+For decades, researchers have been arguing that learning to learn should be an important component of intelligence~\citep{schmidhuber1987evolutionary, bengio1990learning, thrun1998learning, lake2017building}.
+
+Most prior work on learning to learn, such as \cite{andrychowicz2016learning}, \cite{finn2017model} and \cite{metz2018meta}, try to generalize across datasets or tasks instead of instances, since meta-learning lifts its units ``one level above''.
+Their inner loop learns from an entire dataset at a time, instead of a single instance, so the outer loop needs a collection of datasets or tasks.
+Since it is hard to collect millions of datasets or tasks, their outer loop is hard to scale.
+
+But for TTT, each instance itself is a task and defines its own generalization problem, so MTTT is only a solution to the canonical problem of supervised learning, reformulated as learning to learn.
+It does not propose a new problem setting like generalization across datasets or tasks.
+Its inner loop only needs a single instance, so the outer loop only needs a collection of instances -- a dataset in the traditional (non-meta) sense, \textit{e.g.} the ImageNet training set.
+This makes it easier to scale.
+
+% A notable exception is fast weight programmers discussed above, in the end of Subsection~\ref{subsec:rel-ttt}
+
+% optimization hyper-parameters~\citep{maclaurin2015gradient}
+
+\section{Limitations and Future work}
+The search space for practically effective instantiations of MTTT is huge, and our paper has only taken a baby step.
+We believe this search needs to be a community effort, and our biggest motivation for writing this paper is to inspire future steps.
+Fortunately, if our perspective holds, then successful heuristics for regular learning can transfer to our inner loop, and search can be much more efficient.
+Next we outline some especially promising directions for future work, given our current limitations.
+
+\paragraph{Multi-level learning to learn.}
+We have already discussed the possibility of a more ambitious architecture for $f$ (\textit{e.g.} larger MLP or CNN), but when $f$ is a transformer, it can be interpreted as yet another inner loop nested inside the existing one.
+In this fashion, we can potentially build many levels of nested learning problems, instead of the existing two-level paradigm for learning to learn.
+This possibility has been mentioned in \cite{irie2021going}, but might become practically useful under MTTT, given the functional programming capabilities of JAX.
+
+\paragraph{Better infrastructure.}
+Since learning to learn has been relatively under-explored as a practical solution to supervised learning, its support in JAX is still primitive.
+For example, MTTT-Linear only costs $0.1\times$ more FLOPs than linear attention (already unnecessary in principle), but turns out to be $2\times$ slower in wall-clock time.
+SGD is slower by an additional factor of $2\times$ regardless of $T$, even though it costs the same number of FLOPs.
+We believe these systems-level inefficiencies will eventually disappear once the community builds a better infrastructure.
+
+\paragraph{Autoregressive language modeling.}
+For this application, $T=n$ because each $W_t$ only updates on the gradient from $x_t$ in an online fashion, like in \cite{wang2023test}.
+In this paper, we have not been able to try autoregressive tasks because of a rather technical reason:
+JAX saves every intermediate $W_t$, taking $O(TD)$ memory when $W$ is of size $D$.
+But in principle, only $O(D)$ memory is needed. 
+Implementing this solution turns out to be a large engineering effort beyond the scope of our paper.
+
+\paragraph{Outer-loop parameterization and optimization.}
+There are many other ways to parameterize a family of reconstruction tasks, or even a more general family.
+For clean comparison with attention, our way has been simple but probably far from optimal.
+For the same reason, we have also refrained from searching the outer-loop optimization recipe, even though the best recipe with neural networks as inner loop is almost certainly different from that with kernels.
+
+\paragraph{Gradient-free optimization.} Optimizing $\scrL_T$ with zeroth-order techniques~\citep{salimans2017evolution, hinton2022forward, malladi2023fine} might sound radical, but can bring many practical benefits for MTTT.
+It frees us from taking gradients of gradients, and the engineering challenges that follow, such as backpropagation through time.
+We simply avoid the aforementioned problem with recovering intermediate weights $W_t$, and all the systems-level inefficiencies for learning to learn in JAX.
+Altogether, we believe that MTTT could become a killer application for zeroth-order techniques. 
+
+\section*{Acknowledgements}
+We are grateful to Guandao Yang and Beidi Chen for helpful discussions, also to Yossi Gandelsman and Yutong Bai for their help at an early stage of this project.
+Yu Sun is grateful to his PhD advisors, Alexei A. Efros and Moritz Hardt, for their many insights that eventually became part of this paper.
+Yu Sun is supported in part by Oracle Cloud credits and related resources, generously provided by the Oracle for Research program. 
+
+\bibliography{iclr2024_conference}
+\bibliographystyle{iclr2024_conference}
+
+\appendix
+
+\clearpage
+
+\section{Linear Attention and Linear Transformers}
+\label{app:linear-attention}
+This section is intended as a very brief reference on linear attention. 
+For a more in-depth discussion, please see Section 3 of \cite{katharopoulos2020transformers}.
+In this section, we use standard notations for transformers, where $X$ is the $n\times d$ matrix with $x_i$ as its $i$th column.
+Recall that for self-attention, we first form the keys, queries and values by multiplying $X$ with the respective weight matrices:
+\begin{equation}
+\label{eq:kqv}
+K = \theta_K X, ~~Q = \theta_Q X, ~~V = \theta_V X.
+\end{equation}
+Then we obtain the $i$th output embedding $Z_i$ as
+\begin{equation}
+Z_i = \text{softmax}_{j=1}^n \left( Q_i^T K_j \right) V_j,
+\end{equation}
+where softmax makes $Q_i^T K_j$ sum to 1 over $j$.
+Linear attention simply replaces softmax with mean:
+\begin{equation}
+\label{eq:linear-attention}
+V_i' 
+= \frac{1}{n}\sum_{j=1}^n \left( Q_i^T K_j \right) V_j
+= \frac{1}{n}\sum_{j=1}^n Q_i \left( K_j^T V_j \right)
+= \frac{1}{n}\sum_{j=1}^n \left( K_j^T V_j \right) Q_i.
+\end{equation}
+Since $\sum_{j=1}^n \left( K_j^T V_j \right)$ is the same for each $i$, it can be pre-computed with linear complexity.
+
+Linear attention in \cite{katharopoulos2020transformers} is slightly different. Before forming the keys, queries and values in Equation~\ref{eq:kqv}, it first passes $X$ through an engineered feature transformation ($\text{elu}+1$).
+Then for Equation~\ref{eq:linear-attention}, instead of a simple mean, there is a data-dependent normalizer.
+In Section~\ref{sec:exp},
+we label their modified linear attention with citation, and the one described in Equation~\ref{eq:kqv} and \ref{eq:linear-attention} as \textit{linear attention with identity map}.
+
+In standard terms, a transformer uses self-attention unless noted otherwise. 
+A linear transformer is simply a transformer with every self-attention layer replaced by a linear attention layer. Our paper follows this convention.
+
+\section{Multi-Head Attention}
+\label{app:multi}
+For an attention layer with $H$ heads, we need $H$ inner loops in parallel. In the case of linear attention, there would be $H$ linear models, each with a weight matrix of size $(d/H) \times (d/H)$ instead of $d \times d$.
+Under the MTTT perspective, this design naturally forms a bottleneck for compressing information, often critical for autoencoders.
+Specifically, each $\phi$ now maps from dimension $d$ to ${d/H}$, and $g$ from ${d/H}$ back to $d$. 
+Each $h$ here is a projection operation, the \textit{de facto} standard for multi-head attention.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figs/DLN.pdf}
+    \vspace{1ex}
+    \caption{Illustration of Decoder Layer Norm (LN), presented in Section~\ref{sec:exp}.
+    This diagram shows the first half of a transformer block, omitting the second half which does not contain any attention layer.
+    The input embedding is $z$, the output is $\hat{z}$.
+    The identity mapping is at the top, and the residual is learned at the bottom.
+    The dotted line from $W_0$ to $W_1$ represents an inner-loop gradient step.
+    Here we use $T=1$, \textit{i.e.} only one step in the inner loop, so the final prediction is made with $W_1$.
+    \textbf{Standard design}: only use the {blue LN}.
+    The output of decoder $g$, in this case $z_0$, is expected to reconstruct $x$, causing a ``type mismatch".
+    \textbf{Our design}: also use the {red LN}.
+    Now $\hat{x}$ is expected to reconstruct $x$, and both are outputs of LN.
+}
+\vspace{2ex}
+    \label{fig:dln}
+\end{figure}
+
+% \section{Matching}
+% \label{app:match}
+
+\clearpage
+
+\section{Our Kernel Estimator}
+\label{app:nwk}
+Here is the derivation for the Nadaraya-Watson estimator.
+Throughout this section of the appendix, we use $\mathbf{x}$ to denote the input token $x$ as a random variable, which is different from the test instance (\textit{i.e.} sequence) $X$ in the main text of the paper.
+Our goal is to produce the corresponding feature, another random variable $\mathbf{z}$.
+This is formulated as estimating the conditional expectation of $\mathbf{z}$:
+$$
+\E[\mathbf{z}|\mathbf{x} = x] = \int p(z|x)~z~dz = \int \frac{p(x, z)}{p(x)}~z~dz.
+$$
+Since the true probability distributions $p(x)$ and $p(x, z)$ are unknown, we replace them with their kernel density estimations.
+Specifically, the kernel density estimation for $p(x)$ is:
+$$
+\hat{p}(x) = \frac{1}{n}\sum_{i=1}^n \kappa(x, x_i),
+$$
+where each $x_i$ is a piece of training data in general.
+(Recall that for our paper, $x_i$ is specifically training data for the inner loop, \textit{i.e.} a token, which matches our notation in the main text.)
+
+For estimating $p(x,y)$, we use the product kernel:
+$$
+\hat{p}(x, z) = \frac{1}{n}\sum_{i=1}^n \kappa(x, x_i)~\kappa'(z, z_i).
+$$
+At first sight, it seem absurd to factor the joint probability into two seemingly independent kernels.
+But in this case, $\kappa'$ can actually be any $\kappa_i'$ dependent on $x_i$, since it will be integrated out. So the two kernels do not actually need to be independent.
+
+Plugging in those estimations, we obtain the Nadaraya-Watson estimator:
+\begin{align*}
+\hat{\E}[\mathbf{z}|\mathbf{x} = x] &= \int \frac{\hat{p}(x, z)}{\hat{p}(x)}~z~dz \\
+&= \frac{1}{\hat{p}(x)} \int \hat{p}(x, z)~z~dz \\
+&= \frac{1}{\sum_{i=1}^n \kappa(x, x_i)} \int \sum_{i=1}^n \kappa(x, x_i)~\kappa'(z, z_i)~z~dz \\
+&= \frac{1}{\sum_{i=1}^n \kappa(x, x_i)} \sum_{i=1}^n \kappa(x, x_i)~\int \kappa'(z, z_i)~z~dz \\
+&= \frac{1}{\sum_{i=1}^n \kappa(x, x_i)} \sum_{i=1}^n \kappa(x, x_i) ~z_i.
+\end{align*}
+Recall that in the main text, our kernel is chosen to be
+\begin{equation}
+\kappa(x, x'; \theta_K, \theta_Q) \propto e^{(\theta_Kx)^T \theta_Qx'}
+\end{equation}
+where $\theta_K$ and $\theta_Q$ have been known as bandwidth hyper-parameters~\citep{williams2006gaussian}.
+
+In modern days, people think of kernels as positive semi-definite, which might not be guaranteed for $\kappa$ unless $\theta_K=\theta_Q$.
+However, people working on kernels decades ago, around the time when the Nadaraya-Watson estimator was popular, have been surprisingly lenient with the choice of kernels. 
+When an estimator uses $\theta_K\neq \theta_Q$, it is known as a balloon estimator~\citep{chen2017tutorial}.
+Papers like \cite{breiman1977variable} have even used $\theta_Q$ as a function of $x'$, known as sample-adaptive smoothing.
+
+\clearpage
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figs/inner_bgd.pdf}
+    \caption{Inner-loop loss across the 12 TTT layers. Behavior across layers is roughly the same as in Figure~\ref{fig:ablate}. Method: MTTT-MLP performing full-batch gradient descent in the inner loop, $T=4$. Setting: ImageNet from patches. See Subsection~\ref{subsec:patch}.}
+    \label{fig:inner_bgd}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figs/inner_sgd.pdf}
+    \caption{Inner-loop loss across the 12 TTT layers. Behavior across layers is roughly the same as in Figure~\ref{fig:ablate}. Method: MTTT-MLP performing stochastic gradient descent in the inner loop, $T=4$. Setting: ImageNet from pixels. See Subsection~\ref{subsec:pixel}.}
+    \label{fig:inner_sgd}
+\end{figure}
+
+\end{document}

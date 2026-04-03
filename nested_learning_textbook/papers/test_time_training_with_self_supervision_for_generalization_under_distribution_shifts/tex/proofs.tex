@@ -1,0 +1,123 @@
+\section{Proofs}
+Here we prove the theoretical results in the main paper.
+\subsection{The Toy Problem}
+The following setting applies to the two lemmas; this is simply the setting of our toy problem, reproduced here for ease of reference.
+
+\pagebreak
+Consider a two layer linear network parametrized by $\mA\in\R^{h\times d}$ (shared) and $\vv, \vw\in\R^h$ (fixed) for the two heads, respectively.
+Denote $x\in\R^d$ the input and $y_1, y_2\in\R$ the labels for the two tasks, respectively.
+For the main task loss
+\begin{equation}
+l_m(\mA; \vv) = \frac{1}{2}\left(y_1 - \vv^\top \mA x\right)^2,
+\end{equation}
+and the self-supervised task loss
+\begin{equation}
+l_s(\mA; \vw) = \frac{1}{2}\left(y_2 - \vw^\top \mA x\right)^2,
+\end{equation}
+Test-Time Training yields an updated matrix
+\begin{equation}
+\mA' \leftarrow \mA - \eta\left( y_2-\vw^\top \mA x \right) \left(-\vw x^\top \right),
+\end{equation}
+where $\eta$ is the learning rate.
+
+{\lemma \label{lemma_lr}
+Following the exposition of the main paper, let
+\begin{equation}
+\eta\opt  = \frac{(y_1 - v^\top A x)}{(y_2 - w^\top A x) v^\top w x^\top x}.
+\end{equation}
+Assume $\eta\opt \in [\epsilon, \infty)$ for some $\epsilon > 0$.
+Then for any $\eta \in (0, \epsilon]$,
+we are guaranteed an improvement on the main loss i.e. $l_m(\mA') < l_m(\mA)$.
+}
+{\proof
+From the exposition of the main paper, we know that
+$$l_m(\mA - \eta\opt \grad l_s\mA)) = 0,$$
+which can also be derived from simple algebra.
+Then by convexity, we have
+\begin{align}
+l_m&\paren{\mA - \eta \grad l_s(\mA)}\\
+&= l_m\paren{\paren{1 - \frac{\eta}{\eta\opt}} \mA 
+	+ \frac{\eta}{\eta\opt}(\mA - \eta\opt \grad l_s(\mA))}  \\
+&\leq \paren{1 - \frac{\eta}{\eta\opt}} l_m(\mA) + 0 \\
+&\leq \paren{1 - \frac{\eta}{\epsilon}} l_m(\mA)\\
+&< l_m(\mA),
+\end{align}
+where the last inequality uses the assumption that $l_m(\mA)>0$, which holds
+because $\eta\opt > 0$.}
+{\lemma \label{lemma_sign}
+Define
+$\langle \mU, \mV \rangle
+= \text{vec} \left(\mU\right)^\top \text{vec} \left(\mV \right)$ 
+i.e. the Frobenious inner product, then
+\begin{equation}
+\sign \left(\eta\opt\right) = \sign \left(\langle \grad l_m(\mA), \grad l_s(\mA)\rangle\right).
+\end{equation}
+}
+{\proof By simple algebra,
+\begin{align*}
+&\langle\grad  l_m(\mA), \grad l_s(\mA)\rangle \\
+&= 
+    \langle\left( y_1-\vv^\top \mA x \right)\left(-\vv x^\top \right),
+    \left( y_2-\vw^\top \mA x \right)\left(-\vw x^\top \right)\rangle\\
+&= \left( y_1-\vv^\top \mA x \right)\left( y_2-\vw^\top \mA x \right)
+\Tr \left( x \vv^\top \vw x^\top \right)\\
+&= \left( y_1-\vv^\top\mA x \right)\left( y_2-\vw^\top\mA x \right) 
+\vv^\top \vw x^\top x,
+\end{align*}
+}
+which has the same sign as $\eta\opt$.
+
+\subsection{Proof of Theorem 1}
+\label{main_theorem_proof}
+For any $\eta$, by smoothness and convexity,
+\begin{align*}
+\label{proof_first_eq}
+&l_m(x,y; \vtheta(x))
+= l_m(x,y; \vtheta - \eta \grad l_s(x; \vtheta))\\
+&\leq l_m(x,y; \vtheta) 
++ \eta \langle \grad l_m(x, y; \vtheta), \grad l_s(x, \vtheta) \rangle \\
+&\qquad+ \frac{\eta^2\beta}{2} \norm{\grad l_s(x; \vtheta)}^2.
+\end{align*}
+Denote
+$$\eta\opt = \frac{\langle \grad l_m(x, y; \vtheta), \grad l_s(x, \vtheta) \rangle}
+{\beta \norm{\grad l_s(x; \vtheta)}^2}.$$ 
+Then \autoref{proof_first_eq} becomes
+\begin{align}
+&l_m(x,y; \vtheta - \eta\opt \grad l_s(x; \vtheta))\\
+&\leq l_m(x,y; \vtheta) 
+- \frac{\langle \grad l_m(x, y; \vtheta), \grad l_s(x, \vtheta) \rangle^2}
+{2\beta \norm{\grad l_s(x; \vtheta)}^2}.
+\end{align}
+And by our assumptions on the gradient norm 
+and gradient inner product,
+\begin{align}
+\label{proof_second_eq}
+l_m(x,y; \vtheta)  - l_m(x,y; \vtheta - \eta\opt \grad l_s(x; \vtheta)) \geq\frac{\eps^2}{2\beta G^2}.
+\end{align}
+Because we cannot observe $\eta\opt$ in practice, we instead use a fixed learning rate $\eta = \frac{\eps}{\beta G^2}$, as stated in Theorem 1.
+Now we argue that this fixed learning rate still improves performance on the main task.
+
+By our assumptions, $\eta\opt \geq \frac{\eps}{\beta G^2}$, 
+so $\eta \in (0, \eta\opt]$.
+Denote $\vg = \grad l_s(x; \vtheta)$, then by convexity of $l_m$,
+\begin{align}
+&l_m(x,y; \vtheta(x))
+= l_m(x,y; \vtheta - \eta \vg)\\
+&= l_m\paren{x,y; 
+	\paren{1 - \frac{\eta}{\eta\opt}} \vtheta +
+	\frac{\eta}{\eta\opt} \paren{\vtheta - \eta\opt \vg}} \\
+&\leq \paren{1 - \frac{\eta}{\eta\opt}} l_m(x,y; \vtheta) 
++ \frac{\eta}{\eta\opt} l_m(x,y; \vtheta - \eta\opt g)
+\end{align}
+Combining with \autoref{proof_second_eq}, we have
+\begin{align*}
+l_m(x,y; \vtheta(x))
+&\leq \paren{1 - \frac{\eta}{\eta\opt}} l_m(x,y; \vtheta) \\
+&\qquad
++ \frac{\eta}{\eta\opt} \paren{l_m(x,y; \vtheta) - \frac{\eps^2}{2\beta G^2}} \\
+&= l_m(x,y; \vtheta) - \frac{\eta}{\eta\opt}\frac{\eps^2}{2\beta G^2}
+\end{align*}
+Since $\eta / \eta\opt > 0$, we have shown that
+\begin{align}
+l_m(x,y; \vtheta)  - l_m(x,y; \vtheta(x)) > 0.
+\end{align}

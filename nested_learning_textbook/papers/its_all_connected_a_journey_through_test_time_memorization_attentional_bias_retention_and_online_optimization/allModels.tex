@@ -1,0 +1,52 @@
+\begin{table}[t!]
+    \centering
+    \caption{Overview of recent sequence models in \framework{} framework perspective. Surprisingly, all models are using the same type of attentional bias and regularization (forget gate). Note that these architectural choices does not uniquely identify the backbone as there are other design choices (e.g., input-dependency, channel-wise parameters, etc.) as well as the use of other components such as attention, convolutions, etc. Note that for attentional bias and retention gate, we are referring to the original design of \framework, discussed in \autoref{eq:attentional-bias-loss} and \textcolor{c2}{Remark}~\ref{remark:regularization}.}
+    \resizebox{\linewidth}{!}{
+    \begin{tabular}{l c c c c c c}
+    \toprule
+    \multirow{2}{*}{Model} & Memory & \multirow{2}{*}{Attentional Bias} & Retention  & {Memory} & \multicolumn{2}{c}{\multirow{2}{*}{Memory Write Operation}} \\
+    & Architecture & & Gate$^\dagger$ & Algorithm & & \\
+    \midrule
+    \midrule
+    \multicolumn{7}{c}{Shallow Memory}\\
+    \midrule
+         RetNet (\citeyear{sun2023retentive})     & Vector         & Dot-Product & L2 &  GD & \multicolumn{2}{l}{$\M_t =   \alpha \M_{t-1} +  {\vvv_t  \vk_t^\top}$}\\
+        %  RG-LRU (\citeyear{de2024griffin}) & Vector & Dot-Product & & & & \\
+         \midrule
+         Transformer (\citeyear{Vaswani+2017}) & Matrix & L2 & - & Nonparametric & \multicolumn{2}{l}{$\M_t = \M_{t-1} \cup \{(\vk_t, \vvv_t)\}$} \\
+         LA (\citeyear{schlag2021linear})          & Matrix         & Dot-Product & - &  GD & \multicolumn{2}{l}{$\M_t = \M_{t-1} + \vvv_t \vk_t^{\top}$}\\
+         DFW          & Matrix         & Dot-Product & L2 &  GD & \multicolumn{2}{l}{$\M_t = \left(\beta_t \alpha_t^{\top} \right) \odot \M_{t-1} + \vvv_t \vk_t^{\top}$}\\
+         Lightening Attention~(\citeyear{li2025minimax})       & Matrix     & Dot-Product & L2 &  GD & \multicolumn{2}{l}{$\M_t = \alpha   \M_{t-1}   +  \vvv_t\vk_t^\top$}\\
+         GLA (\citeyear{yang2024gatedattn})        & Matrix     & Dot-Product & L2 &  GD & \multicolumn{2}{l}{$\M_t = \text{Diag}(\alpha_t )  \M_{t-1}   +  \vvv_t\vk_t^\top$}\\
+         Mamba (\citeyear{gu2024mamba})     & Matrix         & Dot-Product & L2 &  GD & \multicolumn{2}{l}{$\M_t =   \alpha_t \M_{t-1} + \vvv_t \vk_t^\top $}\\
+         HGRN2 (\citeyear{qin2024hgrn})      & Matrix  & L1 & L2 &  GD & \multicolumn{2}{l}{$\M_t =   \text{Diag}( \alpha_t) \M_{t-1}  +  \vvv_t(\mathbf{1} - \alpha_t)^\top $}\\
+         DeltaNet (\citeyear{neil2017delta}) & Matrix         & L2 & - &  GD & \multicolumn{2}{l}{$\M_t =   (\mathbf{I} - \beta_t \vk_t \vk_t^\top) \M_{t-1} + \beta_t \vvv_t  \vk_t^\top$}\\
+         Longhorn (\citeyear{liu2024longhorn})  & Matrix         & L2 & - &  Implicit GD & \multicolumn{2}{l}{$\M_t =  \left(\mathbf{I}- \frac{\beta_t \vk_t \vk^\top}{\mathbf{1}+ \beta_t \vk_t^\top \vk_t} \right) \M_{t-1} + \left(\frac{\beta_t}{\mathbf{1}+ \vk_t^\top \vk_t \beta_t } \odot \mathbf{x}_t\right) \vk_t$}\\
+         TTT-Linear (\citeyear{sun2024learning}) & Matrix         & L2 & - &  GD & \multicolumn{2}{l}{$\M_t = \M_{t-1} - \eta\nabla \mathcal{L}(\M_{t-1}, \mb{x}_t)$}\\
+        %  Mesa-Layer (\citeyear{von2023uncovering}) & Matrix & L2 & L2 & Newton & \\
+         Gated DeltaNet (\citeyear{yang2024gated}) & Matrix & L2 & L2 & GD & \multicolumn{2}{l}{$\M_t =   \left(\alpha_t (\mathbf{I} - \beta_t \vk_t \vk_t^\top)\right) \M_{t-1} + \beta_t \vvv_t  \vk_t^\top$} \\
+         RWKV-7 (\citeyear{peng2025rwkv7}) & Matrix & L2 & L2 & GD & \multicolumn{2}{l}{$\M_t = \text{diag}(\alpha_t)\left( \mathbf{I} - \beta_t \vk_t \vk_t^\top \right) \M_{t-1} + \beta_t \vvv_t  \vk_t^\top$}\\
+         DeltaProduct (\citeyear{siems2025deltaproduct}) & Matrix & L2 & L2 & MGD$^*$ & \multicolumn{2}{l}{$\M_t =   \left(\alpha_t \prod_{i = 1}^{n} (\mathbf{I} - \beta_{t, i} \vk_{t, i} \vk_{t, i}^\top)\right) \M_{t-1} + \sum_{j = 1}^{n} \prod_{i = j}^{n} (\mathbf{I} - \beta_{t, i} \vvv_{j, i} \vk_{j, i}^\top)$}\\
+        %  Titans-Linear (\citeyear{behrouz2024titans}) & Matrix & L2 & L2 + L2$^\dagger$ & GD + Momentum & \multicolumn{2}{l}{$\M_t = \alpha_t \M_{t-1} -\eta \nabla \mathcal{L}(\M_{t-1}, \mb{x}_t)$} \\
+         \midrule
+         \multicolumn{7}{c}{Deep Memory}\\
+         \midrule
+         TTT-MLP (\citeyear{sun2024learning})    & 2-layer MLP & L2 & - &  GD & \multicolumn{2}{l}{$\M_t = \M_{t-1} -\eta \nabla \mathcal{L}(\M_{t-1}; \vk_t, \vvv_t)$}\\
+         \multirow{1}{*}{Titans-LMM (\citeyear{behrouz2024titans})} & \multirow{1}{*}{$k$-layer MLP} & \multirow{1}{*}{L2} & \multirow{1}{*}{L2} & \multirow{1}{*}{GD + Momentum} & \multicolumn{2}{l}{$\M_t = \alpha_t \M_{t-1} - \mathcal{S}_t, \:\:\: \text{where} \:\: \mathcal{S}_t = \eta_t \mathcal{S}_{t-1} - \theta_t \nabla \mathcal{L}(\M_{t-1}; \vk_t, \vvv_t)$}\\
+        %  Titans-- (\citeyear{behrouz2024titans}) & $k$-layer MLP & L2 & L2 + L2$^\dagger$ & GD & \multicolumn{2}{l}{$\M_t = \alpha_t \M_{t-1} - \eta \nabla \mathcal{L}(\M_{t-1}, \mb{x}_t)$}\\
+         \midrule
+       \mmodel{}  (\textcolor{c1}{ours}) & $2$-layer MLP & L$_p$ & L$_q$ & GD &  \multicolumn{2}{l}{$A_t = \alpha_t A_{t-1} - \eta_t \nabla \ell_p(W_{i-1};\vk_t, \vvv_t), W_t = \frac{A_t}{\|A_t\|_q^{q-2}}$}\\
+        \multirow{2}{*}{\ymodel{}  (\textcolor{c1}{ours})} & \multirow{2}{*}{$2$-layer MLP} & \multirow{2}{*}{Huber} & \multirow{2}{*}{L2} & \multirow{2}{*}{GD} &  \multicolumn{2}{l}{\multirow{2}{*}{$ W_t = \alpha_t W_{t-1} - \begin{cases} 
+    \eta_t \: \nabla \ell_2 (W_{t-1}; \vk_t, \vvv_t)   &  \text{if} \quad \| \M(\vk_t) - \vvv_t \| \leq \delta_t, \\
+    \eta_t \: \delta_t \nabla  \ell_1 (W_{t-1}; \vk_t, \vvv_t)  & \text{Otherwise}.
+    \end{cases} $}} \\
+        &&&&&& \\
+         &&&&&& \\
+        \xmodel{}  (\textcolor{c1}{ours}) & $2$-layer MLP & L2 & KL & GD &  \multicolumn{2}{l}{$W_t = \mbox{Softmax}\left( \alpha_t \log(W_{t-1})  - \eta_t  \nabla \ell_2(W_{t-1};\vk_t, \vvv_t)\right)$}\\
+    \toprule
+    \multicolumn{7}{l}{$^*$ is using multiple rounds of GD per token. }\\
+     \multicolumn{7}{l}{$^\dagger$ For the sake of clarity, we use L2 for all modified L2-like regularizations. However, in fact, only Titans and RWKV-7 are using L2 retention gate (see \autoref{sec:miras})}
+    \end{tabular}
+    }
+    \label{tab:memory-perspective-all}
+\end{table}

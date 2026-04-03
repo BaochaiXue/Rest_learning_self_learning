@@ -1,0 +1,133 @@
+\begin{thebibliography}{21}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Braun et~al.(2009)Braun, Aertsen, Wolpert, and
+  Mehring]{braun2009motor}
+Braun, Daniel~A, Aertsen, Ad, Wolpert, Daniel~M, and Mehring, Carsten.
+\newblock Motor task variation induces structural learning.
+\newblock \emph{Current Biology}, 19\penalty0 (4):\penalty0 352--357, 2009.
+
+\bibitem[Brazdil et~al.(2003)Brazdil, Soares, and Da~Costa]{brazdil2003ranking}
+Brazdil, Pavel~B, Soares, Carlos, and Da~Costa, Joaquim~Pinto.
+\newblock Ranking learning algorithms: Using ibl and meta-learning on accuracy
+  and time results.
+\newblock \emph{Machine Learning}, 50\penalty0 (3):\penalty0 251--277, 2003.
+
+\bibitem[Caruana(1997)]{caruana1997multitask}
+Caruana, Rich.
+\newblock Multitask learning.
+\newblock \emph{Machine learning}, 28\penalty0 (1):\penalty0 41--75, 1997.
+
+\bibitem[Cowan(2010)]{cowan2010magical}
+Cowan, Nelson.
+\newblock The magical mystery four how is working memory capacity limited, and
+  why?
+\newblock \emph{Current Directions in Psychological Science}, 19\penalty0
+  (1):\penalty0 51--57, 2010.
+
+\bibitem[Giraud-Carrier et~al.(2004)Giraud-Carrier, Vilalta, and
+  Brazdil]{giraud2004introduction}
+Giraud-Carrier, Christophe, Vilalta, Ricardo, and Brazdil, Pavel.
+\newblock Introduction to the special issue on meta-learning.
+\newblock \emph{Machine learning}, 54\penalty0 (3):\penalty0 187--193, 2004.
+
+\bibitem[Graves et~al.(2014)Graves, Wayne, and Danihelka]{graves2014neural}
+Graves, Alex, Wayne, Greg, and Danihelka, Ivo.
+\newblock Neural turing machines.
+\newblock \emph{arXiv preprint arXiv:1410.5401}, 2014.
+
+\bibitem[He et~al.(2015)He, Zhang, Ren, and Sun]{he2015delving}
+He, Kaiming, Zhang, Xiangyu, Ren, Shaoqing, and Sun, Jian.
+\newblock Delving deep into rectifiers: Surpassing human-level performance on
+  imagenet classification.
+\newblock \emph{arXiv preprint arXiv:1502.01852}, 2015.
+
+\bibitem[Hochreiter \& Schmidhuber(1997)Hochreiter and
+  Schmidhuber]{hochreiter1997long}
+Hochreiter, Sepp and Schmidhuber, J{\"u}rgen.
+\newblock Long short-term memory.
+\newblock \emph{Neural computation}, 9\penalty0 (8):\penalty0 1735--1780, 1997.
+
+\bibitem[Hochreiter et~al.(2001)Hochreiter, Younger, and
+  Conwell]{hochreiter2001learning}
+Hochreiter, Sepp, Younger, A~Steven, and Conwell, Peter~R.
+\newblock Learning to learn using gradient descent.
+\newblock In \emph{Artificial Neural Networks—ICANN 2001}, pp.\  87--94.
+  Springer, 2001.
+
+\bibitem[Jankowski et~al.(2011)Jankowski, Duch, and
+  Gr{\k{a}}bczewski]{jankowski2011meta}
+Jankowski, Norbert, Duch, W{\l}odzis{\l}aw, and Grabczewski, Krzysztof.
+\newblock \emph{Meta-learning in computational intelligence}, volume 358.
+\newblock Springer Science \& Business Media, 2011.
+
+\bibitem[Lake et~al.(2015)Lake, Salakhutdinov, and Tenenbaum]{lake2015human}
+Lake, Brenden~M, Salakhutdinov, Ruslan, and Tenenbaum, Joshua~B.
+\newblock Human-level concept learning through probabilistic program induction.
+\newblock \emph{Science}, 350\penalty0 (6266):\penalty0 1332--1338, 2015.
+
+\bibitem[Mnih et~al.(2015)Mnih, Kavukcuoglu, Silver, Rusu, Veness, Bellemare,
+  Graves, Riedmiller, Fidjeland, Ostrovski, et~al.]{mnih2015human}
+Mnih, Volodymyr, Kavukcuoglu, Koray, Silver, David, Rusu, Andrei~A, Veness,
+  Joel, Bellemare, Marc~G, Graves, Alex, Riedmiller, Martin, Fidjeland,
+  Andreas~K, Ostrovski, Georg, et~al.
+\newblock Human-level control through deep reinforcement learning.
+\newblock \emph{Nature}, 518\penalty0 (7540):\penalty0 529--533, 2015.
+
+\bibitem[Rendell et~al.(1987)Rendell, Sheshu, and Tcheng]{rendell1987layered}
+Rendell, Larry~A, Sheshu, Raj, and Tcheng, David~K.
+\newblock Layered concept-learning and dynamically variable bias management.
+\newblock In \emph{IJCAI}, pp.\  308--314. Citeseer, 1987.
+
+\bibitem[Schmidhuber et~al.(1997)Schmidhuber, Zhao, and
+  Wiering]{schmidhuber1997shifting}
+Schmidhuber, J{\"u}rgen, Zhao, Jieyu, and Wiering, Marco.
+\newblock Shifting inductive bias with success-story algorithm, adaptive levin
+  search, and incremental self-improvement.
+\newblock \emph{Machine Learning}, 28\penalty0 (1):\penalty0 105--130, 1997.
+
+\bibitem[Schweighofer \& Doya(2003)Schweighofer and Doya]{schweighofer2003meta}
+Schweighofer, Nicolas and Doya, Kenji.
+\newblock Meta-learning in reinforcement learning.
+\newblock \emph{Neural Networks}, 16\penalty0 (1):\penalty0 5--9, 2003.
+
+\bibitem[Silver et~al.(2016)Silver, Huang, Maddison, Guez, Sifre, van~den
+  Driessche, Schrittwieser, Antonoglou, Panneershelvam, Lanctot,
+  et~al.]{silver2016mastering}
+Silver, David, Huang, Aja, Maddison, Chris~J, Guez, Arthur, Sifre, Laurent,
+  van~den Driessche, George, Schrittwieser, Julian, Antonoglou, Ioannis,
+  Panneershelvam, Veda, Lanctot, Marc, et~al.
+\newblock Mastering the game of go with deep neural networks and tree search.
+\newblock \emph{Nature}, 529\penalty0 (7587):\penalty0 484--489, 2016.
+
+\bibitem[Thrun(1998)]{thrun1998lifelong}
+Thrun, Sebastian.
+\newblock Lifelong learning algorithms.
+\newblock In \emph{Learning to learn}, pp.\  181--209. Springer, 1998.
+
+\bibitem[Underwood(1957)]{underwood1957interference}
+Underwood, Benton~J.
+\newblock Interference and forgetting.
+\newblock \emph{Psychological review}, 64\penalty0 (1):\penalty0 49, 1957.
+
+\bibitem[Vilalta \& Drissi(2002)Vilalta and Drissi]{vilalta2002perspective}
+Vilalta, Ricardo and Drissi, Youssef.
+\newblock A perspective view and survey of meta-learning.
+\newblock \emph{Artificial Intelligence Review}, 18\penalty0 (2):\penalty0
+  77--95, 2002.
+
+\bibitem[Weston et~al.(2014)Weston, Chopra, and Bordes]{weston2014memory}
+Weston, Jason, Chopra, Sumit, and Bordes, Antoine.
+\newblock Memory networks.
+\newblock \emph{arXiv preprint arXiv:1410.3916}, 2014.
+
+\bibitem[Yu \& Deng(2012)Yu and Deng]{yu2012automatic}
+Yu, Dong and Deng, Li.
+\newblock \emph{Automatic Speech Recognition}.
+\newblock Springer, 2012.
+
+\end{thebibliography}

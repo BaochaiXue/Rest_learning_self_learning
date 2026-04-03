@@ -1,0 +1,826 @@
+\documentclass{article}
+
+\PassOptionsToPackage{table}{xcolor}
+\usepackage{etoolbox}       
+\usepackage[utf8]{inputenc} 
+
+\usepackage{graphicx}  
+
+\usepackage[parfill]{parskip}
+\usepackage{amsmath,amsthm}
+\usepackage{mathtools}  
+
+\newtoggle{arxiv}
+\toggletrue{arxiv}
+
+  \usepackage[parfill]{parskip}
+  \usepackage[citestyle=authoryear-comp,sorting=nyt,maxbibnames=99,backend=biber]{biblatex}
+  \newcommand{\citep}{\parencite}
+  \newcommand{\citeyearpar}{\citeyear}
+  \newcommand{\citet}{\textcite}
+  \addbibresource{main.bib}  
+
+  \setlength{\textwidth}{6.8in}  
+  \setlength{\textheight}{9in}
+  \setlength{\oddsidemargin}{0in}
+  \setlength{\evensidemargin}{0in}
+  \setlength{\topmargin}{-0.5in}
+  \newlength{\defbaselineskip}
+  \setlength{\defbaselineskip}{\baselineskip}
+  \setlength{\marginparwidth}{0.8in}
+  \setlength{\parskip}{6pt}
+  \setlength{\parindent}{0pt}
+
+  \RequirePackage[T1]{fontenc}
+  \RequirePackage[tt=false, type1=true]{libertine}
+  \RequirePackage[varqu]{zi4}
+  \RequirePackage[libertine]{newtxmath}
+
+\usepackage{bm}
+
+\usepackage[inline]{enumitem}
+\usepackage{booktabs}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{algorithm,algorithmicx,algpseudocode}
+\usepackage{nicematrix}
+
+\usepackage[frozencache,cachedir=.]{minted} 
+
+\usepackage{import}
+\usepackage{lettrine}
+
+\newtheorem{theorem}{Theorem}[section]  
+\newtheorem{corollary}[theorem]{Corollary}  
+
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{prop}[theorem]{Proposition}
+\newtheorem{dfn}[theorem]{Definition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{remark}{Remark}
+
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+\usepackage[T1]{fontenc}
+
+\usepackage{url}            
+\usepackage{booktabs}       
+\usepackage{amsfonts}       
+\usepackage{nicefrac}       
+\usepackage{microtype}      
+
+\usepackage{wrapfig}
+
+\usepackage{caption}
+\usepackage{capt-of}
+\usepackage{lipsum}
+
+\usepackage[colorlinks]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+\usepackage{subcaption}
+\usepackage{threeparttable}
+
+\definecolor{c1}{HTML}{586770}
+\definecolor{c2}{HTML}{900C3F}
+\definecolor{c3}{HTML}{33372A}
+\definecolor{c4}{HTML}{2a4a67}
+\definecolor{myblue}{HTML}{FDF5E0} 
+\definecolor{mygray}{HTML}{DBE2E9} 
+\definecolor{mygreen}{HTML}{E6F3FC} 
+
+\newcommand{\boldres}[1]{{\textbf{\textcolor{c2}{#1}}}}
+\newcommand{\secondres}[1]{{\underline{\textcolor{dark2orange}{#1}}}}
+\newcommand{\thirdres}[1]{{{\textcolor{dark2purple}{#1}}}}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=c1,
+    urlcolor=c1,
+    citecolor=c1,
+}
+
+\usepackage{multirow}
+
+\renewcommand{\figureautorefname}{Figure}
+\renewcommand{\tableautorefname}{Table}
+\renewcommand{\sectionautorefname}{Section}
+\renewcommand{\subsectionautorefname}{Section}
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\newcommand{\undermath}[2]{\underset{#1}{\underbrace{#2}}}
+
+\newcommand{\R}[0]{\mathbb{R}}
+\newcommand{\ttt}[0]{t}
+\newcommand{\inner}[2]{\langle #1, #2 \rangle}
+
+\newcommand{\M}[0]{\mathcal{M}}
+
+\newcommand{\head}[1]{\vspace{1.7mm}\noindent{{\textcolor{c3}{\bf #1.}}}}
+
+\newcommand{\model}[0]{Titan}
+\newcommand{\modelss}[0]{Titans}
+\newcommand{\mb}[1]{\mathbf{#1}}
+
+\newcommand{\SSS}{\mathcal{S}}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\usepackage{tikz}
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,draw,inner sep=0.3pt, fill=c2] (char) {\textcolor{white}{#1}};}}
+
+\newcommand\circledcolor[2]{\textcolor{#1}{\circled{#2}}}
+
+\definecolor{dark2orange}{rgb}{0.9, 0.4, 0.}
+\definecolor{dark2purple}{rgb}{0.4, 0.4, 0.8}
+
+\usepackage{authblk}
+\usepackage{epigraph}
+
+\newcommand{\vk}{\mathbf{k}}
+\newcommand{\vq}{\mathbf{q}}
+\renewcommand{\vv}{\mathbf{v}}
+
+\usepackage{lettrine,Zallman}
+
+\renewcommand{\LettrineFontHook}{\Zallmanfamily}
+
+\title{Titans: Learning to Memorize at Test Time}
+
+\author[$^\dagger$]{Ali Behrouz}
+  \author[$^\dagger$]{Peilin Zhong}
+  \author[$^\dagger$]{Vahab Mirrokni}
+  \affil[$^\dagger$]{Google Research}
+  \affil[ ]{{\small \texttt{\{alibehrouz, peilinz, mirrokni\}@google.com}}}
+  \date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  Over more than a decade there has been an extensive research effort of how effectively utilize recurrent models and attentions. While recurrent models aim to compress the data into a fixed-size memory (called hidden state), attention allows attending to the entire context window, capturing the direct dependencies of all tokens. This more accurate modeling of dependencies, however, comes with a quadratic cost, limiting the model to a fixed-length context. We present a new neural long-term memory module that learns to memorize historical context and helps an attention to attend to the current context while utilizing long past information. We show that this neural memory has the advantage of a fast parallelizable training while maintaining a fast inference. From a memory perspective, we argue that attention due to its limited context but accurate dependency modeling performs as a short-term memory, while neural memory due to its ability to memorize the data, acts as a long-term, more persistent, memory. Based on these two modules, we introduce a new family of architectures, called Titans, and present three variants to address how one can effectively incorporate memory into this architecture. Our experimental results on language modeling, common-sense reasoning, genomics, and time series tasks show that Titans are more effective than Transformers and recent modern linear recurrent models. They further can \emph{effectively} scale to larger than 2M context window size with higher accuracy in needle-in-haystack tasks compared to baselines.
+\end{abstract}
+
+\vspace{5ex}
+\section{Introduction}\label{sec:intro}
+\vspace{-8ex}
+\epigraph{``The true art of memory is the art of attention!"}{--- \textup{Samuel Johnson}, 1787}
+\vspace{1ex}
+
+\lettrine[lines=3]{T}{}ransformers, pure attention-based architectures~\citep{transformers}, have been firmly established as state-of-the-art models in sequence modeling, mainly due to their in-context learning and ability to learn at scale~\citep{kaplan2020scaling}. The primary building blocks of Transformers–attention modules—function as associative memory blocks~\citep{bietti2024birth}, where they learn to store key-value associations and retrieve them by computing pairwise similarity between queries (i.e., search signals) and keys (i.e., contexts). Accordingly, by design, the output of a Transformer is exclusively conditioned on the direct dependencies of tokens in the \emph{current} context window. This accurate modeling of dependencies, however, comes with quadratic time and memory complexity in terms of the context length. In complex real-world tasks (e.g., language modeling~\citep{liu2024lost}, video understanding~\citep{wu2019long}, long-term time series forecasting~\citep{zhou2021informer}), the context window can become extremely large, making the applicability of Transformers challenging in these downstream tasks.  
+
+To overcome the scalability issue of Transformers, recent studies aim to design different variants of linear Transformers~\citep{katharopoulos2020transformers, kacham2024polysketchformer, yang2024gatedattn}, where softmax is replaced by a kernel function in the attention (\textcolor{c1}{see \S}\ref{sec:background} \textcolor{c1}{for details}), resulting in a significant drop in memory consumption. Despite efficiency and the ability to scale to longer context, linear Transformers do not show competitive performance compared to Transformers as the kernel trick makes the model a linear recurrent network, in which the data is compressed into a matrix-valued states~\citep{katharopoulos2020transformers}. This, however, brings a contradictory fact about linear recurrent (or linear Transformers) models: On one hand, we use these linear models to enhance scalability and efficiency (linear vs. quadratic complexity), whose advantages is appeared for very long context; On the other hand, a very long context cannot be properly compressed in a small vector-valued or matrix-valued states~\citep{wang2024longssm}. 
+
+Furthermore, beyond efficiency, most existing architectures–ranging from Hopfield Networks~\citep{hopfield1982neural} to LSTMs~\citep{LSTM} and Transformers~\citep{transformers}–face challenges when dealing with generalization, length extrapolation, and/or reasoning~\citep{anil2022exploring, qin2024exploring}, all of which are inseparable parts of many hard real-world tasks. Although these architectures draw inspiration from the human brain, each of which are missing: (1) a crucial component for learning process—such as short-term memory, long-term memory, meta-memory, attending to current context, etc.~\citep{cowan2008differences}; (2) how these components are interconnected systems that can operate independently; and/or (3) the ability to \emph{actively} learn from data and memorize the abstraction of past history. We argue that in an effective learning paradigm, similar to human brain, there are \emph{distinct} yet interconnected modules, each of which is responsible for a component crucial to the learning process.
+
+\subsection*{\textcolor{c3}{Memory Perspective}}
+Memory is a fundamental mental process and is an inseparable component of human learning~\citep{terry2017learning}. Without a properly functioning memory system, humans and animals would be restricted to basic reflexes and stereotyped behaviors. Accordingly, memory has been the inspiration for many seminal research in machine learning literature; e.g., Hopfield Networks~\citep{hopfield1982neural}, LSTMs~\citep{LSTM}, and Transformers~\citep{transformers}. 
+
+Taking inspiration from the common definitions of memory and learning in neuropsychology literature~\citep{okano2000learning}, most existing architectures consider memory as a neural update caused by an input, and define learning as a process for acquiring effective and useful memory, given an objective. In this perspective, Recurrent Neural Networks (RNNs)~\citep{williams1989learning} can be defined as models with a vector-valued memory module $\M$ (also called hidden state) with two main steps: Given a new input $x_t$ at time $t$, the model (1) updates the memory using a function $f(\M_{t-1}, x_t)$ (with compression); and (2) retrieves the corresponding memory of input using a function $g(\M_{t}, x_t)$ (\textcolor{c1}{see \S}\ref{sec:background} \textcolor{c1}{for details}). Similarly, Transformers can be seen as architectures with a growing memory and two similar steps. That is, the pair of key and value matrices acts as the model's memory, and the model: (1) updates the memory by appending the key and value to the memory (without compression), and (2) retrieves query vectors' corresponding memory by finding the similarity of query and key vectors, which is then used to weight the value vectors for the output.
+
+This perspective, can help us better understand existing paradigms, their critical differences, and design more effective architectures. For example, the main difference between Transformers~\citep{transformers} and \emph{linear} Transformers~\citep{katharopoulos2020transformers} is the memory structure as well as the memory updating step, in which linear Transformers compress the historical data into a fixed-size matrix-valued memory while Transformers keep all historical data (within the context length) without any compression. While both linear Transformers and linear RNNs (including state space models) compress the information in memory update step, the critical difference lies in the structure of the memory, where linear RNNs (vs. linear Transformers) use a vector-valued memory (vs. matrix-valued memory). Therefore, this perspective motivates us to ask: \textcolor{c3}{\textbf{(Q1)}} What constitute a good structure for the memory?
+\textcolor{c3}{\textbf{(Q2)}} What is a proper memory update mechanism? and 
+\textcolor{c3}{\textbf{(Q3)}} What is a good memory retrieval process?
+
+Revisiting our understanding of human memory, it is neither a unitary process nor it serves a single function~\citep{cowan2008differences}. In fact, memory is a confederation of systems–e.g., short-term, working, and long-term memory–each serving a different function with different neural structures, and each capable of operating independently~\citep{willingham1997systems}. This fact motivates us to ask: \textcolor{c3}{\textbf{(Q4)}} How to design an efficient architecture that incorporates different interconnected memory modules. Finally, storing a memory is a neural process that requires to encode and store the abstraction of the past. It can be over-simplification to assume a single vector or a matrix, whose parameters are encoding the data in a linear manner, are enough for storing long-term history. \textcolor{c3}{\textbf{(Q5)}} Is a deep memory module needed to effectively store/remember long past?
+
+\subsection*{\textcolor{c3}{Contributions and Roadmap}}
+In this paper, we aim to answer the above five questions by designing a long-term neural memory module, that can efficiently and effectively learn to memorize at test time. Building upon its design, we discuss how it can be incorporated into an architecture.
+
+\textcolor{c3}{\textbf{Neural Memory} (\S\ref{sec:mem-module})}.
+We present a (deep) neural long-term memory that (as a meta in-context model) learns how to memorize/store the data into its parameters at test time. Inspired by human long-term memory system~\citep{mandler2014structure}, we design this memory module so an event that violates the expectations (being surprising) is more memorable. To this end, we measure the surprise of an input with the gradient of the neural network with respect to the input in \emph{associative memory loss} (\textcolor{c1}{see \S}\ref{sec:long-memory} \textcolor{c1}{for details}).  To better handle the limited memory, we present a decaying mechanism that consider the proportion of memory size and the amount of data surprise, resulting in better memory management. We show that this decay mechanism is in fact the generalization of forgetting mechanism in modern recurrent models \citep{dao2024transformers, yang2024gated, gu2024mamba}. Interestingly, we find that this mechanism is equivalent to optimizing a meta neural network with mini-batch gradient descent, momentum, and weight decay. Building upon tensorizing mini-batch gradient descent to use more matmul operations~\citep{sun2024learning}, we present a fast and parallelizable algorithm to train our deep neural long-term memory.
+
+\noindent
+\textcolor{c3}{\textbf{Titans Architectures} (\S\ref{sec:arch}).}
+After designing the long-term neural memory, an important remaining question is how to effectively and efficiently incorporate memory into a deep learning architecture. We present Titans, a family of deep models that consists of three hyper-heads: (1) Core: this module consists of the short-term memory, and is responsible for the main flow of processing the data (we use attention with limited window size); (2) Long-term Memory: this branch is our neural long-term memory module that is responsible to store/remember long past; (3) Persistent Memory: this is a set of learnable but date-independent parameters that encodes the knowledge about a task. Finally, as a proof of concept, we present three variants of Titans, in which we incorporate memory as: (i) a context, (ii) a layer, and (iii) a gated branch. 
+
+\textcolor{c3}{\textbf{Experimental Results} (\S\ref{sec:experiments})}.  
+We perform experimental evaluations on language modeling, commonsense reasoning, recall-intensive, needle in haystack, time series forecasting, and DNA modeling tasks. We observe that our Titan architecture outperforms all modern recurrent models as well as their hybrid variants (combining with sliding-window attention) across a comprehensive set of benchmarks. Furthermore, Titans outperforms Transformers with the same context window, and show competitive performance with Transformers that use the entire context. This results are achieved while, contrary to Transformers, Titans scale to larger than 2M context window size.  
+
+\section{Preliminaries}\label{sec:prelim}
+\lettrine[lines=3]{I}{}n this section, we discuss the notation and some background concepts that we use though the paper. We let $x \in \mathbb{R}^{N \times d_{\text{in}}}$ be the input, $\M$ be a neural network (neural memory module), $\mathbf{Q}, \mathbf{K}, \mathbf{V}$ be the query, key and value of the attention mechanism, and $\mathbf{M}$ be the attention mask. When segmenting the sequence, we use $\texttt{S}^{(i)}$ to refer to the $i$-th segment. Through the paper, we abuse the notation and use subscripts to refer to a specific element of a matrix, vector, or segments. For example, we let $\texttt{S}^{(i)}_j$ be the $j$-th token in the $i$-th segment. The only exception is subscripts with $t$, which we reserved to index recurrence over time, or the state of a neural network at time $t$. Given a neural network $\mathcal{N}$ and a data sample $x$, we use $\mathcal{N}(x)$ (resp. $\mathcal{N}^*(x)$) to refer to the forward pass with (resp. without) weight adjustment. Also, we abuse the notation and use $\mathcal{N}^{(k)}$ to refer to the $k$-th layer of the neural network. In the following, we first, discuss the backgrounds for attention and its efficient variants followed by a review of modern linear RNNs. Finally, we discuss a memory perspective of these architectures that motivates us to design Titans. 
+
+\subsection{Backgrounds}\label{sec:background}
+\head{Attention}
+Transformers~\citep{transformers} as the de facto backbone for many deep learning models are based on attention mechanism. Given input $x \in \R^{N \times d_{\text{in}}}$, causal attention computes output $\mathbf{y} \in \R^{N \times d_{\text{in}}}$ based on softmax over input dependent key, value, and query matrices:
+\begin{align}
+    \mathbf{Q} = x \mathbf{W}_{\mathbf{Q}}, \qquad \mathbf{K} = x \mathbf{W}_{\mathbf{K}}, \qquad \mathbf{V} = x \mathbf{W}_{\mathbf{V}}, \\
+    \mathbf{y}_i = \sum_{j = 1}^{i} \frac{ \exp\left( \mathbf{Q}_i^{\top} \mathbf{K}_j/\sqrt{d_{\text{in}}}\right) \mathbf{V}_j }{\sum_{\ell = 1}^{i} \exp\left( \mathbf{Q}_i^{\top} \mathbf{K}_{\ell}/\sqrt{d_{\text{in}}}\right)},
+\end{align}
+where $\mathbf{W}_{\mathbf{Q}}, \mathbf{W}_{\mathbf{K}},$ and $\mathbf{W}_{\mathbf{V}} \in \R^{d_{\text{in}} \times d_{\text{in}}}$ are learnable parameters. Despite the power and effectiveness in recall, transformers need at least $N\times d$ operators to calculate the output, resulting in larger memory consumption and lower-throughput for longer sequences.  
+
+\head{Efficient Attentions}
+To improve the memory consumption and throughput of softmax attention for longer sequences, various studies focused on I/O aware implementations of attention~\citep{flashattention-1, dao2024flashattention}, designing more efficient attention mechanisms by sparsifying the attention matrix~\citep{choromanski2021rethinking, dai2019transformerxl, chen2021scatterbrain}, approximating the softmax~\citep{arora2024simple}, or developing kernel-based (linear) attentions~\citep{kacham2024polysketchformer, schlag2021linear, yang2024gatedattn, aksenov2024linear}. In this part, we focus on the later, i.e., linear attentions, where the softmax in standard attention is replaced with an alternative kernel function $\phi(., .)$, such that $ \phi(x, y) = \phi(x)\phi(y)$. Accordingly, the attention can be written as:
+\begin{align}
+    \mathbf{y}_i = \sum_{j = 1}^{i} \frac{\phi(Q_i^\top K_j)}{\sum_{\ell = 1}^{i} \phi(Q_i^{\top} K_{\ell})} \: V_j = \sum_{j = 1}^{i} \frac{\phi(Q_i)^\top \phi(K_j)}{\sum_{\ell = 1}^{i} \phi(Q_i)^{\top} \phi(K_{\ell})} \: V_j = \frac{\phi(Q_i)^{\top} \sum_{j=1}^{i} \phi(K_j) V_j}{\phi(Q_i)^{\top} \sum_{\ell = 1}^{i} \phi(K_{\ell})}, 
+\end{align}
+resulting in a higher-throughput as terms $\sum_{j=1}^{i} \phi(K_j)$ and $\sum_{\ell = 1}^{i} \phi(K_{\ell})$ are re-using in each step. When choosing the kernel as identity matrix~\citep{sun2023retentive}, the above formulation can also be written in a recurrent format:
+\begin{align}\label{eq:linear-transformer}
+    & \M_{t} = \M_{t-1} + K_t^\top V_t\:,\\
+    &\mathbf{y}_t = Q_t \M_t\:,
+\end{align}
+which allows efficient inference for linear attentions.
+
+\head{Modern Linear Models and Their Memory Perspective}
+As discussed earlier, one can define learning as a process for acquiring effective and useful memory. Building upon this, one can see the hidden state of Recurrent Neural Networks (RNNs) as a memory unit, which the model aims to compress the information into. Accordingly, in a general form of recurrent neural network, the hidden state can be treated as a memory unit and the recurrence process can be split into the \textcolor{c1}{\emph{read}} and \textcolor{c1}{\emph{write}} operations in the memory unit. That is, we let $x \in \R^{N \times d_{\text{in}}}$ be the input, $\M \in \R^{d}$ is the memory unit, and $\mb{y} \in \R^{d_{\text{in}}}$ is the output, then the general form of the recurrent neural network is defined as:
+\begin{align}
+    &\qquad \qquad \qquad \qquad \M_t = f(\M_{t-1}, x_t) , \qquad \qquad & \textcolor{c1}{\text{Write Operation}}\\
+    &\qquad \qquad \qquad \qquad \mb{y}_{t} = g(\M_t, x_t), \qquad \qquad &\textcolor{c1}{\text{Read Operation}}
+\end{align}
+where $f(.,.)$ is the \textcolor{c1}{\emph{read}} and $g(.,.)$ is the \textcolor{c1}{\emph{write}} corresponding functions. Note that here the subscript of $\M_t$ shows the state of the memory at time $t$. 
+
+In this perspective, the recurrence formula of linear Transformers (see \autoref{eq:linear-transformer}) is equivalent to additively compress and write keys and values, $(K_t, V_t)$, into a matrix-valued memory unit $\M_t$. Therefore, when dealing with long context data, this additive nature of the process results in memory overflow, significantly damaging the performance of the model. To address this, studies have focused on two promising directions: (1) Adding forget mechanism: several studies have presented adaptive (data-dependent) forgetting gate mechanisms for linear models, where it can erase the memory when it is needed. As examples of such models, we refer to GLA~\citep{yang2024gatedattn}, LRU~\citep{orvieto2023resurrecting}, Griffin~\citep{de2024griffin}, xLSTM~\citep{beck2024xlstm}, and Mamba2~\citep{dao2024transformers}, which the later is also connected to the discretized version of traditional state space models~\citep{gu2024mamba}.(2) Improving the write operation: To overcome the additive nature of memory write operation in traditional recurrent models, \citet{widrow1988adaptive} presented Delta Rule, in which before adding a memory (i.e., a pair of key and value), the model first removes its past value. To enhance the parallelizable training and scaling, \citet{yang2024parallelizing} present a fast paralellizable algorithm.  Finally, very recently, \citet{yang2024gated} improved the DeltaNets by adding a forget gate.   
+
+\head{Memory Modules} Memory has always been one of the core parts of the neural network designs~\citep{schmidhuber1992learning, LSTM, graves2014neuralturingmachines, zhang2024memory}. The idea of seeing linear layers as the key-value (associative) memory system backs to fast weight programs, in which dynamic fast programs are incorporated into recurrent neural networks to serve as writable memory~\citep{schmidhuber1992learning}. The two learning rules of Hebbian~\citep{hebb2005organization} and delta~\citep{prados1989neural} are the most popular learning rules for fast weight programs, which have been extensively explored in various studies~\citep{munkhdalai2017neural, schmidhuber1992learning, munkhdalai2019metalearned, schlag2021linear, irie2021going, yang2024parallelizing, yang2024gated}. All these models, however, are based on momentary surprise, missing the token flow in the sequences (see \autoref{sec:long-memory}), and most of them lacks a forgetting gate, resulting in a poor memory management. 
+
+We further discuss the connection of our architectures with recent models in \autoref{app:MAS}. Additional related work are discussed in \autoref{app:rw}.
+
+\section{Learning to Memorize at Test Time}\label{sec:mem-module}
+\lettrine[lines=3]{T}{}o overcome the lack of long-term memory and to enable the model to learn, forget, and retrieve information, in this section, we present a neural long-term memory module, which is a meta models that learns to memorize at test time. In \autoref{sec:long-memory}, we first discuss the motivation and the design of the neural memory.  In \autoref{sec:fast-training}, we discuss how our architecture design can benefit from a fast and parallelizable training. Finally, in \autoref{sec:persistent-memory}, we augment our architecture using persistent memory module, in which we use learnable but data-independent parameters to learn meta information about the task. 
+
+\subsection{Long-term Memory}\label{sec:long-memory}
+To design a neural long-term memory module, we need a model that can encode the abstraction of the past history into its parameters. An example of this can be LLMs that are shown to be memorizing their training data~\citep{staab2024beyond, schwarzschild2024rethinking, leybzon2024learning}. Therefore, a simple idea is to train a neural network and expect it to memorize its training data. Memorization, however, has almost always been known as an undesirable phenomena in neural networks as it limits the model generalization~\citep{bayat2024pitfalls}, causes privacy concerns~\citep{staab2024beyond}, and so results in poor performance at test time. Moreover, the memorization of the training data might not be helpful at test time, in which the data might be out-of-distribution. We argue that, we need an online meta-model that learns how to memorize/forget the data at test time. In this setup, the model is learning a function that is capable of memorization, but it is not overfitting to the training data, resulting in a better generalization at test time.    
+
+\head{Learning Process and Surprise Metric}
+The key idea to train a long-term memory is to treat its training as an online learning problem, in which we aim to compress the past information $x_1, \dots, x_{t-1}$ into the parameters of our long-term neural memory module $\mathcal{M}_t$. As discussed earlier, an event that violates the expectations (i.e., is surprising) is more memorable for humans~\citep{mandler2014structure}. Inspired by this, a simple definition of surprise for a model can be its gradient with respect to the input. The larger the gradient is, the more different the input data is from the past data. Accordingly, using this surprise score, we can update the memory as:
+\begin{align}\label{eq:GD}
+    \M_{t} = \M_{t-1} - \theta_t \: \undermath{\text{Surprise}}{\textcolor{c4}{\nabla \ell(\M_{t-1}; x_{t})}}.
+\end{align}
+This surprise metric, however, can result in missing important information that comes after a big surprising moment. That is, the gradient can become extremely small after several surprising steps, leading to stocking in a flat area (i.e., local minima), and missing information about some parts of the sequence. From the human memory perspective, an event might not consistently surprise us through a long-period of time although it is memorable. The reason is that the initial moment is surprising enough to get our attention through a long time frame, leading to memorizing the entire time frame. To improve the above surprise metric (\autoref{eq:GD}), we break the surprise metric into (1) \emph{past surprise}, which measures the surprise amount of a very recent past; and (2) \emph{momentary surprise}, which measures the surprise of incoming data: 
+\begin{align}\label{eq:GD-momentum}
+    & \M_{t} = \M_{t-1} + \textcolor{c4}{S_{t}},\\
+    & S_{t} = \eta_t \undermath{\text{Past Surprise}}{\textcolor{c4}{S_{t-1}}} - \theta_t\:  \undermath{\text{Momentary Surprise}}{\textcolor{c4}{\nabla \ell\left(M_{t-1}; x_{t} \right)}}.
+\end{align}
+Interestingly, this formulation is similar to gradient descent with momentum, where $S_{t}$ is the momentum element. Therefore, the momentum here act as a memory of surprise across time (sequence length). In this formulation, the term $\eta_t$ is a data-dependent surprise decay (a function of $x_t$), controlling how surprise decays over time, and the term $\theta_t$ is controlling how much of momentary surprise should be incorporated into the final surprise metric in a data-dependent manner. This data-dependency is particularly important in this design: While surprise of previous tokens might be needed to affect the surprise of the next token, it is mostly valid if all tokens are relevant and are in the same context. Accordingly, a data-dependent $\eta$ can control if memory needs to: (1) ignore the last surprise by setting $\eta_t \rightarrow 0$ (possibly due to the change of context), or (2) fully incorporate the last surprise by setting $\eta_t \rightarrow 1$ (possibly as the token is highly relevant to its recent past tokens). 
+
+\head{Objective}
+Our above surprise metric is based on a loss function $\ell(.;.)$, which is the objective that our memory is learning to act as it at test time. That is, our memory module is a meta model that learns a function based on the loss function $\ell(.;.)$. In this work, we focus on \emph{associative memory}, in which we aim to store the past data as the pairs of keys and values. Given $x_t$, similar to Transformers~\citep{transformers}, we use two linear layers to project $x_t$ into a key and value:
+\begin{align}
+    \mathbf{k}_t = x_t W_K, \qquad \qquad  \mathbf{v}_t = x_t W_V,
+\end{align}
+where $ W_K$ and $W_V \in \R^{d_{\text{in}} \times d_{\text{in}}}$. Next, we expect our memory module to learn the associations between keys and values. To this end, we define the loss as follows:
+\begin{align}\label{eq:loss}
+    \ell(\M_{t-1}; x_t) =\left \Vert \M_{t-1}\left(\mathbf{k}_t\right) - \mathbf{v}_t  \right \Vert_2^2  
+\end{align}
+By optimizing the above loss function in the inner-loop of our meta model (memory), the model learns how to memorize the mapping between keys and values at test time. Note that, similar to meta-learning models~\citep{zintgraf2019fast, nichol2018first}, training of the memory is in the inner-loop, and so parameters $W_K$ and $W_V$ are hyperparameters in the above loss function. Accordingly, in the inner loop, we optimize $\M$'s weights, while in the outer-loop, we optimize other parameters of the entire architecture. 
+
+\head{Forgetting Mechanism}
+When dealing with very large sequences (e.g., millions of tokens), it is crucial to manage which past information should be forgotten–even with a deep or a very large matrix-valued memory. To this end, we use an adaptive forgetting mechanism that allows the memory to forget the information that is not needed anymore, resulting in better managing the memory's limited capacity. That is, given the next token $x_t$, we modify the update rule as:
+\begin{align}\label{eq:all}
+    & \M_{t} = (1 - \alpha_t) \M_{t-1} + \textcolor{c4}{S_{t}},\\
+    & S_{t} = \eta_t {\textcolor{c4}{S_{t-1}}} - \theta_t\:  {\textcolor{c4}{\nabla \ell\left(M_{t-1}; x_{t} \right)}},
+\end{align}
+where $\alpha_t \in [0, 1]$ is the gating mechanism that flexibly controls the memory; i.e., decides how much information should be forgotten. For example, it can update the memory without affecting the past abstraction by letting $\alpha_t \rightarrow 0$, and can clear the entire memory by letting $\alpha_t \rightarrow 1$. Later in this section, we show that this weight decay mechanism is closely related to the gating mechanism in modern RNNs~\citep{dao2024transformers, orvieto2023resurrecting}. 
+
+\head{Memory Architecture} 
+In this paper, we focus on simple MLPs with $L_{\M} \geq 1$ layers as the architecture of our long-term memory. The main reason behind this choice is that we want to focus on better motivating the design of the long-term memory and ways that it can be incorporated into an architecture.  However, our formulation and architectural design opens a new research direction to design neural architectures that are more effective and efficient in memorization of data. Recently, there has been a promising line of work to design such architectures~\citep{zhang2024memory, cetin2024evolved, berges2024memory}, which incorporating them into our framework (i.e., replacing simple MLPs with such architectures) can be an interesting future work. 
+
+When using vector-valued or matrix-valued memory~\citep{yang2024gatedattn, orvieto2023resurrecting, de2024griffin}, the memory module is compressing the past data and fit it into a line. That is, from the meta learning or online learning perspective~\citep{sun2024learning}, using a matrix-valued memory $\M = W \in \R^{d_{\text{in}} \times d_{\text{in}}}$ is equivalent to optimize $\ell(W_{t-1}; x_t) =\left \Vert W_{t-1}\mathbf{k}_t - \mathbf{v}_t  \right \Vert_2^2$, which is an online linear regression objective and so the optimal solution assumes the underlying dependency of historical data is linear. On the other hand, we argue that deep memory modules (i.e., $L_{\M} \geq 2$) . Aligning with the theoretical results that MLPs with at least two layers are strictly more expressive than linear models~\citep{hornik1989multilayer}, in \autoref{sec:deep-memory-exp}, we show that deep memory modules are more effective in practice.       
+
+\head{Retrieving a Memory}
+In the above, we discuss how one can design and train a long-term memory module that learns to memorize at test time. A key remaining question is: \emph{How one can retrieve information from the memory?} We simply use the forward pass without weight update (i.e., inference) to retrieve a memory correspond to a query. Formally, given an input $x_t$, we use a linear layer $W_{Q}$ to project the input, i.e., $\mathbf{q}_t = x_t W_{Q}$ and retrieve the corresponding (or useful) information from the memory ${y}_t$ by:
+\begin{align}
+    y_t = \M^*(\mathbf{q}_t).
+\end{align}
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Figures/Parallelization.png}
+    \caption{The illustration of how the training of neural memory can be done in parallel and using \texttt{matmul}s.}
+    \label{fig:parallel}
+\end{figure*}
+
+\subsection{How to Parallelize the Long-term Memory Training}\label{sec:fast-training} 
+As discussed above, the design of our long-term memory module is equivalent to training a meta model by optimizing associative memory loss function $\ell(\M_{t-1}; x_t) =\left \Vert \M_{t-1}\left(\mathbf{k}_t\right) - \mathbf{v}_t  \right \Vert_2^2$ using gradient descent with momentum and weight decay. Therefore, in theory, the training of long-term memory module requires $\mathcal{O}\left(N\right)$ FLOPs, where $N$ is the sequence length. However, in practice, we need to parallelize the training process and to fully take advantage of hardware accelerators (e.g., TPUs, GPUs), we need to tensorize the process and use more \texttt{matmul}s. 
+
+Next, we show that calculating the weights in the inner loop with mini-batch gradient descent, data-dependent learning rate, and weight decay can be reformulated so that it uses only \texttt{matmul}s and sum. We build upon the work of \citet{sun2024learning} that shows forward pass of a model optimizing with the mini-batch gradient descent (with constant learning rate) can be calculated using \texttt{matmul}s. We can split the sequence into chunks of size $b \geq 1$, and write the mini-batch gradient descent as:
+\begin{align}
+    \M_{t} = (1 - \alpha_t) \M_{t-1} - \theta_t \nabla \ell(\M_{t-1}; x_t) = \beta_{t} \M_0 - \sum_{i = 1}^{t} \theta_i \frac{\beta_{t}}{\beta_{i}} \nabla \ell(\M_{t'}; x_i),
+\end{align}
+where $t' = t - \texttt{mod}(t, b)$, and $\beta_{i} = \prod_{j=1}^{i}(1-\alpha_j)$. For the sake of simplicity, we focus on the first chunk, i.e., $t = b$ and so $t' = 0$. Also, we explain the process for the case that $\M_{t} = W_t$ is linear. The process for MLPs with $N_p \geq 2$ is similar. Using our loss function, we have:
+\begin{align}\label{eq:weight-decay-matmul}
+    \nabla \ell(W_{0}; x_t) =  (W_0 x_t - x_t) x_t^{\top} \Rightarrow \sum_{i = 1}^{b} \theta_i \frac{\beta_{b}}{\beta_{i}} \nabla \ell(W_{0}; x_i) = \Theta_b \mathbf{B}_b (W_0 X - X) X^{\top}, 
+\end{align}
+where $\Theta_b = \texttt{diag}\left(\begin{bmatrix}
+    \theta_1 & \theta_2 & \dots & \theta_b
+\end{bmatrix} \right)$ and $\mathbf{B}_b$ is defined analogously on $\frac{\beta_{b}}{\beta_{i}}$s. Note that, we do not need to store all $\Theta_{kb}$ and $\mathbf{B}_{kb}$ for $k = 1, \dots, N/b$, instead, we store these matrices for each chunk, resulting in using less memory. Next, we extend this representation so we can also incorporate the momentum term. In a chunk wise gradient descent with momentum, if we look at the momentum term, we have:
+\begin{align}\label{eq:momentum-ssm}
+    S_{t} = \eta_t {S_{t-1}} - \theta_t\:  u_t,
+\end{align}
+where $u_t = \nabla \ell\left(M_{t'}; x_{t} \right)$. Note that, we can compute all $u_t$ at the same time, and so \autoref{eq:momentum-ssm} is a linear recurrence with $u_t$ as an input, $S_t$ as the hidden state, and $\eta_t$ as input-dependent transition value. Accordingly, we can use parallel associative scan~\citep{smith2023simplified} to calculate $S_t$s in this chunk.  
+
+\head{Parameters as the Function of Chunks}
+Instead of making parameters like $\alpha_t, \theta_t$, and $\eta_t$ input-dependent (i.e., a function of token $x_t$), we can make them functions of their chunk. Despite losing expressive power, this formulation can help to make the training even faster. In this case, we are using the same value for each of $\alpha$, $\theta$, and $\eta$ in each chunk. Accordingly, in \autoref{eq:weight-decay-matmul}, we can store $\Theta$ using a single scaler. Similarly we can make \autoref{eq:momentum-ssm} faster. That is, when $\eta$ and $\theta$ are learnable but time-invariant inside each chunk, this equation becomes a linear time-invariant system (LTI), which can be computed by a global convolution~\citep{gu2022efficiently}. In our experiments, we make these parameters as the functions of tokens. However, such simplifications (i.e., as the function of chunks) can be the interest of future work to training larger models in more efficient manner.   
+
+\subsection{Persistent Memory}\label{sec:persistent-memory}
+Our long-term memory can also be seen as a contextual memory, meaning that the output is fully depend on the context. Therefore, in addition to our long-term memory, we also use a set of learnable but input-independent parameters to act as task-related memory. This type of memory has been referred to as persistent or meta-memory in the literature~\citep{sukhbaatar2019augmenting, dong2024hymba}. Given $N_p \geq 1$, we use learnable parameters $P = \begin{bmatrix}
+    p_1 & p_2 & \dots & p_{N_p}
+\end{bmatrix}$ and append it to the start of our sequence: i.e., given a context window size of $N$, we modify the input as:
+\begin{align}
+    x_{\text{new}} = \begin{bmatrix}
+    p_1 & p_2 & \dots & p_{N_p}
+\end{bmatrix} || \: \: x, 
+\end{align}
+where $||$ is concatenation. Next, we discuss the motivation of persistent memory from three perspective:
+
+\head{Memory Perspective}
+As discussed earlier, our neural long-term memory is a contextual memory, in which all parameters are input-dependent. An effective memory system, however, also needs input-independent parameters to store the abstraction of the task knowledge. That is, mastering a task requires the memorization of the knowledge that how the task can be done, and these parameters are responsible for storing such knowledge. 
+
+\head{Feedforward Network Perspective}
+In the Transformer architectures, there are fully connected layers after the attention module, which are shown to be similar to attention weights but with data-independent parameters. That is, \citet{sukhbaatar2019augmenting} showed that replacing the \texttt{ReLU} in fully connected layers with \texttt{Softmax} can results in an attention-like weights, in which weights are data-independent:
+\begin{align}
+    FFN(x) = W_V \: \texttt{Softmax}\left( W_K x\right).
+\end{align}
+In fact, $W_K$ and $W_V$ are acting similar to $K$ and $V$ matrices in attention module when they are input-independent. The persistent memory weights are expected to have the same functionality, meaning that using them in the first part of the sequence leads to having input-independent attention weights~\citep{sukhbaatar2019augmenting}. 
+
+\head{Technical Perspective}
+Attention with causal mask has implicit bias toward initial tokens in the sequence, and so attention weights are almost always highly active for initial tokens, resulting in performance damage. From the technical perspective, these learnable parameters at the start of the sequence can mitigate such effect by redistributing the attention weights more effectively~\citep{xiao2024efficient, hanLMInfinite2024}. 
+
+\begin{figure*}[t!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Figures/loop-arch.png}
+    \caption{\textbf{Memory as a Context (MAC) Architecture.} This architecture includes three branches of (1) core, (2) contextual (long-term) memory, and (3) persistent memory. The core branch concatenates the \emph{corresponding} long-term and persistent memories with the input sequence. Next, attention performs on the sequence and decides what part of the information should store in the long-term memory. At the test time, parameters corresponds to contextual memory are still learning, parameters corresponds to the core branch are responsible for in-context learning, and parameters of persistent memory are responsible to store the knowledge about tasks and so are fixed.}
+    \label{fig:loop-arch}
+\end{figure*}
+
+\section{How to Incorporate Memory?}\label{sec:arch}
+\lettrine[lines=3]{A}{}n important question that remained unanswered is: How one can effectively and efficiently incorporate the designed neural memory into a deep learning architecture? As discussed earlier, from a memory perspective, the pair of K and V matrices in transformers can be interpreted as an associative memory block. Due to their accurate modeling of dependencies and so their limited context window, we interpret them as short-term memory modules, attending to the \emph{current} context window size. On the other hand, our neural memory with the ability to continuously learn from data and store it in its weights can play the role of a a long-term memory. In this section, we aim to answer the above question by proposing three different variants of Titans. Later in our experiments, we show that each of these variants has its own advantages/disadvantages and also can show a trade-off between the efficiency and effectiveness in very long-contexts. 
+
+\subsection{Memory as a Context}
+In the first architecture design (see \autoref{fig:loop-arch}), we treat the memory as a context to the current information. That is, given a long sequence $x \in \R^{N \times d_{\text{in}}}$, we first chunk the sequence into fixed-size segments $\texttt{S}^{(i)}$ for $i = 1, \dots, N/C$. Given the incoming segment $\texttt{S}^{(t)}$, we consider it as the current context and its past segment as the historical information. Therefore, let $\M_{t-1}$ be the state of long-term memory before segment $\texttt{S}^{(t)}$, we use the input context as the query to the memory $\M_{t-1}$ to retrieve the corresponding information from the long-term memory. That is, we retrieve the past information that corresponds to $\texttt{S}^{(t)}$ as:
+\begin{align}
+    h_{t} = \M^{*}_{t-1} (\mathbf{q}_{t}),  
+\end{align}
+where $\mathbf{q}_{t} = \texttt{S}^{(t)} W_Q$. Next, we use this historical information along with our persistent memory parameters as the input sequence to the attention module:
+\begin{align}
+    &\tilde{\texttt{S}}^{(t)} = \begin{bmatrix}
+    p_1 & p_2 & \dots & p_{N_p}
+\end{bmatrix} \:\: || \:\: h_{t}  \:\: || \:\: \texttt{S}^{(t)},\\
+&y_t = \texttt{Attn}\left( \tilde{\texttt{S}}^{(t)} \right).  
+\end{align}
+The structure of the attention map over the entire sequence is shown in \autoref{fig:MAC-attention}. We then use $y_t$ to update the long-term memory module for the next segment and the final output:
+\begin{align}
+    &\M_{t} = \M_{t-1}\left( y_t \right), \\
+    &o_t = y_t \otimes  \M_{t}^{*}\left( y_t \right).
+\end{align}
+Note that, in the above, we are updating the weight of $\M_{t-1}$ through forward pass. 
+
+\begin{figure*}[t!]
+    \centering
+    \begin{subfigure}{0.48\linewidth}
+        \includegraphics[width=\linewidth]{Figures/MAC.png}
+    \caption{\textbf{Memory as a Context (MAC).} We segment the sequence and use full causal attention in each window. Again, the first $N_p$ tokens are persistent memory and the next $N_{l}$ are long-term memory tokens}
+    \label{fig:MAC-attention}
+    \end{subfigure}~\hfill
+    \centering~
+    \begin{subfigure}{0.48\linewidth}
+        \includegraphics[width=\linewidth]{Figures/MAG.png}
+    \caption{\textbf{Memory as Gating (MAG).} We use sliding window attention (SWA) as a short-term memory and our neural memory module as a long-term memory, combining by a gating.}
+    \label{fig:MAG-attention}
+    \end{subfigure}
+    \caption{Attention masks for different variants of Titans.}
+\end{figure*}
+
+This architecture has two key advantages: (1) Attention by having both historical and current context, has the ability to decides whether given the current data, the long-term memory information is needed. (2) The attention module helps the long-term memory to store only useful information from the current context. That is, not all tokens in each segment are useful and memorizing all of them can result in memory overflow. Therefore, attention is helping the memory to understand which information is useful, better managing the memory capacity. (3) At test time: (i) persistent memory parameters are fixed as they encodes the knowledge about the task, which should not be changed; (ii) the attention module weights are in-context learner; and (iii) the long-term memory module is still learning (memorizing) the information at test time. That is, we update the weights of the neural memory even at test time as weights are encoding the abstraction of long past.  
+
+\begin{figure*}[t!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Figures/gate-arch.png}
+    \caption{\textbf{Memory as a Gate (MAG) Architecture.} This architecture, similarly, has the three branches of (1) core, (2) contextual memory, and (3) persistent memory. It, however, incorporates only persistent memory into the context and combine memory with the core branch using a gating mechanism. At test time, the behavior is the same as \autoref{fig:loop-arch}.}
+    \label{fig:gate-arch}
+\end{figure*}
+
+\subsection{Gated Memory}
+In the next variant (see \autoref{fig:gate-arch}), in one branch, we directly use the input data to update the long-term memory, and in the second branch, we use a sliding window attention (SWA):
+
+\begin{align}
+    &\tilde{x} = \begin{bmatrix}
+    p_1 & p_2 & \dots & p_{N_p}
+\end{bmatrix} \:\: || \:\: x, \\
+    &y = \texttt{SW-Attn}^*\left( \tilde{x} \right), \\
+    &o = y \otimes \M(\tilde{x}),
+\end{align}
+where $\texttt{SW-Attn}^*$ is sliding window attention with prefix (see \autoref{fig:MAG-attention}). Note that, contrary to the previous design, we are not segmenting the input data. Also, we abuse the notation and use $\M(x)$ to refer to the final output of the memory after all recursion over the tokens of the sequence. In the above equation, $\otimes$ can be any non-linear gating. In our experiments, we normalize the outputs $y$ and $ \M(\tilde{x})$ using learnable vector-valued weights, followed by a non-linearity $\sigma(.)$. 
+
+The overall attention mask of this design is shown in \autoref{fig:MAG-attention}. In this design, sliding window attention is act as a precise short-term memory, while the neural memory module is acting as a fading memory for the model. This architecture design can also be seen as a multi-head architecture where the structure of heads are different~\citep{dong2024hymba}.  
+
+\subsection{Memory as a Layer}
+The last variant uses the neural Memory As a Layer (MAL) of a deep neural network (see \autoref{fig:mal}). This architecture design is more common in the literature, where the hybrid models stack recurrent models with full or sliding window attentions. Given input $x$, we have:
+\begin{align}
+    &\tilde{x} = \begin{bmatrix}
+    p_1 & p_2 & \dots & p_{N_p}
+\end{bmatrix} \:\: || \:\: x, \\
+    &y = \M(\tilde{x}), \\
+    &o = \texttt{SW-Attn} \left( y \right),
+\end{align}
+where $\texttt{SW-Attn}$ is sliding window attention. The main drawback of this design is that the power of the model is limited by each of the layers and so it cannot take advantage of the complementary data processing of attention and neural memory module. In our experiments, for evaluating memory in this design, we use a similar architecture as H3~\citep{fu2023hungry}, where we replace the the sequence model with our neural memory module (LMM).
+
+\begin{figure*}[t!]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Figures/MAL.png}
+    \caption{\textbf{Memory as a Layer (MAL) Architecture.} In this architecture, the memory layer is responsible to compress the past and current context before the attention module.}
+    \label{fig:mal}
+\end{figure*}
+
+\head{Memory Without Attention}
+Although in the above, we discussed MAL as the combination of LMMs and attention in a sequential manner, one simple variant of MAL is to treat LMM as a sequence model without any attention. From the memory perspective, as discussed in \autoref{sec:intro}, we expect each part of the memory system to work independently, even if other components are disturbed. Therefore, a long-term memory module should still be a powerful model even without short-term memory (i.e., attention). We refer to this variant as LMM or Titans (LMM) in our experiments. We provide additional discussions on the connection of Titans and other modern recurrent models in \autoref{app:MAS}. 
+
+\subsection{Architectural Details}
+For the sake of simplicity and presentation, we avoid discussing the implementation details like using residual connection, gating with linear layer, and normalization. In all blocks, we use residual connections. In our implementation, we use \texttt{SiLU}(.) activation~\citep{elfwing2018sigmoid} as the non-linear activation for computing query, key, and values and normalize queries and keys using $\ell_2$-norm. 
+
+\head{Convolution}
+Following the recent modern linear recurrent models~\citep{yang2024gated, gu2024mamba}, we  incorporate a 1D depthwise-separable convolution layer after each of the query, key, and value projections. While not significantly affect the performance, these 1D convolutions have shown performance improvement and are also computationally efficient. 
+
+\head{Gating} We also follow the recent architectures that use normalization and gating with a linear layer before the final output projection~\citep{mehta2023long}. 
+
+\begin{theorem}
+    Contrary to Transformers, diagonal linear recurrent models, and DeltaNet, all of which are limited to \texttt{TC}$\:^0$~\citep{merrill2024the}, Titans are capable of solving problems beyond \texttt{TC}$\:^0$, meaning that Titans are theoretically more expressive than Transformers and most modern linear recurrent models in state tracking tasks. 
+\end{theorem}
+
+\section{Experiments}\label{sec:experiments}
+\lettrine[lines=3]{N}{}ext, we evaluate the performance of Titans and its variants in language modeling, commonsense reasoning, needle in haystack, DNA modeling, and time series forecasting tasks\footnote{In the first version of the work, we aim to provide insights/evidences about why the learning paradigms of Titans are effective. We are working on finalizing the results of larger models and will report them in the next version.}. In more details, in this section, we answer the following empirical questions: (1) How do Titans perform compared to baselines in downstream tasks? (\textcolor{c1}{see \S}\ref{sec:exp-lm}, \textcolor{c1}{\S}\ref{sec:exp-timeseries}, \textcolor{c1}{and \S}\ref{sec:exp-DNA}); (2) What is the actual context length of Titans? (\textcolor{c1}{see \S}\ref{sec:exp-hystack} \textcolor{c1}{and \S}\ref{sec:exp-babilong}); (3) How do Titans scale with respect to context length? (\textcolor{c1}{see \S}\ref{sec:exp-efficiency}); (4) How the depth of memory can affect both performance and efficiency? (\textcolor{c1}{see \S}\ref{sec:deep-memory-exp}); and (5) What is the contribution of each Titans' component in its performance? (\textcolor{c1}{see~\S}\ref{sec:exp-ablation}).
+
+\subsection{Experimental Setup}\label{sec:exp-setup}
+\head{Models}
+In our experiments, we focus on the three variants of Titans, which we refer to as: Titans with (1) Memory as a Context (MAC), (2) Memory as a Gate (MAG), and (3) Memory as a Layer (MAL) as well as (4) neural memory module alone. The reason behind using our long-term memory as a separate module is based on our definition of learning. As discussed in \autoref{sec:intro}, we define learning a process for acquiring effective and useful memory. Accordingly, we expect our long-term memory to effectively learn from data, even without attention. For each of these models, we consider four scales with: (i) 170M, (ii) 340M,  (iii) 400M, and (iv) 760M parameters. While the first three are trained on 15B tokens sampled from FineWeb-Edu dataset~\citep{penedo2024the}, the last one is trained on 30B tokens from the same dataset. 
+
+\begin{table*}[t!]
+\centering
+\caption{
+Performance of Titans and recurrent- and Transformer-based baselines on language modeling and common-sense reasoning tasks. Hybrid models are marked with $^*$. The best results among {\colorbox{myblue}{simple}} and {\colorbox{mygreen}{hybrid}} models are highlighted. 
+}\label{tab:lm_results}
+\centering
+\resizebox{0.9\linewidth}{!}{
+\centering
+\begin{tabular}{l|c c|c c c c c c c c c}
+\toprule
+\textbf{Model}  & \textbf{Wiki.}  &  \textbf{LMB.} &  \textbf{LMB.} & \textbf{PIQA} &    \textbf{Hella.} & \textbf{Wino.} & \textbf{ARC-e} &  \textbf{ARC-c} &  \textbf{SIQA}  & \textbf{BoolQ} &  \textbf{Avg.} \\
+ & ppl $\downarrow$  &  ppl $\downarrow$  &  acc $\uparrow$  & acc $\uparrow$ &   acc\_n $\uparrow$  & acc $\uparrow$  & acc $\uparrow$ & acc\_n $\uparrow$ &  acc $\uparrow$  & acc $\uparrow$ &   $\uparrow$  \\
+\midrule
+\midrule
+\multicolumn{12}{c}{340M params / 15B tokens} \\
+\midrule
+ Transformer++ & 31.52 & 41.08 &  30.76 & 62.98  &  34.76 & 50.53  & 45.21  & 24.05 & 36.81 & 58.24 & 42.92\\
+ RetNet & 32.50 & 49.73 & 28.24 & 62.61 & 34.15 &  50.91 & 44.27 & 23.62 & 36.79 & 59.72 & 42.54\\
+ GLA & 28.51 & 43.02 & 28.73 & 64.05 & 35.96 & 50.00 & 54.19 & 24.29 & 37.13 & 58.39 & 44.09\\
+ Mamba & 30.83 & 40.21 & 29.94 & 63.79 & 35.88 & 49.82 & 49.24 & 24.56 &  35.41  & 60.07 & 43.59\\
+ DeltaNet & 28.65 & 47.30 & 28.43 & 63.52 & 35.95 & 49.63 & 52.68 & 25.37 &  \cellcolor{myblue}\underline{37.96}  &  58.79  & 44.04 \\
+ TTT & 27.44 & 34.19 & 30.06 & 63.97  & 35.71 & 50.08 & 53.01 & 26.11 & 37.32 & 59.83 & 44.51\\
+ Gated DeltaNet & 27.01 & 30.94 &  34.11 & 63.08 & 38.12  &  51.60  &  55.28  &  26.77  & 34.89 & 59.54  & 45.42\\
+\midrule
+Titans (LMM) & \cellcolor{myblue}26.18 &  \cellcolor{myblue}29.97 &  \cellcolor{myblue}34.98  & \cellcolor{myblue}64.73  & \cellcolor{myblue}39.61  & \cellcolor{myblue}51.85  & \cellcolor{myblue}55.60  & \cellcolor{myblue}28.14 & 34.52 & \cellcolor{myblue}59.99 & \cellcolor{myblue} 46.17 \\
+Titans (MAC)$^*$         & 25.43 & \cellcolor{mygreen}28.13  & 36.00 & \cellcolor{mygreen}65.32 & 40.35 & 51.21& \cellcolor{mygreen}58.17 & \cellcolor{mygreen}29.00 & 38.63 & \cellcolor{mygreen}60.18 & 47.36\\
+Titans (MAG)$^*$         & 25.07 & 28.72 & \cellcolor{mygreen}36.71 & 64.88 & \cellcolor{mygreen}40.56 & \cellcolor{mygreen}52.49 & 57.72& 28.16 & \cellcolor{mygreen}39.75 & 60.01& \cellcolor{mygreen}47.54 \\
+Titans (MAL)$^*$         & \cellcolor{mygreen}24.69 & 28.80 & 35.74  & 64.97 & 39.44 & 51.97 & 56.58  & 28.21 & 38.14 & 57.32 & 46.55\\
+\midrule
+\multicolumn{12}{c}{400M params / 15B tokens} \\
+\midrule
+ Transformer++ & 30.63 & 37.37 & 29.64 & 64.27 & 37.72 &	51.53 & 54.95	& 27.36 &  38.07  &  \cellcolor{myblue}\underline{61.59}  & 45.64 \\
+ RetNet & 29.92 & 46.83 & 29.16 & 65.23 & 36.97 &	51.85 & 56.01	& 27.55 &  37.30  & 59.66  & 45.47 \\
+ HGRN2 & 32.33 & 47.14 & 26.12 & 64.52 & 35.45 &	52.24 & 55.97	& 25.51 &  37.35  & 59.02  & 44.52 \\
+GLA & 27.96 & 36.66 & 27.86 &  \cellcolor{myblue}\underline{65.94} & 37.41 &	49.56 & 56.01	& 26.36 &   \cellcolor{myblue}\underline{38.94}  & 59.84  & 45.24 \\
+ Mamba & 29.22 & 39.88 & 29.82 & 65.72 & 37.93 &	50.11 & 58.37	& 26.70 &  37.76  & 61.13  & 45.94 \\
+Mamba2 & 26.34 & 33.19 & 32.03 & 65.77 & 39.73 &	{52.48} & 59.00	& 27.64 &  37.92  & 60.72  & 46.91 \\
+ DeltaNet & 27.69 & 44.04 & 29.96 & 64.52 & 37.03 &	50.82 & 56.77	& 27.13 &  38.22  & 60.09  & 45.57 \\
+ TTT & 26.11 & 31.52 & 33.25 & 65.70 & 39.11 & 51.68& 58.04& 28.99 & 38.26 & 59.87 & 46.86\\
+Gated DeltaNet & 25.47 & 29.24 & 34.40 &  \cellcolor{myblue}\underline{65.94} & 40.46 &	51.46 & {59.80}	& {28.58} &  37.43  & 60.03  & 47.26 \\
+ Samba$^*$ & 25.32 & 29.47 & 36.86 & 66.09& 39.24 & 51.45 & 60.12 & 27.20  & 38.68  &  58.22 & 47.23\\
+Gated DeltaNet-H2$^*$  & {24.19} & {28.09} & {36.77} & {66.43} & {40.79} &	{52.17} & 59.55	& {29.09} &  {39.04}  & 58.56  & {47.69} \\
+\midrule
+Titans (LMM) & \cellcolor{myblue}25.03 & \cellcolor{myblue} 28.99  & \cellcolor{myblue}35.21 & 65.85 & \cellcolor{myblue}40.91 & \cellcolor{myblue}52.19 & \cellcolor{myblue} 59.97 & \cellcolor{myblue}29.20 & 38.74 & 60.85 &  \cellcolor{myblue}47.83  \\
+Titans (MAC)$^*$         & 25.61 & \cellcolor{mygreen}27.73  &     36.92 & 66.39 & \cellcolor{mygreen}41.18 & 52.80 & \cellcolor{mygreen}60.24 & 29.69 & \cellcolor{mygreen}40.07  & \cellcolor{mygreen}61.93 & \cellcolor{mygreen}48.65 \\
+Titans (MAG)$^*$         & \cellcolor{mygreen}23.59 & 27.81  & \cellcolor{mygreen}37.24 & \cellcolor{mygreen}66.80 & 40.92 &  \cellcolor{mygreen}53.21 & 60.01 & 29.45 & 39.91 & 61.28 & 48.60 \\
+Titans (MAL)$^*$         & 23.93 & 27.89  & 36.84 & 66.29 & 40.74 & 52.26 &  59.85 & \cellcolor{mygreen}29.71 & 38.92 & 58.40 & 47.87 \\
+\midrule
+\multicolumn{12}{c}{760M params / 30B tokens} \\
+\midrule
+ Transformer++ & 25.21 & 27.64 & 35.78 & 66.92 & 42.19 &	51.95 & 60.38	& 32.46 &  39.51  & 60.37  & 48.69 \\
+ RetNet & 26.08 & 24.45 & 34.51 & 67.19 & 41.63 &	52.09 & 63.17	& 32.78 &  38.36  & 57.92  &  48.46\\
+ Mamba & 28.12 & 23.96 & 32.80 & 66.04 & 39.15 &	\cellcolor{myblue}\underline{52.38} & 61.49	& 30.34 &  37.96  & 57.62  & 47.22 \\
+ Mamba2 & 22.94 & 28.37 & 33.54 & 67.90 & 42.71 &	49.77 & {63.48}	& 31.09 &  40.06  & 58.15  & 48.34 \\
+ DeltaNet & 24.37 & 24.60 & 37.06 & 66.93 & 41.98 &	50.65 & 64.87	& 31.39 &  39.88  & 59.02  & 48.97 \\
+ TTT & 24.17 & 23.51 & 34.74 & 67.25 & 43.92 & 50.99 & 64.53 & 33.81 & \cellcolor{myblue}\underline{40.16} & 59.58 & 47.32 \\
+ Gated DeltaNet & {21.18} & {22.09} & {35.54} & {68.01} & {44.95} & {50.73} & \cellcolor{myblue}\underline{66.87}	& {33.09} &  {39.21}  & 59.14  & 49.69 \\
+ Samba$^{*}$ & 20.63 & 22.71 & 39.72 & 69.19 & 47.35 &	52.01 & 66.92	& 33.20 &  38.98  & 61.24  & 51.08 \\
+  Gated DeltaNet-H2$^*$ & {19.88} & 20.83 & {39.18} & 68.95 & {48.22} &	{52.57} & 67.01	& {35.49} &  {39.39}  & 61.11  & 51.49 \\
+  \midrule
+Titans (LMM) & \cellcolor{myblue}20.04 & \cellcolor{myblue}21.96 &  \cellcolor{myblue}37.40 & \cellcolor{myblue}69.28  & \cellcolor{myblue}48.46 & 52.27 & 66.31 & \cellcolor{myblue}35.84 & 40.13 & \cellcolor{myblue}62.76 & \cellcolor{myblue}51.56\\
+Titans (MAC) & 19.93 & 20.12 &  39.62 & \cellcolor{mygreen}70.46  & \cellcolor{mygreen}49.01 & \cellcolor{mygreen}53.18 & 67.86 & 36.01 & \cellcolor{mygreen}41.87 & \cellcolor{mygreen}62.05 & \cellcolor{mygreen}52.51\\
+Titans (MAG) & \cellcolor{mygreen}18.61 & \cellcolor{mygreen}19.86 &  \cellcolor{mygreen}40.98 & 70.25  & 48.94 & 52.89 & \cellcolor{mygreen}68.23 & \cellcolor{mygreen}36.19 & 40.38 & 62.11 & 52.50\\
+Titans (MAL) & 19.07 & 20.33 &  40.05 & 69.99  & 48.82 & 53.02& 67.54 & 35.65 & 30.98 & 61.72 & 50.97\\
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+
+\head{Baselines}
+We compare our models with the state-of-the-art linear recurrent models, Transformers, and hybrid models (recurrent + attention). More specifically in language tasks, we compare with Transformer++~\citep{touvron2023llama}, RetNet~\citep{sun2023retentive}, Gated Linear Attention (GLA)~\citep{yang2024gatedattn}, Mamba~\citep{gu2024mamba}, Mamba2~\citep{dao2024transformers}, DeltaNet~\citep{yang2024parallelizing}, TTT~\citep{sun2024learning}, and Gated DeltaNet~\citep{yang2024gated}. In needle in haystack tasks, we also compare with GPT4~\citep{achiam2023gpt}, Llama3 with RAG~\citep{touvron2023llama}, RecurrentGemma2-9B~\citep{botev2024recurrentgemma}, and Mistral~\citep{jiang2023mistral} models, all of which are provided in the benchmark~\citep{kuratov2024babilong}. In time series tasks, we compare with Mamba-based~\citep{behrouz2024mambamixer}, Transformer-based~\citep{nie2022time, liu2023itransformer, zhang2023crossformer}, and linear models~\citep{das2023longterm, wu2023timesnet, zeng2023transformers, li2023revisiting}. 
+
+\head{Training}
+In the training, we follow the training procedure of \citet{yang2024gated}, and use LLama 2 tokenizer with a vocabulary size of 32K and use training length of 4K tokens. We employ AdamW optimizer with learning rate of $4e$-$4$ with cosine annealing schedule with batch size of 0.5M tokens, and weight decay of $0.1$.   
+
+\subsection{Language Modeling}\label{sec:exp-lm}
+We first focus on the perplexity in language modeling and also commonsense reasoning tasks. The results for Titans' variants and also baselines with three different sizes of 340M, 400M, and 760M are reported in \autoref{tab:lm_results}. Among non-hybrid models, including Transformer++, our neural memory module achieves the best performance in both perplexity and accuracy measures. Comparing our neural memory module and TTT, which is also a gradient-based recurrent model can show us the importance of our weight decay as well as the momentum. As discussed earlier, the weight decay can be interpreted as a gating mechanism to forget the past data, when it is needed. Also, momentum can help us better manage the memory by providing additional memory for the surprise metric. While some baselines also take advantage of gating mechanism, e.g., Mamba, Mamba2, and Gated DeltaNet, the superior performance of our neural memory module shows the importance of both our surprise mechanism and having deep and non-linear memory. We further discuss the later in \autoref{sec:deep-memory-exp}. 
+
+Comparing the hybrid models, we found that all three variants of Titans (MAC, MAG, and MAL) outperform both Samba (Mamba + attention) and Gated DeltaNet-H2 (Gated DeltaNet + atttention). We attribute the superior performance of Titans (MAL) to the power of neural memory module as the architecture design and used attention are all the same. Comparing Titans (MAG) and (MAC), we find that while their performance are close, MAC performs better when dealing with longer dependencies in the data. Interestingly, both MAG and MAC outperform MAL variant, which due to using the same modules, we attribute this to the architecture design of these models. This finding is particularly important as the current hybrid models (except Hymba~\citep{dong2024hymba}) in the literature are using MAL-style combination of recurrent models and attention. 
+
+\begin{table*}
+    \centering
+    \caption{Performance of Titans and baselines on S-NIAH task from RULER benchmark. The best results among {\colorbox{myblue}{simple}} and {\colorbox{mygreen}{hybrid}} models are highlighted.}
+    \label{tab:hystack}
+    \resizebox{0.7\linewidth}{!}{
+    \begin{tabular}{l c c c c c c c c c c c c}
+    \toprule
+    \multirow{2}{*}{Model} & \multicolumn{4}{c}{\textbf{S-NIAH-PK}} & \multicolumn{4}{c}{\textbf{S-NIAH-N}} & \multicolumn{4}{c}{\textbf{S-NIAH-W}} \\
+    \cmidrule(lr){2-5} \cmidrule(lr){6-9} \cmidrule(lr){10-13}
+    &  2K & 4K & 8K & 16K &  2K & 4K & 8K & 16K &  2K & 4K & 8K & 16K \\
+    \midrule
+    \midrule
+       TTT  & 98.4 & \cellcolor{myblue}98.8 & 98.0 & 88.4 & 60.2 & 36.6 &  10.2 & 4.4 & 78.8 & 28.0 & 4.4 & 0.0 \\
+       Mamba2 & 98.6 & 61.4 & 31.0 & 5.4 & 98.4 & 55.8 & 14.2 & 0.0 & 42.2 & 4.2 & 0.0 & 0.0\\
+       DeltaNet & 96.8 & \cellcolor{myblue}98.8 & \cellcolor{myblue}98.6 & 71.4 & 47.2 & 15.4 & 12.8 & 5.4 & 46.2 & 20.0 & 1.6 & 0.0\\
+       \midrule
+       Titans (LMM) & \cellcolor{myblue}99.8 & 98.4 & 98.2 & \cellcolor{myblue}96.2 & \cellcolor{myblue}100.0 & \cellcolor{myblue}99.8 & \cellcolor{myblue}93.4 & \cellcolor{myblue}80.2 & \cellcolor{myblue}90.4 & \cellcolor{myblue}89.4 & \cellcolor{myblue}85.8 & \cellcolor{myblue}80.6 \\
+       Titans (MAC)  & 99.2 & \cellcolor{mygreen}98.8 & \cellcolor{mygreen}99.0 & \cellcolor{mygreen}98.4 & 99.6 & 98.2 & \cellcolor{mygreen}97.6 & 97.4  & \cellcolor{mygreen}98.2 & \cellcolor{mygreen}98.2 & \cellcolor{mygreen}95.6 & \cellcolor{mygreen}95.2 \\
+       Titans (MAG) & \cellcolor{mygreen}99.4 & 98.0 & 97.4 & 97.4 & 99.2 & \cellcolor{mygreen}98.8 &  97.2 & \cellcolor{mygreen}98.6 &  98.0 & 98.0  & 90.2  &  88.2  \\
+       Titans (MAL) & 98.8 & 98.6 & 98.8 & 97.8 & \cellcolor{mygreen}99.8  & 98.1 & 96.8  & 96.4 & 98.0 & 97.4 & 92.0 & 90.4\\
+    \toprule
+    \end{tabular}
+    }
+\end{table*}
+
+\subsection{Needle in a Haystack}\label{sec:exp-hystack}
+Scaling a model to longer context window is not always equivalent to being effective for very long sequences~\citep{hsieh2024ruler}. The needle-in-a-haystack (NIAH) task is designed to measure the actual effective context length of models. In this task, we evaluate the model on retrieving a piece of information (i.e., the ``needle'') from long distractor texts (i.e., the ``haystack''). In this part, we use Single NIAH (S-NIAH) task from RULER benchmark~\citep{hsieh2024ruler} and evaluate Titans and baselines on sequences with length 2K, 4K, 8K, and 16K. The results are reported in \autoref{tab:hystack}. Neural Memory module achieves the best results compare to baselines in all three tasks. We attribute this superior performance to three key differences of Titans with existing sequence models: (1) Compared to TTT, our Neural Memory can better handle the memory capacity by using momentum and also the forgetting mechanism (i.e., weight decay). Therefore, with increasing the sequence length, the performance of Neural Memory does not drop and show a consistent trend; (2) Compared to Mamba2, which has the gating (forgetting) mechanism, Titans have deep non-linear memory, resulting in better memory management. Also, contrary to our neural memory and DeltaNet, Mamba2 is not capable of removing a memory and so we can see a significant drop in performance when increasing the sequence length; (3) Compared to DeltaNet, although it is capable of removing memory using delta rule, it cannot erase the memory, lacking forgetting mechanism. Finally, As expected we can see on par or better results when using Titans variants, where the best results correspond to MAC.  
+
+\begin{figure*}[t!]
+    \centering
+    \begin{subfigure}{0.33\linewidth}
+        \includegraphics[width=\linewidth]{Figures/BABILong-few-shot.png}
+    \caption{Few-shot Setup}
+    \label{fig:babilong-zero-shot}
+    \end{subfigure}~
+    \centering~\hspace{4ex}
+    \begin{subfigure}{0.33\linewidth}
+        \includegraphics[width=\linewidth]{Figures/BABILong-FT.png}
+    \caption{Fine-Tuning Setup}
+    \label{fig:babilong-fine-tune}
+    \end{subfigure}
+    \caption{Performance of Titans and baselines on BABILong benchmark. Titans (MAC) outperforms all baselines, including extremely large models, e.g., GPT4.}
+    \vspace{-2ex}
+\end{figure*}
+
+\subsection{BABILong Benchmark}\label{sec:exp-babilong}
+In the previous section we discussed the results on a simple NIAH tasks where a single needle needs to be retrieved. Although Titans showed better performance compared to baselines, their true advantage over very long sequences is still hidden. To this end, in this section, we use a harder task from BABILong benchmark~\citep{kuratov2024babilong}, in which the model needs to reason across facts distributed in extremely long documents. We follow the original experimental setup and training process in the benchmark. There are two settings: (1) Few-shot setting, in which we use large pre-trained models, and (2) fine-tuning setting, where we fine-tune the MAC variant of Titans to compare it with other fine-tuned baselines. The results for few-shot setting are reported in \autoref{fig:babilong-zero-shot}. In this setup, we can see Titans outperform all baselines–i.e., Mamba2.8B~\citep{gu2024mamba}, RWKV-6-7B~\citep{peng2024eagle}, RecurrentGemma-9B~\citep{botev2024recurrentgemma}, Gemma-9B~\citep{team2024gemma}, Llama3.1-8B~\citep{touvron2023llama}, GPT-4, and GPT4o-mini~\citep{achiam2023gpt}. These results are achieved while Titans (MAC) is having much less number of parameters than baselines. 
+
+In the fine-tuning setup, we compare the small fine-tuned version of Titans (MAC) with: (i) the fine-tuned version of small models (almost the same number of parameters as Titans) such as Mamba~\citep{gu2024mamba}, RMT~\citep{bulatov2022recurrent}, (ii) large models with Retrieval-Augmented Generation (RAG)~\citep{lewis2020retrieval} such as Llama3.1-8B~\citep{touvron2023llama}, and (iii) extremely large models such as GPT-4~\citep{achiam2023gpt}, GPT4o-mini, Qwen2.5-72B~\citep{yang2024qwen2}, and Llama3.1-70B~\citep{touvron2023llama}. Baseline results are reported by \citep{kuratov2024babilong}. The results of Titans and baselines are reported in \autoref{fig:babilong-fine-tune}. Titans outperform all models even extremely large models like GPT4. Also, compared to Transformer-based with memory models like RMT, Titans show better performance mainly due to their powerful memory. That is, RMT compress the historical data into 16 size vector-valued memory, while Titans with in-context online memory learner are capable of encoding the past into the parameters of the model. Interestingly, even augmenting Llama3.1-8B model with RAG performs worse than Titans with about $\times$70 less parameters.       
+
+\begin{figure*}[t!]
+    \centering
+    \begin{subfigure}{0.333\linewidth}
+        \includegraphics[width=\linewidth]{Figures/deep-memory-1.png}
+    \caption{170M Parameters}
+    \end{subfigure}~
+    \centering
+    \begin{subfigure}{0.333\linewidth}
+        \includegraphics[width=\linewidth]{Figures/deep-memory-2.png}
+    \caption{360M Parameters}
+    \end{subfigure}~
+    \centering
+    \begin{subfigure}{0.333\linewidth}
+        \includegraphics[width=\linewidth]{Figures/deep-memory-3.png}
+    \caption{760M Parameters}
+    \end{subfigure}
+    \caption{The effect of memory depth on the perplexity. Deeper long-term memory results in better scaling in longer sequences.}
+    \label{fig:effect-deep-memory}
+\end{figure*}
+
+\subsection{The Effect of Deep Memory}\label{sec:deep-memory-exp}
+In this section, we evaluate the effect of deep memory in both wall-clock training time and model performance\footnote{Note that, in this experiment, we only focus on the neural memory module to evaluate the effect of memory depth in the memorization process. Combining neural memory with attention as we do in Titans variants, can additionally enhance the performance of the model over long sequences.}. To this end, we focus on different variants of our neural memory module, where $L_{\M} = 1, 2, 3, 4$. We also use Mamba as a baseline for the model performance. For a fair comparison, we use the same training process for all models and train them on a subset of the Pile dataset~\citep{gao2020pile}. 
+
+We report the perplexity of our models and baselines as the function of the sequence length in \autoref{fig:effect-deep-memory}. Interestingly, with the increase of memory depth, $L_{\M}$, the model can achieve better perplexity over all sequence length. Also, deeper memory modules are more robust to the sequence length when the model has less number of parameters. With the increase of the number of parameters, all models show better performance on longer sequences.  
+
+\begin{wrapfigure}{r}{0.33\linewidth}
+    \centering
+    \vspace{-4ex}
+        \includegraphics[width=\linewidth]{Figures/deep-memory-efficiency.png}
+    \caption{The effect of memory depth on training throughput}
+    \label{fig:effect-deep-memory-efficiency}
+    \vspace{-8ex}
+\end{wrapfigure}
+
+We also evaluate the effect of memory depth ($L_{\M} = 1, 2, 3, 4$) on the training throughput. We report the training throughput (the number of tokens per second) as the function of sequence length in \autoref{fig:effect-deep-memory-efficiency}. All models scale linearly with respect to the context length (i.e., constant trend in the number of tokens per second with respect to sequence length). Also, by increasing the memory depth, as expected, we can see a linear trend that a deeper memory results in a slower training. Therefore, it is not always efficient to use deeper memory modules, showing a trade-off between effectiveness and efficiency. 
+
+\begin{table*}[t!]
+\centering
+  \caption{\small Performance on long-term forecasting. The best results are \hspace{-1pt} \colorbox{myblue}{highlighted}\hspace{-1pt}. }\label{tab:avg_baseline_results}
+  \centering
+  \resizebox{0.9\linewidth}{!}{
+  \centering
+  \begin{tabular}{l| cc|  cc|  cc| cc| cc| cc| cc| cc| cc}
+    \toprule
+    \multicolumn{1}{c}{\multirow{2}{*}{}} & 
+    \multicolumn{2}{c}{\rotatebox{0}{\scalebox{0.8}{\textbf{Neural Memory}}}} &
+    \multicolumn{2}{c}{\rotatebox{0}{\scalebox{0.8}{\textbf{Simba}}}}&
+    \multicolumn{2}{c}{\rotatebox{0}{\scalebox{0.8}{\textbf{iTransformer}}}} &
+    \multicolumn{2}{c}{\rotatebox{0}{\scalebox{0.8}{\textbf{RLinear}}}} &
+    \multicolumn{2}{c}{\rotatebox{0}{\scalebox{0.8}{\textbf{PatchTST}}}} &
+    \multicolumn{2}{c}{\rotatebox{0}{\scalebox{0.8}{\textbf{Crossformer}}}}  &
+    \multicolumn{2}{c}{\rotatebox{0}{\scalebox{0.8}{\textbf{TiDE}}}} &
+    \multicolumn{2}{c}{\rotatebox{0}{\scalebox{0.8}{{\textbf{TimesNet}}}}} &
+    \multicolumn{2}{c}{\rotatebox{0}{\scalebox{0.8}{\textbf{DLinear}}}} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9} \cmidrule(lr){10-11} \cmidrule(lr){12-13} \cmidrule(lr){14-15} \cmidrule(lr){16-17} \cmidrule(lr){18-19}  
+    \multicolumn{1}{c}{}  &  \multicolumn{1}{c}{\scalebox{0.78}{MSE}} & \multicolumn{1}{c}{\scalebox{0.78}{MAE}} &  \multicolumn{1}{c}{\scalebox{0.78}{MSE}} & \multicolumn{1}{c}{\scalebox{0.78}{MAE}} & \multicolumn{1}{c}{\scalebox{0.78}{MSE}} & \multicolumn{1}{c}{\scalebox{0.78}{MAE}}  & \multicolumn{1}{c}{\scalebox{0.78}{MSE}} & \multicolumn{1}{c}{\scalebox{0.78}{MAE}}  & \multicolumn{1}{c}{\scalebox{0.78}{MSE}} & \multicolumn{1}{c}{\scalebox{0.78}{MAE}}  & \multicolumn{1}{c}{\scalebox{0.78}{MSE}} & \multicolumn{1}{c}{\scalebox{0.78}{MAE}}  & \multicolumn{1}{c}{\scalebox{0.78}{MSE}} & \multicolumn{1}{c}{\scalebox{0.78}{MAE}}  & \scalebox{0.78}{MSE} & \multicolumn{1}{c}{\scalebox{0.78}{MAE}} & \multicolumn{1}{c}{\scalebox{0.78}{MSE}} & \multicolumn{1}{c}{\scalebox{0.78}{MAE}}  \\
+    \midrule
+    \midrule
+
+    \scalebox{0.95}{ETTm1} & \scalebox{0.78}{\cellcolor{myblue}{0.358}} &\scalebox{0.78}{\cellcolor{myblue}{0.387}} &  \scalebox{0.78}{0.383} &\scalebox{0.78}{0.396}  & \scalebox{0.78}{0.407} & \scalebox{0.78}{0.410} & \scalebox{0.78}{0.414} & \scalebox{0.78}{0.407} &  {\scalebox{0.78}{0.387}} &  {\scalebox{0.78}{0.400}} & \scalebox{0.78}{0.513} & \scalebox{0.78}{0.496} & \scalebox{0.78}{0.419} & \scalebox{0.78}{0.419} & {\scalebox{0.78}{0.400}} & {\scalebox{0.78}{0.406}}  &{\scalebox{0.78}{0.403}} &{\scalebox{0.78}{0.407}}  \\ 
+
+    
+    \scalebox{0.95}{ETTm2} & \scalebox{0.78}{\cellcolor{myblue}{0.261}} &\scalebox{0.78}{\cellcolor{myblue}{0.309}} &  \scalebox{0.78}{0.271} &\scalebox{0.78}{0.327}  & {\scalebox{0.78}{0.288}} & {\scalebox{0.78}{0.332}} &  {\scalebox{0.78}{0.286}} &  {\scalebox{0.78}{0.327}} &  {\scalebox{0.78}{0.281}} &  {\scalebox{0.78}{0.326}} & \scalebox{0.78}{0.757} & \scalebox{0.78}{0.610} & \scalebox{0.78}{0.358} & \scalebox{0.78}{0.404} &{\scalebox{0.78}{0.291}} &{\scalebox{0.78}{0.333}} &\scalebox{0.78}{0.350} &\scalebox{0.78}{0.401}   \\ 
+
+    
+    \scalebox{0.95}{ETTh1} & \scalebox{0.78}{\cellcolor{myblue}{0.420}} &\scalebox{0.78}{\cellcolor{myblue}{0.421}} &  \scalebox{0.78}{0.441} &\scalebox{0.78}{0.432} & {\scalebox{0.78}{0.454}} &  {\scalebox{0.78}{0.447}} &  {\scalebox{0.78}{0.446}} &  {\scalebox{0.78}{0.434}} & \scalebox{0.78}{0.469} & \scalebox{0.78}{0.454} & \scalebox{0.78}{0.529} & \scalebox{0.78}{0.522} & \scalebox{0.78}{0.541} & \scalebox{0.78}{0.507} &\scalebox{0.78}{0.458} &{\scalebox{0.78}{0.450}} &{\scalebox{0.78}{0.456}} &{\scalebox{0.78}{0.452}}  \\ 
+
+    \scalebox{0.95}{ETTh2} & \scalebox{0.78}{\cellcolor{myblue}{0.336}} &\scalebox{0.78}{\cellcolor{myblue}{0.382}} &  \scalebox{0.78}{0.361} &\scalebox{0.78}{0.391}  &  {\scalebox{0.78}{0.383}} &  {\scalebox{0.78}{0.407}} &  {\scalebox{0.78}{0.374}} &  {\scalebox{0.78}{0.398}} & {\scalebox{0.78}{0.387}} & {\scalebox{0.78}{0.407}} & \scalebox{0.78}{0.942} & \scalebox{0.78}{0.684} & \scalebox{0.78}{0.611} & \scalebox{0.78}{0.550}  &{\scalebox{0.78}{0.414}} &{\scalebox{0.78}{0.427}} &\scalebox{0.78}{0.559} &\scalebox{0.78}{0.515}  \\ 
+
+    
+    \scalebox{0.95}{ECL} & \scalebox{0.78}{\cellcolor{myblue}{0.162}} &\scalebox{0.78}{\cellcolor{myblue}{0.261}} &\scalebox{0.78}{0.169} &\scalebox{0.78}{0.274} &  {\scalebox{0.78}{0.178}} &  {\scalebox{0.78}{0.270}} & \scalebox{0.78}{0.219} & \scalebox{0.78}{0.298} & \scalebox{0.78}{0.205} &  {\scalebox{0.78}{0.290}} & \scalebox{0.78}{0.244} & \scalebox{0.78}{0.334} & \scalebox{0.78}{0.251} & \scalebox{0.78}{0.344} & {\scalebox{0.78}{0.192}} &\scalebox{0.78}{0.295} &\scalebox{0.78}{0.212} &\scalebox{0.78}{0.300}  \\ 
+
+    
+
+    \scalebox{0.95}{Traffic} & \scalebox{0.78}{\cellcolor{myblue}{0.415}} &\scalebox{0.78}{{0.289}} &  \scalebox{0.78}{0.493} &\scalebox{0.78}{0.291} &  {\scalebox{0.78}{0.428}} &  {\cellcolor{myblue}\scalebox{0.78}{0.282}} & \scalebox{0.78}{0.626} & \scalebox{0.78}{0.378} &  {\scalebox{0.78}{0.481}} &  {\scalebox{0.78}{0.304}}& \scalebox{0.78}{0.550} &  {\scalebox{0.78}{0.304}} & \scalebox{0.78}{0.760} & \scalebox{0.78}{0.473} &{\scalebox{0.78}{0.620}} &{\scalebox{0.78}{0.336}} &\scalebox{0.78}{0.625} &\scalebox{0.78}{0.383}   \\ 
+
+    
+    \scalebox{0.95}{Weather} & \scalebox{0.78}{\cellcolor{myblue}{0.231}} &\scalebox{0.78}{\cellcolor{myblue}{0.265}} &  \scalebox{0.78}{0.255} &\scalebox{0.78}{0.280} &  {\scalebox{0.78}{0.258}} &  {\scalebox{0.78}{0.278}} & \scalebox{0.78}{0.272} & \scalebox{0.78}{0.291} &  {\scalebox{0.78}{0.259}} &  {\scalebox{0.78}{0.281}} & \scalebox{0.78}{0.259} & \scalebox{0.78}{0.315} & \scalebox{0.78}{0.271} & \scalebox{0.78}{0.320} &{\scalebox{0.78}{0.259}} &{\scalebox{0.78}{0.287}} &\scalebox{0.78}{0.265} &\scalebox{0.78}{0.317} \\ 
+    \bottomrule
+  \end{tabular}
+  }
+
+\end{table*}
+
+\vspace{2ex}
+\subsection{Time Series Forecasting}\label{sec:exp-timeseries}
+To show the effectiveness of our memory module in a broader tasks, we also evaluate its performance in time series forecasting tasks. To this end, we use Simba framework~\citep{patro2024simba} for time series forecasting, and replace its Mamba module with our neural memory. We report the results on common time series forecasting benchmark datasets–ETT, ECL, Traffic, and Weather~\citep{zhou2021informer}. The results are reported in \autoref{tab:avg_baseline_results}. Our neural memory module is outperforming all baselines, including Mamba-based, linear-based, and Transformer-based architectures. 
+
+\begin{table*}[t!]
+\centering
+\caption{Downstream evaluation of pre-trained DNA models on GenomicsBenchmarks~\citep{grevsova2023genomic}. We report top-1 classification accuracy ($\%$).}
+\label{table:genomics_benchmarks}
+\resizebox{0.75\linewidth}{!}{
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Model       & Enhancer Cohn & Enhancer Ens & Human Reg. & Non-TATA Promoters & Human OCR Ens. \\ \midrule
+CNN           & 69.5                 & 68.9                     & 93.3             & 84.6                     & 68.0               \\
+DNABERT       & 74.0                 & 85.7                     & 88.1             & 85.6                     & 75.1               \\
+GPT           & 70.5                 & 83.5                     & 91.5             & 87.7                     & 73.0               \\
+HyenaDNA      & 74.2                 & 89.2                     & \cellcolor{myblue}93.8    & 96.6                     & \cellcolor{myblue}80.9      \\ \midrule
+Transformer++ & 73.4                 & {89.5}            & 89.9             & 94.4                     & 79.5               \\
+Mamba         & 73.0                 & -                        & -                & 96.6                     & -                  \\
+Based         & {74.6}        & 89.5            & 89.5             & \cellcolor{myblue}96.8            & 79.0               \\ 
+\midrule
+Neural Memory Module & \cellcolor{myblue}75.2 &  \cellcolor{myblue}89.6 & 89.3 & 96.6 & 79.9\\
+
+\bottomrule
+\end{tabular}
+}
+\end{table*}
+
+\subsection{DNA Modeling}\label{sec:exp-DNA}
+In order to understand the capability of Titans beyond natural language, we further evaluate the performance of our neural memory module on DNA modeling tasks. To this end, we evaluate pre-trained models on the downstream tasks in GenomicsBenchmarks~\citep{grevsova2023genomic}. We follow the same experimental setups from \citet{nguyen2024hyenadna}, and re-use the reported results of baselines by \citet{arora2024simple}. The performance of Titans (LMM) and baselines are reported in \autoref{table:genomics_benchmarks}.  We find that LMM is competitive with state-of-the-art architectures across different downstream genomics tasks.
+
+\subsection{Efficiency}\label{sec:exp-efficiency}
+\begin{wrapfigure}{r}{0.33\linewidth}
+    \centering
+    \vspace{-3ex}
+        \includegraphics[width=\linewidth]{Figures/efficiency.png}
+    \caption{Training throughput comparison of Titans and baselines. }
+    \label{fig:efficiency}
+    \vspace{-6ex}
+\end{wrapfigure}
+In this part, we compare the efficiency of our neural memory as well as Titans with state-of-the-art sequence models. The training throughput of models for different \texttt{sequence length $\times$ batch size} are reported in \autoref{fig:efficiency}. Comparing recurrent models, including our neural memory module, we can see our memory module is slightly slower than Mamba2 and Gated DeltaNet, mainly due to: (1) having deep memory and more expressive
+transition process (memory update), and (2) highly optimized kernel in the implementation of Mamba2. Interestingly, Titans (MAL) are faster than baselines as well as the memory module. The main reason for this better throughput is the highly optimized kernel of Flash-Attention~\citep{dao2024flashattention}, which is used for implementing SWA and full attention module in Titans.  
+
+\subsection{Ablation Study}\label{sec:exp-ablation}
+Finally, we perform ablation studies on the different architectural choices in Titans. We consider our neural memory module as a base model and then changing one component at a time: (1) replacing deep memory with linear memory, removing (2) convolution, (3) momentum in the surprise measure, (4) weight decay (or forgot mechanism), and (5) persistent memory. The results are reported in \autoref{tab:ablation}. All components of neural memory design are positively contributing to its performance, where the greatest contribution comes from weight decay, momentum, convolution, and persistent memory, respectively. 
+
+\begin{table*}
+    \centering
+    \caption{Ablation Study on Titans. All components of Titans are positively contributing to its performance. }
+    \label{tab:ablation}
+    \resizebox{0.55\linewidth}{!}{
+    \begin{tabular}{l c c c}
+    \toprule
+    \multirow{2}{*}{Model}     & Language Modeling & Reasoning & Long Context\\
+    & ppl $\downarrow$ & acc $\uparrow$ & acc $\uparrow$ \\
+    \midrule
+    \midrule
+    LMM         &   \cellcolor{mygreen}27.01  &   \cellcolor{mygreen}47.83  & \cellcolor{mygreen}92.68\\ 
+    \midrule
+    \hspace{6pt}+\texttt{Attn} (MAC) & 26.67 & \cellcolor{myblue}48.65 &       \cellcolor{myblue}{97.95}         \\
+    \hspace{6pt}+\texttt{Attn} (MAG) & \cellcolor{myblue}25.70 & 48.60 & 96.70               \\
+    \hspace{6pt}+\texttt{Attn} (MAL) & 25.91 & 47.87 &  96.91              \\
+    \midrule
+    Linear Memory          &  28.49   &  46.97   &  85.34 \\
+    w/o Convolution        &  28.73   &  45.82   &  90.28\\
+    w/o Momentum           &  28.98   &  45.49   &  87.12\\
+    w/o Weight Decay       &  29.04   &  45.11   &  85.60\\
+    w/o Persistent Memory  &  27.63   &  46.35   &  92.49\\
+    \toprule
+    \end{tabular}
+    }
+\end{table*}
+
+\head{The Effect of Architectural Design}
+To evaluate the effect of architecture design, we compare the performance of three represented variants of Titans in three aspects of (i) language modeling, (ii) commen-sense reasoning, and (iii) long context NIAH (BABILong) tasks. The results are reported in \autoref{tab:ablation}. We find that MAC and MAG have close performance in language modeling and common-sense reasoning tasks, while MAC achieve significantly better performance in long-context NIAH. Both of these models achieve better performance than MAL. These results along with \autoref{fig:efficiency}, show a trade-off between fast training and more expressive design.  
+
+\section{Conclusion}\label{sec:concolusion}
+In this paper, we present a neural long-term memory that, as a meta in-context learner, learns to memorize at test time. The neural memory module is a recurrent model in nature, and is adaptively memorizing tokens that are more surprising or are close to surprising tokens. Comparing to modern recurrent models, it has more expressive memory update and storing mechanism. Using this memory, we present Titans architectures, and its three variants, in which we suggest to incorporate the memory module as (1) a context, (2) gating, and (3) a layer.  Our experimental evaluation on diverse tasks tasks validate that Titans are more effective than Transformers and recent modern linear recurrent models, specifically for long context. That is, Titans can scale to larger than 2M context window size with better accuracy than baselines. 
+
+Titans are implemented in Pytorch and JAX and we intend to make the code we used to train and evaluate our models available soon.
+
+\newpage
+\printbibliography
+
+\appendix
+
+\newpage
+\section{Related Work}\label{app:rw}
+There are diverse perspectives that can independently lead to the design of Titans or its components. Accordingly, to further situate our work in a broader context, we review three categories of studies:
+
+\subsection{Linear Recurrent Models}
+Recently, to address the computational cost of Transformers in both training and inference, linear recurrent models have attracted much attention~\citep{tiezzi2024resurgence}, mainly due to their fast inference and training. The first generation of models–such as RetNet~\citep{sun2023retentive}, LRU~\citep{orvieto2023resurrecting}, RWKV~\citep{peng2023rwkv}, S5~\citep{smith2023simplified}, and S4~\citep{gu2022efficiently}–uses data-independent transition matrix/decay mechanism. The second generation of such models started to incorporate gating mechanism, a widely used techniques in traditional RNNs~\citep{gers2000learning, greff2016lstm, van2018unreasonable}, into such linear architectures–e.g., Griffin~\citep{de2024griffin}, SSMs~\citep{hasani2023liquid, behrouz2024mambamixer, dao2024transformers, gu2024mamba}, RWKV6~\citep{peng2024eagle}. The third generation of linear recurrent models are based on more complex memory updating rule based on meta-learning, online learning, and/or delta-rule, resulting in more expressive and effective models such as: Longhorn~\citep{liu2024longhorn}, Gated DeltaNet~\citep{yang2024gated}, TTT~\citep{sun2024learning}, and DeltaNet~\citep{yang2024parallelizing}. Our LMM model can be seen as the next generation of such models, in which we incorporate the token flow into the memory updating mechanism, having more powerful memory updating process. See \autoref{app:MAS} for a detailed discussion of different recurrent models and Titans.
+
+\subsection{Transformer-based Architectures}
+
+\head{Transformers}
+Transformers~\citep{transformers} as the de facto backbone for many deep learning models are based on attention mechanism~\citep{bahdanau2014neural}. They, however, suffer from quadratic computational cost, limiting their ability to scale to long context window. To improve the memory consumption and throughput of softmax attention for longer sequences, various studies focused on I/O aware implementations of attention~\citep{flashattention-1, dao2024flashattention}, designing more efficient attention mechanisms by sparsifying the attention matrix~\citep{choromanski2021rethinking, dai2019transformerxl, chen2021scatterbrain, roy2021efficient, chen2021scatterbrain, dong2024flex}, approximating the softmax~\citep{arora2024simple}, or developing kernel-based (linear) attentions~\citep{kacham2024polysketchformer, schlag2021linear, yang2024gatedattn, aksenov2024linear}.
+
+\head{Segment-based Transformers}
+Another line of research to improve the efficiency of Transformers is segment-based or Chunk Transformers~\citep{dai2019transformerxl}. The main drawback of chunk Transformers is that segments are fully separated and so the context window is limited to the length of the chunks. To address this issue, various studies discuss the importance of a memory so it can help the model to transfer information across chunks~\citep{bulatov2022recurrent, rodkin2024associative, wu2020memformer, zancato2024bmojo, hutchins2022block, feng2022learn, hutchins2022block, bulatov2023scaling, wang2019r, wu2020memformer, zancato2024bmojo}. The key differences of Titans with these models are: (1) The memory in such models are simple small size vectors, lacking expressive power to compress complex information; (2) The memory module lacks forget mechanism, leading to a fast memory overflow; (3) only focus on momentary surprise, missing the information flow. More specifically, recalling Recurrent Memory Transformers (RMT)~\citep{bulatov2022recurrent, rodkin2024associative, bulatov2023scaling}, one can treat Titans (MAC) as the generalization of RMT, where we use a neural memory module instead of a vector-valued small size memory. 
+
+\head{Memory for Large Language Models}
+Another interesting research direction has been to incorporate external memory modules to LLMs after training~\citep{he2024camelot, Khandelwal2020Generalization, wang2024memoryllm}. Such models are different from our approach as we incorporate the memory as a part of initial architecture and so we train it in an end-to-end manner. Also, most of these explicit memory modules suffer from the same limitations as chunk-based Transformers (mentioned above). For a detailed discussion of such models, we refer to the recent study of \citet{wang2024towards}.
+
+\subsection{Test Time Training and Fast Weight Programs}
+
+\head{Memory Design and Augmentation with Memory} 
+In the literature, a substantial research effort have been toward designing memory modules that are capable of either memorizing the knowledge abstraction (e.g., persistent memory)~\citep{sukhbaatar2019augmenting}, or memorizing the data-dependent information (also known as contextual memory), through recurrence~\citep{zancato2024bmojo, bulatov2022recurrent, rodkin2024associative}, Transformers~\citep{munkhdalai2024leave, zhang2024memory, cetin2024evolved, berges2024memory, le2020self, feng2022learn}, gradient~\citep{munkhdalai2019metalearned, irie2022dual}, or other learning paradigms~\citep{weston2014memory, sukhbaatar2015end}. These memory models, however, either (1) are based on momentary surprise, missing the data flow and events,   (2) lack forget mechanisms to remove the memory, leading to a fast memory overflow (3) are fixed-size shallow (matrix valued) memory, resulting in poor performance in long context, and (4) are based on fixed parameters at test time, lacking test time adaption. 
+
+\head{Fast Weight Programs}
+The idea of seeing linear layers as the key-value (associative) memory system backs to fast weight programs, in which dynamic fast programs are incorporated into recurrent neural networks to serve as writable memory~\citep{schlag2021linear, schmidhuber1992learning, schmidhuber1993reducing}. The two learning rules of Hebbian~\citep{hebb2005organization} and delta~\citep{prados1989neural} are the most popular learning rules for fast weight programs, which have been extensively explored in various studies~\citep{munkhdalai2017neural, schmidhuber1992learning, munkhdalai2019metalearned, schlag2021linear, irie2021going, yang2024parallelizing, yang2024gated}. All these models, however, are based on momentary surprise, missing the token flow in the sequences (see \autoref{sec:long-memory}), and most of them lacks a forgetting gate, resulting in a poor memory management. 
+
+\head{Test Time Training}
+The key ideas of learning at test time or learning to learn (i.e.,~\citep{andrychowicz2016learning}) backs to very early studies on local learning~\cite{bottou1992local}, in which each test data sample is trained on its neighbors before making a prediction~\citep{zhang2006svm, gandelsman2022test}. This approach further has shown promising performance in vision tasks~\citep{jain2011online, mullapudi2019online}, mostly due to their ability to mitigate out-of-distribution samples. The most similar studies to ours in this direction are MNM~\citep{munkhdalai2019metalearned} and TTT-layer~\citep{sun2024learning}, which we discussed the key differences in \autoref{app:MAS}. 
+
+\section{Language Modeling and Common-sense Reasoning Datasets}\label{app:exp-details}
+Following recent studies on linear recurrent models~\citep{yang2024gated, dao2024transformers, yang2024parallelizing}, we use Wikitext~\citep{merity2017pointer}, LMB~\citep{paperno-etal-2016-lambada}, PIQA~\citep{bisk2020piqa}, HellaSwag~\citep{zellers-etal-2019-hellaswag}, WinoGrande~\citep{sakaguchi2021winogrande},  ARC-easy (ARC-e) and ARC-challenge (ARC-c)~\citep{clark2018think}, SIQA~\citep{sap-etal-2019-social}, and BoolQ~\citep{clark-etal-2019-boolq}. Also, the baselines results for 400M models are from the reported results by \citet{yang2024gated}. 
+
+\section{Long-term Memory Module (LMM) as a Sequence Model}\label{app:MAS}
+In this section, we discuss how LMM as a sequence model is connected to modern linear recurrent models. For the sake of simplicity, we start with a linear memory, where $\M_t = W_t \in \R^{d_{\text{in}} \times d_{\text{in}}}$. In this case, our objective function becomes $\ell(\M; x_t) = \frac{1}{2}\left\Vert \M_{t}\mathbf{k}_t - \mathbf{v}_t  \right \Vert_2^2$, in which we use gradient descent with momentum and weight decay for the optimization. Accordingly, revisiting the recurrent formula in \autoref{eq:all}:   
+\begin{align}\label{eq:linear-mal}
+    &\M_t =  \texttt{diag}\left(1 - \alpha_t\right)\M_t + S_t \\
+    &S_t = \texttt{diag}\left(\eta_t \right)S_{t-1} - \texttt{diag}\left(\theta_t \right) \left( \M_{t-1} \mathbf{k}_t^\top \mathbf{k}_t - \mathbf{v}_t^{\top} \mathbf{k}_t \right).
+\end{align}
+
+\head{LMM is Generalized Gated DeltaNet} As discussed by \citet{yang2024gated}, DeltaNet~\citep{yang2024parallelizing} can alternatively be interpreted as an online learning problem that optimizes the $\mathcal{L} = \frac{1}{2}\left\Vert \mathbf{S}_{t}\mathbf{k}_t - \mathbf{v}_t  \right \Vert_2^2$, resulting in:
+\begin{align}\label{eq:deltanet}
+    \mathbf{S}_{t+1} = \mathbf{S}_{t} - \theta_t \nabla \mathcal{L} = \mathbf{S}_{t} \left( \mathbf{I} - \theta_t \mathbf{k}_t\mathbf{k}_t^{\top} \right) + \theta_t \mathbf{v}_t\mathbf{k}^{\top}_t.
+\end{align}
+In this formulation, Gated DeltaNet is the same as above but with an additional weight decay term~\citep{yang2024gated}. Comparing \autoref{eq:linear-mal} and \autoref{eq:deltanet}, we can see that setting $\eta_t = 0$ results in both formulations to be equivalent. Accordingly, we can say LMM is generalizing the very recent study of Gated DeltaNet~\citep{yang2024gated} from three aspects: 
+\begin{itemize}
+    \item \underline{Momentum-based Rule}: The Delta Rule is based on momentary surprise, meaning that the flow of tokens cannot affect the memory update rule. LMM, however, is based on a momentum rule, which consider \emph{both} past and momentary surprise.
+    \item \underline{Deep Memory}: While Gated DeltaNet is limited to a linear (matrix-valued) memory as it requires finding the closed recurrence form, LMM allows using deep memory module by using a gradient-based formulation, resulting in higher expressive power.
+    \item \underline{Non-Linear Recurrence}: While DeltaNet and Gated DeltaNet are based on linear recurrence, our LMM is using inter-chunk non-linear recurrence and intra-chunk  linear recurrence. This design allows LMM having a higher expressive power.
+\end{itemize}
+
+Here, we discussed Gated DeltaNet as a sample of recent generation of recurrent models. Similar approaches such as RWKV-7~\citep{rwkv-repo} are also using the same formulation and loss function, and so LMM is generalizing all such models.  
+
+\head{LMM is Generalized Longhorn}
+Similar to DeltaNet, Longhorn~\citep{liu2024longhorn} uses the same loss function but it derives the closed form using implicit online learning: 
+\begin{align}
+    \mathbf{S}_{t+1} = \mathbf{S}_{t} \left( \mathbf{I} - \delta_t \mathbf{k}_t\mathbf{k}_t^{\top} \right) + \delta_t \mathbf{v}_t\mathbf{k}^{\top}_t,
+\end{align}
+where $\delta_t = \frac{\theta_t}{1 + \theta_t \mathbf{k}_t\mathbf{k}_t^{\top}}$.
+It, however, lacks a forgetting gate, resulting in a faster memory overflow. Therefore, in addition two the abovementioned aspects of (1)~\underline{Momentum-based Rule}, (2)~\underline{Deep Memory}, and (3)~\underline{Non-Linear Recurrence}, LMM has the advantage of using an additional (4) \underline{Forget Gate}, leading to a better memory management. 
+
+\head{LMM is Generalized TTT Layer}
+To the best of our knowledge, TTT~\citep{sun2024learning}, is the only modern linear recurrent models with a gradient-based updating rule. In addition to different architectural designs and also objective functions, our LMM has three key differences with presented TTT layers~\citep{sun2024learning}:
+\begin{enumerate}
+    \item \underline{Forgetting Mechanism}: TTT layers are updating memory at each time, without having the chance to forget the past data. Accordingly, when fixing the memory size, the model cannot manage the memory for long sequences. A forget mechanism, such as LMM's, allows clearing the memory when very past information is not needed anymore. We show that in a general case, this forget mechanism is equivalent to weight decay and provide a fast method to incorporate it into the parallel training.
+    \item \underline{Momentum-based Update Rule}: TTT layers are based on momentary surprise, meaning that the flow of tokens cannot affect the memory update rule. LMM, however, is based on a momentum rule, which consider \emph{both} past and momentary surprise. See \autoref{sec:long-memory} for the motivation of this design.
+    \item \underline{Deep Memory}: While TTT-layers allows for deeper memory, the advantages/disadvantages of such deeper memory modules have not been experimentally evaluated.  
+\end{enumerate}
+
+To the best of our knowledge, our neural long-term memory module is the first linear recurrent model with momentum-based update rule. 
+
+Finally, as a key difference with all the above and other recent linear recurrent studies, note that the hybrid variants of modern linear models–such as Griffin~\citep{de2024griffin}, DeltaNet~\citep{yang2024parallelizing}, Gated DeltaNet~\citep{yang2024gated}, H3~\citep{fu2023hungry}, Mamba2~\citep{dao2024transformers}, Samba~\citep{ren2024samba}, etc.–all are based on sequential layer-wise design. We present Titans to show how effectively one can incorporate such memory modules into an architecture.
+
+\end{document}

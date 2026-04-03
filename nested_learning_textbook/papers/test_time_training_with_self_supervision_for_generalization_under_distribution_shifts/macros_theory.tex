@@ -1,0 +1,61 @@
+\newcommand{\todo}[1]{}
+\renewcommand{\todo}[1]{{\color{red} TODO: {#1}}}
+
+\newcommand{\ones}{\mathbf 1}
+\newcommand{\reals}{{\mbox{\bf R}}}
+\newcommand{\integers}{{\mbox{\bf Z}}}
+\newcommand{\naturals}{{\mbox{\bf N}}}
+\newcommand{\symm}{{\mbox{\bf S}}}  % symmetric matrices
+
+% -- learning theory
+\newcommand{\fat}{\mathop{\bf fat}}
+\newcommand{\vcsg}{\mbox{VC-Subgraph}}
+
+% -- calculus
+\newcommand{\pder}[2]{\frac{\partial#1}{\partial#2}} % partial derivatives
+\newcommand{\der}[2]{\frac{d}{d#2}} % derivatives
+\newcommand{\grad}{\nabla}
+
+% -- lin alg and optimization
+\newcommand{\nullspace}{{\mathcal N}}
+\newcommand{\range}{{\mathcal R}}
+\newcommand{\Rank}{\mathop{\bf Rank}}
+\newcommand{\diag}{\mathop{\bf diag}}
+\newcommand{\card}{\mathop{\bf card}}
+\newcommand{\rank}{\mathop{\bf rank}}
+\newcommand{\conv}{\mathop{\bf conv}}
+\newcommand{\prox}{\mathbf{prox}}
+
+\newcommand{\Co}{{\mathop {\bf Co}}} % convex hull
+\newcommand{\dist}{\mathop{\bf dist{}}}
+\newcommand{\epi}{\mathop{\bf epi}} % epigraph
+\newcommand{\Vol}{\mathop{\bf vol}}
+\newcommand{\dom}{\mathop{\bf dom}} % domain
+\newcommand{\intr}{\mathop{\bf int}}
+\newcommand{\relint}{\mathop{\bf relint}}
+\newcommand{\opt}{^*}
+
+% -- probability
+\newcommand\ex{\ensuremath{\mathbb{E}}} % Expectation
+\DeclareMathOperator*{\var}{Var} % Variance
+\DeclareMathOperator*{\cov}{Cov} % Covariance
+
+\newcommand{\cf}{{\it cf.}}
+\newcommand{\eg}{{\it e.g.}}
+\newcommand{\ie}{{\it i.e.}}
+\newcommand{\etc}{{\it etc.}}
+
+\newcommand{\bmat}[1]{\begin{bmatrix}#1 \end{bmatrix}} % square brackets as delimiters
+
+% --- Self-scaling delmiter pairs ---
+\def\floor#1{\left\lfloor #1 \right\rfloor}
+\def\ceil#1{\left\lceil #1 \right\rceil}
+\def\seq#1{\left\langle #1 \right\rangle}
+\def\set#1{\left\{ #1 \right\}}
+\def\abs#1{\left| #1 \right|}
+\def\1#1{1\left[ #1 \right]} % Indicator
+
+\def\norm#1{\left\| #1 \right\|}
+\def\paren#1{\left( #1 \right)}     % need better macro name!
+\def\brack#1{\left[ #1 \right]}     % need better macro name!
+\def\brace#1{\left\{ #1 \right\}}

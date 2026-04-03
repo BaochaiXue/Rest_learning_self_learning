@@ -1,0 +1,59 @@
+\section{Preliminaries}\label{sec:prelim}
+In this section we discuss the notations and  review the background concepts. 
+
+\head{Notations}
+We let $x \in \R^{N \times d_{\text{in}}}$ be the input, $\M_t$ represent the state of memory/model $\M$ at time $t$, $\mathbf{K}$ be the keys, $\mathbf{V}$ be the values, and $\mathbf{Q}$ be the query matrices. We use bold lowercase letters with subscript $t$ to refer to the vector corresponds to the input $t$ (i.e., $\vk_t, \vv_t$, and $\vq_t$). We further refer to the distribution of any random variable $\mathcal{T}$ as $p(\mathcal{T})$. Throughout the paper, we use simple MLPs with $\mathcal{L}_{\M} \geq 1$ layers and residual connection as the architecture of the memory module $\M(\cdot)$. When it is needed, we parameterized the memory module with $\boldsymbol{\theta}_{\M} \supseteq \{W_1, W_2, \dots, W_{\mathcal{L}_{\M}} \}$, which at least includes the parameters of linear layers in the MLP. We use superscript with parenthesis to refer to parameters in different \emph{levels} of nested learning (different update frequency): i.e., either by using level index $W^{(\ell)}$ or its corresponding frequency $W^{(f_\ell)}$. 
+
+
+
+\head{Gradient Descent} Gradient descent is one of the most widely used optimization algorithms for high-dimensional problems, and its variants are standard tools for training large models. Given an objective $\mathcal{L}(\cdot; \cdot)$, the stochastic gradient descent (SGD) with step size $\eta_t > 0$ (a.k.a. learning rate) updates parameters by:
+\begin{align}
+    W_{t+1} \;=\; W_t - \eta_t \nabla_{W_t} \mathcal{L}(W_t; \boldsymbol{x_t}),
+\end{align}
+for data sample $\boldsymbol{x_t}$ from training set. The gradient descent formulation admits several equivalent characterizations that are useful in analysis. One of those equivalent formulations  is steepest‑descent in the Euclidean metric, where one step of gradient descent is equivalent to:
+\begin{align}
+    W_{t+1} \;=\; \arg\min_{W}\;\Big\{\,
+\langle \nabla_{W} \mathcal{L}(W_t; \boldsymbol{x_t}),\, W \rangle \;+\; \tfrac{1}{2\eta_t}\|W-W_t\|_2^2
+\,\Big\},
+\end{align}
+which is  minimizing a first‑order Taylor approximation regularized by a quadratic proximal term. The  GD step above is precisely a proximal update on the linearization of $\mathcal{L}(\cdot; \cdot)$ at $W_t$, revealing an implicit bias toward small moves in $L_2$-distance. Accumulating steps (with a constant learning rate $\eta$) yields the \emph{follow‑the‑regularized‑leader} (\textsc{FTRL}) form
+\begin{align}
+    W_{t+1} \;=\;
+\arg\min_{W} \Big\{\;\bigg\langle \sum_{s=1}^{t} \nabla \mathcal{L}(W_s; \boldsymbol{x}_s),\, W \bigg\rangle
+\;+\; \frac{1}{2\eta}\,\|W-W_1\|_2^2\Big\},
+\end{align}
+whose solution is $W_{t+1}=W_1-\eta\sum_{s=1}^{t}\nabla \mathcal{L}(W_s; \boldsymbol{x}_s)$. These two formulations are used in this paper interchangeably. However,   our discussions and formulations are generally valid for many other optimization algorithms as well.
+
+
+\head{Meta Learning}
+Designing an effective machine learning model often requires making decisions about its architecture parameterized by $\boldsymbol{\theta} \in \Theta$, objective $\mathcal{L}(\theta)$, and an optimizer, aiming to iteratively optimize the objective. Meta learning paradigm (or learning to learn)~\citep{schmidhuber1996simple, finn2017model, akyurek2022learning, irie2025metalearning} aim to automate a part of such decisions by modeling it as a \emph{two-level} optimization procedure, in which the outer model aims to learn to set parameters for the inner procedure to maximize the performance across a set of tasks. That is, given an objective parameterized by a parameter $\Phi$: i.e., $\ell(\boldsymbol{\theta}, \mathcal{D}; \Phi)$, one can formalize the outer loop process as optimizing parameter $\Phi$ over a set of tasks:
+\begin{align}
+    \Phi^{\ast} =
+\underset{\Phi}{\arg\min}
+\;\;
+\mathbb{E}_{\mathcal{T}_i \sim p(\mathcal{T})}
+\Biggl[
+    \ell(\theta, \mathcal{T}_i; \Phi)
+\Biggr],
+\end{align}
+where $p(\mathcal{T})$ is the distribution of tasks. While initial studies on meta-learning used supervised settings for the outer loop~\citep{schmidhuber1996simple}, recently, a more flexible family of methods that use an unsupervised process for the outer loop has gained popularity~\citep{brown2020language, chen2022meta, qu2025optimizing, finn2017model, akyurek2022learning}. In addition to the growing interest to use meta learning methods for a diverse set of downstream tasks~\citep{finn2017model, chen2022meta, qu2025optimizing, munkhdalai2019metalearned, irie2025metalearning}, in recent years, it also has shown popularity as a paradigm to design powerful sequence models~\citep{sun2024learning, behrouz2025Miras, behrouz2024titans}.
+
+
+\head{Fast Weight Programmers (FWPs)}
+Fast weight programmers (more recently refer to as linear Transformers)~\citep{schmidhuber1992learning, hinton1987using, ba2016using, schlag2021linear}, which also have been motivated from neuroscience perspective~\citep{gershman2025key}, are recurrent neural networks whose memory (or hidden state) is \emph{matrix‑valued}: a time‑varying fast‑weight matrix $\M_t\in\mathbb{R}^{d_{\mathrm{out}}\times d_{\mathrm{key}}}$ that serves as a short‑term memory. A separate “programmer” (slow net) maps each input $\boldsymbol{x}_t\in\mathbb{R}^{d_{\mathrm{in}}}$ to query, key, and value vectors and updates the fast weights online. A basic (Hebbian/outer‑product) FWP—often called \emph{vanilla} FWP—update its parameters with:
+\begin{align}
+    &\M_t \;=\; \alpha_t \M_{t-1} \;+\; \vv_t \phi(\vk_t)^{\top},
+\end{align}
+and retrieve from memory with $y_t \;=\; \M_t\,\phi(q_t)$, where $\phi(\cdot)$ is an element-wise feature map (often applied to both keys and queries). Unlike traditional RNNs or early variants of modern RNNs~\citep{LSTM, botev2024recurrentgemma, sun2023retentive} with vector states, the \emph{matrix} $\M_t$ is the recurrent state; it is \emph{written} by rank‑one update and \emph{read} by a matrix–vector multiplication, providing a compact, learnable key–value memory with constant state size across time.
+
+
+
+
+\head{In-context Learning}
+The concept of ``in-context learning'' initially defined by \citet{brown2020language} as the ability of a language model to leverage knowledge acquired during pre-training in order to infer and perform a new task solely based on its context (e.g., few examples, or natural language instructions). This broad and general definition, which simply is applicable for any language model with any architectural backbones and/or objective, later was formalized in a way that only described in-context learning for Transformer architectures trained with next token prediction objectives. Accordingly, despite extensive research on the algorithms/problems that a transformer-based model can learn in-context~\citep{akyurek2022learning, akyurek2024context, dherin2025learning, zhang2024trained}, the in-context learning as its general form is relatively underexplored. Throughout this paper, we use the most general definition of ``in-context learning'' and refer to it as the ability of a model to adapt itself to and learn from a given context. Our NL formulation connects ICL with the concept of associative memory, offering a unified explanation for the ICL capabilities of models regardless of their architectural backbone and/or objectives. 
+
+
+
+
+
+ 

@@ -1,0 +1,16 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Evidence from physiology that temporary memory may not be stored as neural activities}{}% 2
+\BOOKMARK [1][-]{section.3}{Fast Associative Memory}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{Layer normalized fast weights}{section.3}% 4
+\BOOKMARK [1][-]{section.4}{Experimental results}{}% 5
+\BOOKMARK [2][-]{subsection.4.1}{Associative retrieval}{section.4}% 6
+\BOOKMARK [2][-]{subsection.4.2}{Integrating glimpses in visual attention models}{section.4}% 7
+\BOOKMARK [2][-]{subsection.4.3}{Facial expression recognition}{section.4}% 8
+\BOOKMARK [2][-]{subsection.4.4}{Agents with memory}{section.4}% 9
+\BOOKMARK [1][-]{section.5}{Conclusion}{}% 10
+\BOOKMARK [1][-]{section*.1}{Supplementary Material}{}% 11
+\BOOKMARK [1][-]{appendix.A}{Experimental details}{}% 12
+\BOOKMARK [2][-]{subsection.A.1}{Associative retrieval}{appendix.A}% 13
+\BOOKMARK [2][-]{subsection.A.2}{Integrating glimpses in visual attention models: MNIST and Facial expression recognition}{appendix.A}% 14
+\BOOKMARK [2][-]{subsection.A.3}{Agents with memory}{appendix.A}% 15
+\BOOKMARK [1][-]{appendix.B}{Implementing the fast weights ``inner loop'' in biological neural networks}{}% 16

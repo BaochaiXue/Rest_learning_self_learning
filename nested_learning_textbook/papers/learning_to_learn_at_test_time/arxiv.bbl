@@ -1,0 +1,436 @@
+\begin{thebibliography}{66}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Ahn et~al.(2023)Ahn, Cheng, Daneshmand, and Sra]{ahn2023transformers}
+Kwangjun Ahn, Xiang Cheng, Hadi Daneshmand, and Suvrit Sra.
+\newblock Transformers learn to implement preconditioned gradient descent for
+  in-context learning.
+\newblock \emph{arXiv preprint arXiv:2306.00297}, 2023.
+
+\bibitem[Aky{\"u}rek et~al.(2022)Aky{\"u}rek, Schuurmans, Andreas, Ma, and
+  Zhou]{akyurek2022learning}
+Ekin Aky{\"u}rek, Dale Schuurmans, Jacob Andreas, Tengyu Ma, and Denny Zhou.
+\newblock What learning algorithm is in-context learning? investigations with
+  linear models.
+\newblock \emph{arXiv preprint arXiv:2211.15661}, 2022.
+
+\bibitem[Andrychowicz et~al.(2016)Andrychowicz, Denil, Gomez, Hoffman, Pfau,
+  Schaul, Shillingford, and De~Freitas]{andrychowicz2016learning}
+Marcin Andrychowicz, Misha Denil, Sergio Gomez, Matthew~W Hoffman, David Pfau,
+  Tom Schaul, Brendan Shillingford, and Nando De~Freitas.
+\newblock Learning to learn by gradient descent by gradient descent.
+\newblock \emph{Advances in neural information processing systems}, 29, 2016.
+
+\bibitem[Ba et~al.(2016)Ba, Hinton, Mnih, Leibo, and Ionescu]{ba2016using}
+Jimmy Ba, Geoffrey~E Hinton, Volodymyr Mnih, Joel~Z Leibo, and Catalin Ionescu.
+\newblock Using fast weights to attend to the recent past.
+\newblock \emph{Advances in neural information processing systems}, 29, 2016.
+
+\bibitem[Bao et~al.(2021)Bao, Dong, and Wei]{beit}
+Hangbo Bao, Li~Dong, and Furu Wei.
+\newblock Beit: {BERT} pre-training of image transformers.
+\newblock \emph{CoRR}, abs/2106.08254, 2021.
+\newblock URL \url{https://arxiv.org/abs/2106.08254}.
+
+\bibitem[Beltagy et~al.(2020)Beltagy, Peters, and Cohan]{beltagy2020longformer}
+Iz~Beltagy, Matthew~E Peters, and Arman Cohan.
+\newblock Longformer: The long-document transformer.
+\newblock \emph{arXiv preprint arXiv:2004.05150}, 2020.
+
+\bibitem[Bengio et~al.(1990)Bengio, Bengio, and Cloutier]{bengio1990learning}
+Yoshua Bengio, Samy Bengio, and Jocelyn Cloutier.
+\newblock \emph{Learning a synaptic learning rule}.
+\newblock Citeseer, 1990.
+
+\bibitem[Beyer et~al.(2022)Beyer, Zhai, and Kolesnikov]{beyer2022better}
+Lucas Beyer, Xiaohua Zhai, and Alexander Kolesnikov.
+\newblock Better plain vit baselines for imagenet-1k.
+\newblock \emph{arXiv preprint arXiv:2205.01580}, 2022.
+
+\bibitem[Bierens(1988)]{bierens1988nadaraya}
+Hermanus~Josephus Bierens.
+\newblock The nadaraya-watson kernel regression function estimator.
+\newblock \emph{(Serie Research Memoranda; No. 1988-58). Faculty of Economics
+  and Business Administration, Vrije Universiteit Amsterdam.}, 1988.
+
+\bibitem[Bottou \& Vapnik(1992)Bottou and Vapnik]{bottou1992local}
+L{\'e}on Bottou and Vladimir Vapnik.
+\newblock Local learning algorithms.
+\newblock \emph{Neural computation}, 4\penalty0 (6):\penalty0 888--900, 1992.
+
+\bibitem[Breiman et~al.(1977)Breiman, Meisel, and Purcell]{breiman1977variable}
+Leo Breiman, William Meisel, and Edward Purcell.
+\newblock Variable kernel estimates of multivariate densities.
+\newblock \emph{Technometrics}, 19\penalty0 (2):\penalty0 135--144, 1977.
+
+\bibitem[Brown et~al.(2020)Brown, Mann, Ryder, Subbiah, Kaplan, Dhariwal,
+  Neelakantan, Shyam, Sastry, Askell, et~al.]{brown2020language}
+Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared~D Kaplan, Prafulla
+  Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell,
+  et~al.
+\newblock Language models are few-shot learners.
+\newblock \emph{Advances in neural information processing systems},
+  33:\penalty0 1877--1901, 2020.
+
+\bibitem[Cai(2001)]{cai2001weighted}
+Zongwu Cai.
+\newblock Weighted nadaraya--watson regression estimation.
+\newblock \emph{Statistics \& probability letters}, 51\penalty0 (3):\penalty0
+  307--318, 2001.
+
+\bibitem[Chen et~al.(2020)Chen, Radford, Child, Wu, Jun, Luan, and
+  Sutskever]{chen2020generative}
+Mark Chen, Alec Radford, Rewon Child, Jeffrey Wu, Heewoo Jun, David Luan, and
+  Ilya Sutskever.
+\newblock Generative pretraining from pixels.
+\newblock In \emph{International conference on machine learning}, pp.\
+  1691--1703. PMLR, 2020.
+
+\bibitem[Chen(2017)]{chen2017tutorial}
+Yen-Chi Chen.
+\newblock A tutorial on kernel density estimation and recent advances.
+\newblock \emph{Biostatistics \& Epidemiology}, 1\penalty0 (1):\penalty0
+  161--187, 2017.
+
+\bibitem[Clark et~al.(2022)Clark, Guu, Chang, Pasupat, Hinton, and
+  Norouzi]{clark2022meta}
+Kevin Clark, Kelvin Guu, Ming-Wei Chang, Panupong Pasupat, Geoffrey Hinton, and
+  Mohammad Norouzi.
+\newblock Meta-learning fast weight language models.
+\newblock \emph{arXiv preprint arXiv:2212.02475}, 2022.
+
+\bibitem[Collobert et~al.(2006)Collobert, Sinz, Weston, Bottou, and
+  Joachims]{collobert2006large}
+Ronan Collobert, Fabian Sinz, Jason Weston, L{\'e}on Bottou, and Thorsten
+  Joachims.
+\newblock Large scale transductive svms.
+\newblock \emph{Journal of Machine Learning Research}, 7\penalty0 (8), 2006.
+
+\bibitem[Dai et~al.(2022)Dai, Sun, Dong, Hao, Sui, and Wei]{dai2022can}
+Damai Dai, Yutao Sun, Li~Dong, Yaru Hao, Zhifang Sui, and Furu Wei.
+\newblock Why can gpt learn in-context? language models secretly perform
+  gradient descent as meta optimizers.
+\newblock \emph{arXiv preprint arXiv:2212.10559}, 2022.
+
+\bibitem[Deng et~al.(2009)Deng, Dong, Socher, Li, Li, and
+  Fei-Fei]{deng2009imagenet}
+Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li~Fei-Fei.
+\newblock Imagenet: A large-scale hierarchical image database.
+\newblock In \emph{2009 IEEE conference on computer vision and pattern
+  recognition}, pp.\  248--255. Ieee, 2009.
+
+\bibitem[Dosovitskiy et~al.(2020)Dosovitskiy, Beyer, Kolesnikov, Weissenborn,
+  Zhai, Unterthiner, Dehghani, Minderer, Heigold, Gelly,
+  et~al.]{dosovitskiy2020image}
+Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn,
+  Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg
+  Heigold, Sylvain Gelly, et~al.
+\newblock An image is worth 16x16 words: Transformers for image recognition at
+  scale.
+\newblock \emph{arXiv preprint arXiv:2010.11929}, 2020.
+
+\bibitem[Finn et~al.(2017)Finn, Abbeel, and Levine]{finn2017model}
+Chelsea Finn, Pieter Abbeel, and Sergey Levine.
+\newblock Model-agnostic meta-learning for fast adaptation of deep networks.
+\newblock In \emph{International conference on machine learning}, pp.\
+  1126--1135. PMLR, 2017.
+
+\bibitem[Gammerman et~al.(1998)Gammerman, Vovk, and
+  Vapnik]{Gammerman98learningby}
+A.~Gammerman, V.~Vovk, and V.~Vapnik.
+\newblock Learning by transduction.
+\newblock In \emph{In Uncertainty in Artificial Intelligence}, pp.\  148--155.
+  Morgan Kaufmann, 1998.
+
+\bibitem[Gandelsman et~al.(2022)Gandelsman, Sun, Chen, and Efros]{ttt-mae}
+Yossi Gandelsman, Yu~Sun, Xinlei Chen, and Alexei~A. Efros.
+\newblock Test-time training with masked autoencoders.
+\newblock \emph{Advances in Neural Information Processing Systems}, 2022.
+
+\bibitem[Hansen et~al.(2020)Hansen, Jangir, Sun, Aleny{\`a}, Abbeel, Efros,
+  Pinto, and Wang]{hansen2020self}
+Nicklas Hansen, Rishabh Jangir, Yu~Sun, Guillem Aleny{\`a}, Pieter Abbeel,
+  Alexei~A Efros, Lerrel Pinto, and Xiaolong Wang.
+\newblock Self-supervised policy adaptation during deployment.
+\newblock \emph{arXiv preprint arXiv:2007.04309}, 2020.
+
+\bibitem[Hardt \& Sun(2023)Hardt and Sun]{hardt2023test}
+Moritz Hardt and Yu~Sun.
+\newblock Test-time training on nearest neighbors for large language models.
+\newblock \emph{arXiv preprint arXiv:2305.18466}, 2023.
+
+\bibitem[He et~al.(2021)He, Chen, Xie, Li, Doll{\'{a}}r, and Girshick]{mae}
+Kaiming He, Xinlei Chen, Saining Xie, Yanghao Li, Piotr Doll{\'{a}}r, and
+  Ross~B. Girshick.
+\newblock Masked autoencoders are scalable vision learners.
+\newblock \emph{CoRR}, abs/2111.06377, 2021.
+
+\bibitem[Hinton(2022)]{hinton2022forward}
+Geoffrey Hinton.
+\newblock The forward-forward algorithm: Some preliminary investigations.
+\newblock \emph{arXiv preprint arXiv:2212.13345}, 2022.
+
+\bibitem[Hinton \& Plaut(1987)Hinton and Plaut]{hinton1987using}
+Geoffrey~E Hinton and David~C Plaut.
+\newblock Using fast weights to deblur old memories.
+\newblock In \emph{Proceedings of the ninth annual conference of the Cognitive
+  Science Society}, pp.\  177--186, 1987.
+
+\bibitem[Hopfield(1982)]{hopfield1982neural}
+John~J Hopfield.
+\newblock Neural networks and physical systems with emergent collective
+  computational abilities.
+\newblock \emph{Proceedings of the national academy of sciences}, 79\penalty0
+  (8):\penalty0 2554--2558, 1982.
+
+\bibitem[Irie et~al.(2021)Irie, Schlag, Csord{\'a}s, and
+  Schmidhuber]{irie2021going}
+Kazuki Irie, Imanol Schlag, R{\'o}bert Csord{\'a}s, and J{\"u}rgen Schmidhuber.
+\newblock Going beyond linear transformers with recurrent fast weight
+  programmers.
+\newblock \emph{Advances in Neural Information Processing Systems},
+  34:\penalty0 7703--7717, 2021.
+
+\bibitem[Jain \& Learned-Miller(2011)Jain and Learned-Miller]{jain2011online}
+Vidit Jain and Erik Learned-Miller.
+\newblock Online domain adaptation of a pre-trained cascade of classifiers.
+\newblock In \emph{CVPR 2011}, pp.\  577--584. IEEE, 2011.
+
+\bibitem[Joachims(2002)]{joachims2002learning}
+Thorsten Joachims.
+\newblock \emph{Learning to classify text using support vector machines},
+  volume 668.
+\newblock Springer Science \& Business Media, 2002.
+
+\bibitem[Katharopoulos et~al.(2020)Katharopoulos, Vyas, Pappas, and
+  Fleuret]{katharopoulos2020transformers}
+Angelos Katharopoulos, Apoorv Vyas, Nikolaos Pappas, and Fran{\c{c}}ois
+  Fleuret.
+\newblock Transformers are rnns: Fast autoregressive transformers with linear
+  attention.
+\newblock In \emph{International conference on machine learning}, pp.\
+  5156--5165. PMLR, 2020.
+
+\bibitem[Kirsch \& Schmidhuber(2021)Kirsch and Schmidhuber]{kirsch2021meta}
+Louis Kirsch and J{\"u}rgen Schmidhuber.
+\newblock Meta learning backpropagation and improving it.
+\newblock \emph{Advances in Neural Information Processing Systems},
+  34:\penalty0 14122--14134, 2021.
+
+\bibitem[Lake et~al.(2017)Lake, Ullman, Tenenbaum, and
+  Gershman]{lake2017building}
+Brenden~M Lake, Tomer~D Ullman, Joshua~B Tenenbaum, and Samuel~J Gershman.
+\newblock Building machines that learn and think like people.
+\newblock \emph{Behavioral and brain sciences}, 40:\penalty0 e253, 2017.
+
+\bibitem[Liu et~al.(2021)Liu, Kothari, van Delft, Bellot-Gurlet, Mordan, and
+  Alahi]{liu2021ttt++}
+Yuejiang Liu, Parth Kothari, Bastien van Delft, Baptiste Bellot-Gurlet, Taylor
+  Mordan, and Alexandre Alahi.
+\newblock Ttt++: When does self-supervised test-time training fail or thrive?
+\newblock \emph{Advances in Neural Information Processing Systems}, 34, 2021.
+
+\bibitem[Lu et~al.(2021)Lu, Yao, Zhang, Zhu, Xu, Gao, Xu, Xiang, and
+  Zhang]{lu2021soft}
+Jiachen Lu, Jinghan Yao, Junge Zhang, Xiatian Zhu, Hang Xu, Weiguo Gao,
+  Chunjing Xu, Tao Xiang, and Li~Zhang.
+\newblock Soft: Softmax-free transformer with linear complexity.
+\newblock \emph{Advances in Neural Information Processing Systems},
+  34:\penalty0 21297--21309, 2021.
+
+\bibitem[Luo et~al.(2020)Luo, Huang, Szeliski, Matzen, and
+  Kopf]{luo2020consistent}
+Xuan Luo, Jia-Bin Huang, Richard Szeliski, Kevin Matzen, and Johannes Kopf.
+\newblock Consistent video depth estimation.
+\newblock \emph{ACM Transactions on Graphics (ToG)}, 39\penalty0 (4):\penalty0
+  71--1, 2020.
+
+\bibitem[Mahankali et~al.(2023)Mahankali, Hashimoto, and Ma]{mahankali2023one}
+Arvind Mahankali, Tatsunori~B Hashimoto, and Tengyu Ma.
+\newblock One step of gradient descent is provably the optimal in-context
+  learner with one layer of linear self-attention.
+\newblock \emph{arXiv preprint arXiv:2307.03576}, 2023.
+
+\bibitem[Malladi et~al.(2023)Malladi, Gao, Nichani, Damian, Lee, Chen, and
+  Arora]{malladi2023fine}
+Sadhika Malladi, Tianyu Gao, Eshaan Nichani, Alex Damian, Jason~D Lee, Danqi
+  Chen, and Sanjeev Arora.
+\newblock Fine-tuning language models with just forward passes.
+\newblock \emph{arXiv preprint arXiv:2305.17333}, 2023.
+
+\bibitem[Metz et~al.(2018)Metz, Maheswaranathan, Cheung, and
+  Sohl-Dickstein]{metz2018meta}
+Luke Metz, Niru Maheswaranathan, Brian Cheung, and Jascha Sohl-Dickstein.
+\newblock Meta-learning update rules for unsupervised representation learning.
+\newblock \emph{arXiv preprint arXiv:1804.00222}, 2018.
+
+\bibitem[Mullapudi et~al.(2018)Mullapudi, Chen, Zhang, Ramanan, and
+  Fatahalian]{mullapudi2018online}
+Ravi~Teja Mullapudi, Steven Chen, Keyi Zhang, Deva Ramanan, and Kayvon
+  Fatahalian.
+\newblock Online model distillation for efficient video inference.
+\newblock \emph{arXiv preprint arXiv:1812.02699}, 2018.
+
+\bibitem[Nitzan et~al.(2022)Nitzan, Aberman, He, Liba, Yarom, Gandelsman,
+  Mosseri, Pritch, and Cohen-Or]{nitzan2022mystyle}
+Yotam Nitzan, Kfir Aberman, Qiurui He, Orly Liba, Michal Yarom, Yossi
+  Gandelsman, Inbar Mosseri, Yael Pritch, and Daniel Cohen-Or.
+\newblock Mystyle: A personalized generative prior.
+\newblock \emph{arXiv preprint arXiv:2203.17272}, 2022.
+
+\bibitem[Pathak et~al.(2016)Pathak, Krahenbuhl, Donahue, Darrell, and
+  Efros]{pathak2016context}
+Deepak Pathak, Philipp Krahenbuhl, Jeff Donahue, Trevor Darrell, and Alexei~A
+  Efros.
+\newblock Context encoders: Feature learning by inpainting.
+\newblock In \emph{Proceedings of the IEEE conference on computer vision and
+  pattern recognition}, pp.\  2536--2544, 2016.
+
+\bibitem[Poli et~al.(2023)Poli, Massaroli, Nguyen, Fu, Dao, Baccus, Bengio,
+  Ermon, and R{\'e}]{poli2023hyena}
+Michael Poli, Stefano Massaroli, Eric Nguyen, Daniel~Y Fu, Tri Dao, Stephen
+  Baccus, Yoshua Bengio, Stefano Ermon, and Christopher R{\'e}.
+\newblock Hyena hierarchy: Towards larger convolutional language models.
+\newblock \emph{arXiv preprint arXiv:2302.10866}, 2023.
+
+\bibitem[Salimans et~al.(2017)Salimans, Ho, Chen, Sidor, and
+  Sutskever]{salimans2017evolution}
+Tim Salimans, Jonathan Ho, Xi~Chen, Szymon Sidor, and Ilya Sutskever.
+\newblock Evolution strategies as a scalable alternative to reinforcement
+  learning.
+\newblock \emph{arXiv preprint arXiv:1703.03864}, 2017.
+
+\bibitem[Schlag et~al.(2021)Schlag, Irie, and Schmidhuber]{schlag2021linear}
+Imanol Schlag, Kazuki Irie, and J{\"u}rgen Schmidhuber.
+\newblock Linear transformers are secretly fast weight programmers.
+\newblock In \emph{International Conference on Machine Learning}, pp.\
+  9355--9366. PMLR, 2021.
+
+\bibitem[Schmidhuber(1987)]{schmidhuber1987evolutionary}
+J{\"u}rgen Schmidhuber.
+\newblock \emph{Evolutionary principles in self-referential learning, or on
+  learning how to learn: the meta-meta-... hook}.
+\newblock PhD thesis, Technische Universit{\"a}t M{\"u}nchen, 1987.
+
+\bibitem[Schmidhuber(1992)]{schmidhuber1992learning}
+J{\"u}rgen Schmidhuber.
+\newblock Learning to control fast-weight memories: An alternative to dynamic
+  recurrent networks.
+\newblock \emph{Neural Computation}, 4\penalty0 (1):\penalty0 131--139, 1992.
+
+\bibitem[Shocher et~al.(2018)Shocher, Cohen, and Irani]{shocher2018zero}
+Assaf Shocher, Nadav Cohen, and Michal Irani.
+\newblock “zero-shot” super-resolution using deep internal learning.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pp.\  3118--3126, 2018.
+
+\bibitem[Sun et~al.(2020)Sun, Wang, Liu, Miller, Efros, and Hardt]{sun2020test}
+Yu~Sun, Xiaolong Wang, Zhuang Liu, John Miller, Alexei Efros, and Moritz Hardt.
+\newblock Test-time training with self-supervision for generalization under
+  distribution shifts.
+\newblock In \emph{International Conference on Machine Learning}, pp.\
+  9229--9248. PMLR, 2020.
+
+\bibitem[Sun et~al.(2021)Sun, Ubellacker, Ma, Zhang, Wang, Csomay-Shanklin,
+  Tomizuka, Sreenath, and Ames]{sun2021online}
+Yu~Sun, Wyatt~L Ubellacker, Wen-Loong Ma, Xiang Zhang, Changhao Wang, Noel~V
+  Csomay-Shanklin, Masayoshi Tomizuka, Koushil Sreenath, and Aaron~D Ames.
+\newblock Online learning of unknown dynamics for model-based controllers in
+  legged locomotion.
+\newblock \emph{IEEE Robotics and Automation Letters}, 6\penalty0 (4):\penalty0
+  8442--8449, 2021.
+
+\bibitem[Szegedy et~al.(2015)Szegedy, Liu, Jia, Sermanet, Reed, Anguelov,
+  Erhan, Vanhoucke, and Rabinovich]{szegedy2015going}
+Christian Szegedy, Wei Liu, Yangqing Jia, Pierre Sermanet, Scott Reed, Dragomir
+  Anguelov, Dumitru Erhan, Vincent Vanhoucke, and Andrew Rabinovich.
+\newblock Going deeper with convolutions.
+\newblock In \emph{Proceedings of the IEEE conference on computer vision and
+  pattern recognition}, pp.\  1--9, 2015.
+
+\bibitem[Tarzanagh et~al.(2023)Tarzanagh, Li, Thrampoulidis, and
+  Oymak]{tarzanagh2023transformers}
+Davoud~Ataee Tarzanagh, Yingcong Li, Christos Thrampoulidis, and Samet Oymak.
+\newblock Transformers as support vector machines.
+\newblock \emph{arXiv preprint arXiv:2308.16898}, 2023.
+
+\bibitem[Thrun \& Pratt(1998)Thrun and Pratt]{thrun1998learning}
+Sebastian Thrun and Lorien Pratt.
+\newblock Learning to learn: Introduction and overview.
+\newblock In \emph{Learning to learn}, pp.\  3--17. Springer, 1998.
+
+\bibitem[Tieleman \& Hinton(2009)Tieleman and Hinton]{tieleman2009using}
+Tijmen Tieleman and Geoffrey Hinton.
+\newblock Using fast weights to improve persistent contrastive divergence.
+\newblock In \emph{Proceedings of the 26th annual international conference on
+  machine learning}, pp.\  1033--1040, 2009.
+
+\bibitem[Vapnik(2013)]{vapnik2013nature}
+Vladimir Vapnik.
+\newblock \emph{The nature of statistical learning theory}.
+\newblock Springer science \& business media, 2013.
+
+\bibitem[Vincent et~al.(2008)Vincent, Larochelle, Bengio, and
+  Manzagol]{denoisingautoencoder}
+Pascal Vincent, Hugo Larochelle, Yoshua Bengio, and Pierre-Antoine Manzagol.
+\newblock Extracting and composing robust features with denoising autoencoders.
+\newblock In \emph{ICML}, pp.\  1096–1103, 2008.
+
+\bibitem[Von~Oswald et~al.(2023)Von~Oswald, Niklasson, Randazzo, Sacramento,
+  Mordvintsev, Zhmoginov, and Vladymyrov]{von2023transformers}
+Johannes Von~Oswald, Eyvind Niklasson, Ettore Randazzo, Jo{\~a}o Sacramento,
+  Alexander Mordvintsev, Andrey Zhmoginov, and Max Vladymyrov.
+\newblock Transformers learn in-context by gradient descent.
+\newblock In \emph{International Conference on Machine Learning}, pp.\
+  35151--35174. PMLR, 2023.
+
+\bibitem[Wang et~al.(2020{\natexlab{a}})Wang, Shelhamer, Liu, Olshausen, and
+  Darrell]{wang2020tent}
+Dequan Wang, Evan Shelhamer, Shaoteng Liu, Bruno Olshausen, and Trevor Darrell.
+\newblock Tent: Fully test-time adaptation by entropy minimization.
+\newblock \emph{arXiv preprint arXiv:2006.10726}, 2020{\natexlab{a}}.
+
+\bibitem[Wang et~al.(2023)Wang, Sun, Gandelsman, Chen, Efros, and
+  Wang]{wang2023test}
+Renhao Wang, Yu~Sun, Yossi Gandelsman, Xinlei Chen, Alexei~A Efros, and
+  Xiaolong Wang.
+\newblock Test-time training on video streams.
+\newblock \emph{arXiv preprint arXiv:2307.05014}, 2023.
+
+\bibitem[Wang et~al.(2020{\natexlab{b}})Wang, Li, Khabsa, Fang, and
+  Ma]{wang2020linformer}
+Sinong Wang, Belinda~Z Li, Madian Khabsa, Han Fang, and Hao Ma.
+\newblock Linformer: Self-attention with linear complexity.
+\newblock \emph{arXiv preprint arXiv:2006.04768}, 2020{\natexlab{b}}.
+
+\bibitem[Williams \& Rasmussen(2006)Williams and
+  Rasmussen]{williams2006gaussian}
+Christopher~KI Williams and Carl~Edward Rasmussen.
+\newblock \emph{Gaussian processes for machine learning}, volume~2.
+\newblock MIT press Cambridge, MA, 2006.
+
+\bibitem[Zhang et~al.(2021)Zhang, Bengio, Hardt, Recht, and
+  Vinyals]{zhang2021understanding}
+Chiyuan Zhang, Samy Bengio, Moritz Hardt, Benjamin Recht, and Oriol Vinyals.
+\newblock Understanding deep learning (still) requires rethinking
+  generalization.
+\newblock \emph{Communications of the ACM}, 64\penalty0 (3):\penalty0 107--115,
+  2021.
+
+\bibitem[Zhang et~al.(2006)Zhang, Berg, Maire, and Malik]{zhang2006svm}
+Hao Zhang, Alexander~C Berg, Michael Maire, and Jitendra Malik.
+\newblock Svm-knn: Discriminative nearest neighbor classification for visual
+  category recognition.
+\newblock In \emph{2006 IEEE Computer Society Conference on Computer Vision and
+  Pattern Recognition (CVPR'06)}, volume~2, pp.\  2126--2136. IEEE, 2006.
+
+\bibitem[Zhang et~al.(2023)Zhang, Frei, and Bartlett]{zhang2023trained}
+Ruiqi Zhang, Spencer Frei, and Peter~L Bartlett.
+\newblock Trained transformers learn linear models in-context.
+\newblock \emph{arXiv preprint arXiv:2306.09927}, 2023.
+
+\end{thebibliography}

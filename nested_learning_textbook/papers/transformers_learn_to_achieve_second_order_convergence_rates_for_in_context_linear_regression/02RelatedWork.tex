@@ -1,0 +1,40 @@
+\vspace{-1mm}
+\section{Related Work} \label{sec:related_work}
+\vspace{-1mm}
+% \paragraph{In-context learning by large language models. }
+% GPT-3 \citep{brown2020lm} first showed that Transformer-based large language models can ``learn'' to perform new tasks from in-context demonstrations (i.e., input-output pairs).
+% Since then, a large body of work in NLP has studied in-context learning, for instance by understanding how the choice and order of demonstrations affects results \citep{lu-etal-2022-fantastically,liu-etal-2022-makes,rubin-etal-2022-learning,su2023selective,chang-jia-2023-data,nguyen2023context}, studying the effect of label noise \citep{min-etal-2022-rethinking,yoo-etal-2022-ground,wei2023larger}, and proposing methods to improve ICL accuracy \citep{zhao2021calibrate,min-etal-2022-noisy,min-etal-2022-metaicl}.
+
+\paragraph{In-context learning by large language models. }
+GPT-3 \citep{brown2020lm} first showed that Transformer-based large language models can ``learn'' to perform new tasks from in-context demonstrations (i.e., input-output pairs).
+Since then, a large body of work in NLP has studied in-context learning, for instance by understanding how the choice and order of demonstrations affects results \citep{lu-etal-2022-fantastically,liu-etal-2022-makes,rubin-etal-2022-learning,su2023selective,chang-jia-2023-data,nguyen2023context}, studying the effect of label noise \citep{min-etal-2022-rethinking,yoo-etal-2022-ground,wei2023larger}, and proposing methods to improve ICL accuracy \citep{zhao2021calibrate,min-etal-2022-noisy,min-etal-2022-metaicl}.
+
+\paragraph{In-context learning beyond natural language. }
+Inspired by the phenomenon of ICL by large language models, subsequent work has studied how Transformers learn in-context beyond NLP tasks.
+\citet{Garg2022WhatCT} first investigated Transformers' ICL abilities for various classical machine learning problems, including linear regression. 
+We largely adopt their linear regression setup in this work.
+\citet{Li2023TransformersAA} formalize in-context learning as an algorithm learning problem.
+\citet{han2023incontext} suggests that Transformers learn in-context by performing Bayesian inference on prompts, which can be asymptotically interpreted as kernel regression. 
+Other work has analyzed how Transformers do in-context classification \citep{AtaeeTarzanagh2023TransformersAS,tarzanagh2023maxmargin,Zhang2023TrainedTL}, the role of pertaining data \citep{raventós2023pretraining}, and the relationship between model architecture and ICL \citep{lee2023exploring}.
+% \citet{AtaeeTarzanagh2023TransformersAS} and \citet{tarzanagh2023maxmargin} show that Transformers can find max-margin solutions for classification tasks and act as support vector machines.  \citet{Zhang2023TrainedTL} prove that a linear attention Transformer trained by gradient flow can indeed in-context learn class of linear models.
+% \citet{raventós2023pretraining} explore how diverse pretraining data can enable models to perform ICL on new tasks. \citet{lee2023exploring} investigate the relationship between model architecture and ICL.
+
+
+\paragraph{Do Transformers implement Gradient Descent? }
+A growing body of work has suggested that Transformers learn in-context by implementing gradient descent within their internal representations.
+\citet{Akyrek2022WhatLA} summarize operations that Transformers can implement, such as multiplication and affine transformations, and show that Transformers can implement gradient descent for linear regression using these operations.
+Concurrently, \citet{Oswald2022TransformersLI} argue that Transformers learn in-context via gradient descent, where one layer performs one gradient update.
+In subsequent work, \citet{Oswald2023UncoveringMA} further argue that Transformers are strongly biased towards learning to implement gradient-based optimization routines.
+\citet{Ahn2023TransformersLT} extend the work of \citet{Oswald2022TransformersLI} by showing Transformers can learn to implement preconditioned \gd, where the pre-conditioner can adapt to the data. 
+\citet{Bai2023TransformersAS} provide detailed constructions for how Transformers can implement a range of learning algorithms via gradient descent.
+Finally, \citet{Dai2023WhyCG} conduct experiments on NLP tasks and conclude that Transformer-based language models performing ICL behave similarly to models fine-tuned via gradient descent\new{; however, concurrent work \citep{shen2023pretrained} argues that real-world LLMs do not perform ICL via gradient descent}.
+\citet{mahankali2024one} showed that implementing gradient descent is a global minima for single layer linear self-attention. However, we study deeper models in this work, which can behave differently from single-layer models.
+In this paper, we argue that Transformers actually learn to perform in-context learning by implementing a second-order optimization method, not gradient descent\footnote{After an initial version of this paper, \citet{vladymyrov2024linear} found that a variant of \gd\ can mimic Iterative Newton by approximating the inverse implicitly and getting second-order rates, which also supports our claim.}.
+
+\paragraph{Mechanistic interpretability for Transformers. }
+Our work attempts to understand the mechanism through which Transformers perform in-context learning.
+Prior work has studied other aspects of Transformers' internal mechanisms, including 
+reverse-engineering language models \citep{wang2022interpretability}, the grokking phenomenon  \citep{power2022grokking,nanda2023progress}, manipulating attention maps
+\citep{hassid2022does}, and circuit finding \citep{conmy2023automated}. 
+
+\paragraph{Theoretical Expressivity of Transformers. } \citet{pmlr-v202-giannou23a} provide a construction of looped transformers to implement \newton's method for solving pseudo-inverse, and each Newton iteration can be implemented by 13 looped Transformer layers. In contrast, our construction needs only one Transformer layer to compute one Newton iteration.

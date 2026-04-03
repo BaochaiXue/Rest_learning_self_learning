@@ -1,0 +1,784 @@
+\begin{thebibliography}{120}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Ahn et~al.(2023)Ahn, Cheng, Daneshmand, and Sra]{Ahn2023TransformersLearnImplement}
+K.~Ahn, X.~Cheng, H.~Daneshmand, and S.~Sra.
+\newblock Transformers learn to implement preconditioned gradient descent for in-context learning.
+\newblock \emph{Advances in Neural Information Processing Systems}, 36:\penalty0 45614--45650, Dec. 2023.
+\newblock URL \url{https://proceedings.neurips.cc/paper_files/paper/2023/hash/8ed3d610ea4b68e7afb30ea7d01422c6-Abstract-Conference.html}.
+
+\bibitem[Ainslie et~al.(2023)Ainslie, Lee-Thorp, Jong, Zemlyanskiy, Lebron, and Sanghai]{Ainslie2023GQATrainingGeneralized}
+J.~Ainslie, J.~Lee-Thorp, M.~d. Jong, Y.~Zemlyanskiy, F.~Lebron, and S.~Sanghai.
+\newblock {GQA}: {Training} {Generalized} {Multi}-{Query} {Transformer} {Models} from {Multi}-{Head} {Checkpoints}.
+\newblock In \emph{The 2023 {Conference} on {Empirical} {Methods} in {Natural} {Language} {Processing}}, Dec. 2023.
+\newblock URL \url{https://openreview.net/forum?id=hmOwOZWzYE}.
+
+\bibitem[Aksenov et~al.(2024)Aksenov, Balagansky, Vaina, Shaposhnikov, Gorbatovski, and Gavrilov]{Aksenov2024LinearTransformersLearnable}
+Y.~Aksenov, N.~Balagansky, S.~M. L.~C. Vaina, B.~Shaposhnikov, A.~Gorbatovski, and D.~Gavrilov.
+\newblock Linear {Transformers} with {Learnable} {Kernel} {Functions} are {Better} {In}-{Context} {Models}, Feb. 2024.
+\newblock URL \url{http://arxiv.org/abs/2402.10644}.
+\newblock arXiv:2402.10644 [cs] version: 1.
+
+\bibitem[Akyürek et~al.(2024)Akyürek, Damani, Qiu, Guo, Kim, and Andreas]{Akyurek2024SurprisingEffectivenessTestTime}
+E.~Akyürek, M.~Damani, L.~Qiu, H.~Guo, Y.~Kim, and J.~Andreas.
+\newblock The {Surprising} {Effectiveness} of {Test}-{Time} {Training} for {Abstract} {Reasoning}, Nov. 2024.
+\newblock URL \url{http://arxiv.org/abs/2411.07279}.
+\newblock arXiv:2411.07279 [cs] version: 1.
+
+\bibitem[Ansari et~al.(2024)Ansari, Stella, Turkmen, Zhang, Mercado, Shen, Shchur, Rangapuram, Arango, Kapoor, Zschiegner, Maddix, Wang, Mahoney, Torkkola, Wilson, Bohlke-Schneider, and Wang]{Ansari2024ChronosLearningLanguage}
+A.~F. Ansari, L.~Stella, A.~C. Turkmen, X.~Zhang, P.~Mercado, H.~Shen, O.~Shchur, S.~S. Rangapuram, S.~P. Arango, S.~Kapoor, J.~Zschiegner, D.~C. Maddix, H.~Wang, M.~W. Mahoney, K.~Torkkola, A.~G. Wilson, M.~Bohlke-Schneider, and B.~Wang.
+\newblock Chronos: {Learning} the language of time series.
+\newblock \emph{Transactions on Machine Learning Research}, 2024.
+\newblock ISSN 2835-8856.
+\newblock URL \url{https://openreview.net/forum?id=gerNCVqqtR}.
+
+\bibitem[Arora et~al.(2023{\natexlab{a}})Arora, Eyuboglu, Timalsina, Johnson, Poli, Zou, Rudra, and Re]{Arora2023ZoologyMeasuringImproving}
+S.~Arora, S.~Eyuboglu, A.~Timalsina, I.~Johnson, M.~Poli, J.~Zou, A.~Rudra, and C.~Re.
+\newblock Zoology: {Measuring} and {Improving} {Recall} in {Efficient} {Language} {Models}.
+\newblock In \emph{The {Twelfth} {International} {Conference} on {Learning} {Representations}}, Oct. 2023{\natexlab{a}}.
+\newblock URL \url{https://openreview.net/forum?id=LY3ukUANko}.
+
+\bibitem[Arora et~al.(2023{\natexlab{b}})Arora, Yang, Eyuboglu, Narayan, Hojel, Trummer, and Ré]{Arora2023LanguageModelsEnable}
+S.~Arora, B.~Yang, S.~Eyuboglu, A.~Narayan, A.~Hojel, I.~Trummer, and C.~Ré.
+\newblock Language {Models} {Enable} {Simple} {Systems} for {Generating} {Structured} {Views} of {Heterogeneous} {Data} {Lakes}, Apr. 2023{\natexlab{b}}.
+\newblock URL \url{http://arxiv.org/abs/2304.09433}.
+\newblock arXiv:2304.09433 [cs].
+
+\bibitem[Arora et~al.(2024)Arora, Eyuboglu, Zhang, Timalsina, Alberti, Zou, Rudra, and Re]{Arora2024SimpleLinearAttention}
+S.~Arora, S.~Eyuboglu, M.~Zhang, A.~Timalsina, S.~Alberti, J.~Zou, A.~Rudra, and C.~Re.
+\newblock Simple linear attention language models balance the recall-throughput tradeoff.
+\newblock In \emph{Proceedings of the 41st {International} {Conference} on {Machine} {Learning}}, pages 1763--1840. PMLR, July 2024.
+\newblock URL \url{https://proceedings.mlr.press/v235/arora24a.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Beck et~al.(2024)Beck, Pöppel, Spanring, Auer, Prudnikova, Kopp, Klambauer, Brandstetter, and Hochreiter]{Beck2024XLSTMExtendedLong}
+M.~Beck, K.~Pöppel, M.~Spanring, A.~Auer, O.~Prudnikova, M.~Kopp, G.~Klambauer, J.~Brandstetter, and S.~Hochreiter.
+\newblock {xLSTM}: {Extended} {Long} {Short}-{Term} {Memory}, May 2024.
+\newblock URL \url{http://arxiv.org/abs/2405.04517}.
+\newblock arXiv:2405.04517 [cs, stat].
+
+\bibitem[Behrouz et~al.(2024)Behrouz, Zhong, and Mirrokni]{Behrouz2024TitansLearningMemorize}
+A.~Behrouz, P.~Zhong, and V.~Mirrokni.
+\newblock Titans: {Learning} to {Memorize} at {Test} {Time}, Dec. 2024.
+\newblock URL \url{http://arxiv.org/abs/2501.00663}.
+\newblock arXiv:2501.00663 [cs].
+
+\bibitem[Bertasius et~al.(2021)Bertasius, Wang, and Torresani]{Bertasius2021SpaceTimeAttentionAll}
+G.~Bertasius, H.~Wang, and L.~Torresani.
+\newblock Is {Space}-{Time} {Attention} {All} {You} {Need} for {Video} {Understanding}?
+\newblock In \emph{Proceedings of the 38th {International} {Conference} on {Machine} {Learning}}, pages 813--824. PMLR, July 2021.
+\newblock URL \url{https://proceedings.mlr.press/v139/bertasius21a.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Bietti et~al.(2023)Bietti, Cabannes, Bouchacourt, Jegou, and Bottou]{Bietti2023BirthTransformerMemory}
+A.~Bietti, V.~Cabannes, D.~Bouchacourt, H.~Jegou, and L.~Bottou.
+\newblock Birth of a {Transformer}: {A} {Memory} {Viewpoint}.
+\newblock In \emph{Thirty-seventh {Conference} on {Neural} {Information} {Processing} {Systems}}, Nov. 2023.
+\newblock URL \url{https://openreview.net/forum?id=3X2EbBLNsk}.
+
+\bibitem[Boyd and Vandenberghe(2004)]{Boyd2004ConvexOptimization}
+S.~Boyd and L.~Vandenberghe.
+\newblock \emph{Convex optimization}.
+\newblock Cambridge University Press, Cambridge, 2004.
+
+\bibitem[Bradbury et~al.(2017)Bradbury, Merity, Xiong, and Socher]{Bradbury2017QuasirecurrentNeuralNetworks}
+J.~Bradbury, S.~Merity, C.~Xiong, and R.~Socher.
+\newblock Quasi-recurrent neural networks.
+\newblock In \emph{International conference on learning representations}, 2017.
+\newblock URL \url{https://openreview.net/forum?id=H1zJ-v5xl}.
+
+\bibitem[Brown et~al.(2020)Brown, Mann, Ryder, Subbiah, Kaplan, Dhariwal, Neelakantan, Shyam, Sastry, Askell, Agarwal, Herbert-Voss, Krueger, Henighan, Child, Ramesh, Ziegler, Wu, Winter, Hesse, Chen, Sigler, Litwin, Gray, Chess, Clark, Berner, McCandlish, Radford, Sutskever, and Amodei]{Brown2020LanguageModelsAre}
+T.~B. Brown, B.~Mann, N.~Ryder, M.~Subbiah, J.~Kaplan, P.~Dhariwal, A.~Neelakantan, P.~Shyam, G.~Sastry, A.~Askell, S.~Agarwal, A.~Herbert-Voss, G.~Krueger, T.~Henighan, R.~Child, A.~Ramesh, D.~M. Ziegler, J.~Wu, C.~Winter, C.~Hesse, M.~Chen, E.~Sigler, M.~Litwin, S.~Gray, B.~Chess, J.~Clark, C.~Berner, S.~McCandlish, A.~Radford, I.~Sutskever, and D.~Amodei.
+\newblock Language {Models} are {Few}-{Shot} {Learners}, July 2020.
+\newblock URL \url{http://arxiv.org/abs/2005.14165}.
+\newblock arXiv:2005.14165 [cs].
+
+\bibitem[Cabannes et~al.(2023)Cabannes, Dohmatob, and Bietti]{Cabannes2023ScalingLawsAssociative}
+V.~Cabannes, E.~Dohmatob, and A.~Bietti.
+\newblock Scaling {Laws} for {Associative} {Memories}.
+\newblock In \emph{The {Twelfth} {International} {Conference} on {Learning} {Representations}}, Oct. 2023.
+\newblock URL \url{https://openreview.net/forum?id=Tzh6xAJSll}.
+
+\bibitem[Castoldi and de~Campos(2009)]{Castoldi2009MinimumdisturbanceDescriptionDevelopment}
+F.~T. Castoldi and M.~L.~R. de~Campos.
+\newblock Minimum-disturbance description for the development of adaptation algorithms and a new leakage least squares algorithm.
+\newblock In \emph{2009 {IEEE} {International} {Conference} on {Acoustics}, {Speech} and {Signal} {Processing}}, pages 3129--3132, Apr. 2009.
+\newblock \doi{10.1109/ICASSP.2009.4960287}.
+\newblock URL \url{https://ieeexplore.ieee.org/document/4960287}.
+\newblock ISSN: 2379-190X.
+
+\bibitem[Cesa-Bianchi et~al.(2004)Cesa-Bianchi, Conconi, and Gentile]{Cesa-Bianchi2004GeneralizationAbilityOnline}
+N.~Cesa-Bianchi, A.~Conconi, and C.~Gentile.
+\newblock On the generalization ability of on-line learning algorithms.
+\newblock \emph{IEEE Transactions on Information Theory}, 50\penalty0 (9):\penalty0 2050--2057, Sept. 2004.
+\newblock ISSN 1557-9654.
+\newblock \doi{10.1109/TIT.2004.833339}.
+\newblock URL \url{https://ieeexplore.ieee.org/document/1327806/?arnumber=1327806}.
+\newblock Conference Name: IEEE Transactions on Information Theory.
+
+\bibitem[Chen et~al.(2024)Chen, Liuzhicheng, Wang, Tian, and Wang]{Chen2024DiJiangEfficientLarge}
+H.~Chen, Liuzhicheng, X.~Wang, Y.~Tian, and Y.~Wang.
+\newblock {DiJiang}: {Efficient} {Large} {Language} {Models} through {Compact} {Kernelization}.
+\newblock In \emph{Forty-first {International} {Conference} on {Machine} {Learning}}, June 2024.
+\newblock URL \url{https://openreview.net/forum?id=0uUHfhXdnH&referrer=%5Bthe%20profile%20of%20Yuchuan%20Tian%5D(%2Fprofile%3Fid%3D~Yuchuan_Tian1)}.
+
+\bibitem[Chen et~al.(2021)Chen, Zeng, Ji, and Yang]{Chen2021SkyformerRemodelSelfattention}
+Y.~Chen, Q.~Zeng, H.~Ji, and Y.~Yang.
+\newblock Skyformer: remodel self-attention with {Gaussian} kernel and nyström method.
+\newblock In \emph{Proceedings of the 35th {International} {Conference} on {Neural} {Information} {Processing} {Systems}}, {NIPS} '21, pages 2122--2135, Red Hook, NY, USA, 2021. Curran Associates Inc.
+\newblock ISBN 978-1-7138-4539-3.
+
+\bibitem[Choromanski et~al.(2020)Choromanski, Likhosherstov, Dohan, Song, Gane, Sarlos, Hawkins, Davis, Mohiuddin, Kaiser, Belanger, Colwell, and Weller]{Choromanski2020RethinkingAttentionPerformers}
+K.~M. Choromanski, V.~Likhosherstov, D.~Dohan, X.~Song, A.~Gane, T.~Sarlos, P.~Hawkins, J.~Q. Davis, A.~Mohiuddin, L.~Kaiser, D.~B. Belanger, L.~J. Colwell, and A.~Weller.
+\newblock Rethinking {Attention} with {Performers}.
+\newblock In \emph{International {Conference} on {Learning} {Representations}}, Oct. 2020.
+\newblock URL \url{https://openreview.net/forum?id=Ua6zuk0WRH}.
+
+\bibitem[Clark et~al.(2022)Clark, Guu, Chang, Pasupat, Hinton, and Norouzi]{Clark2022MetaLearningFastWeight}
+K.~Clark, K.~Guu, M.-W. Chang, P.~Pasupat, G.~Hinton, and M.~Norouzi.
+\newblock Meta-{Learning} {Fast} {Weight} {Language} {Models}.
+\newblock In Y.~Goldberg, Z.~Kozareva, and Y.~Zhang, editors, \emph{Proceedings of the 2022 {Conference} on {Empirical} {Methods} in {Natural} {Language} {Processing}}, pages 9751--9757, Abu Dhabi, United Arab Emirates, Dec. 2022. Association for Computational Linguistics.
+\newblock \doi{10.18653/v1/2022.emnlp-main.661}.
+\newblock URL \url{https://aclanthology.org/2022.emnlp-main.661}.
+
+\bibitem[Dao and Gu(2024)]{Dao2024TransformersAreSSMs}
+T.~Dao and A.~Gu.
+\newblock Transformers are {SSMs}: {Generalized} {Models} and {Efficient} {Algorithms} {Through} {Structured} {State} {Space} {Duality}.
+\newblock In \emph{Forty-first {International} {Conference} on {Machine} {Learning}}, June 2024.
+
+\bibitem[Dao et~al.(2022)Dao, Fu, Ermon, Rudra, and Re]{Dao2022FlashAttentionFastMemoryEfficient}
+T.~Dao, D.~Y. Fu, S.~Ermon, A.~Rudra, and C.~Re.
+\newblock {FlashAttention}: {Fast} and {Memory}-{Efficient} {Exact} {Attention} with {IO}-{Awareness}.
+\newblock In \emph{Advances in {Neural} {Information} {Processing} {Systems}}, Oct. 2022.
+\newblock URL \url{https://openreview.net/forum?id=H4DqfPSibmx}.
+
+\bibitem[De et~al.(2024)De, Smith, Fernando, Botev, Cristian-Muraru, Gu, Haroun, Berrada, Chen, Srinivasan, Desjardins, Doucet, Budden, Teh, Pascanu, Freitas, and Gulcehre]{De2024GriffinMixingGated}
+S.~De, S.~L. Smith, A.~Fernando, A.~Botev, G.~Cristian-Muraru, A.~Gu, R.~Haroun, L.~Berrada, Y.~Chen, S.~Srinivasan, G.~Desjardins, A.~Doucet, D.~Budden, Y.~W. Teh, R.~Pascanu, N.~D. Freitas, and C.~Gulcehre.
+\newblock Griffin: {Mixing} {Gated} {Linear} {Recurrences} with {Local} {Attention} for {Efficient} {Language} {Models}, Feb. 2024.
+\newblock URL \url{http://arxiv.org/abs/2402.19427}.
+\newblock arXiv:2402.19427 [cs].
+
+\bibitem[Dehghani et~al.(2023)Dehghani, Djolonga, Mustafa, Padlewski, Heek, Gilmer, Steiner, Caron, Geirhos, Alabdulmohsin, Jenatton, Beyer, Tschannen, Arnab, Wang, Ruiz, Minderer, Puigcerver, Evci, Kumar, Steenkiste, Elsayed, Mahendran, Yu, Oliver, Huot, Bastings, Collier, Gritsenko, Birodkar, Vasconcelos, Tay, Mensink, Kolesnikov, Pavetic, Tran, Kipf, Lucic, Zhai, Keysers, Harmsen, and Houlsby]{Dehghani2023ScalingVisionTransformers}
+M.~Dehghani, J.~Djolonga, B.~Mustafa, P.~Padlewski, J.~Heek, J.~Gilmer, A.~P. Steiner, M.~Caron, R.~Geirhos, I.~Alabdulmohsin, R.~Jenatton, L.~Beyer, M.~Tschannen, A.~Arnab, X.~Wang, C.~R. Ruiz, M.~Minderer, J.~Puigcerver, U.~Evci, M.~Kumar, S.~V. Steenkiste, G.~F. Elsayed, A.~Mahendran, F.~Yu, A.~Oliver, F.~Huot, J.~Bastings, M.~Collier, A.~A. Gritsenko, V.~Birodkar, C.~N. Vasconcelos, Y.~Tay, T.~Mensink, A.~Kolesnikov, F.~Pavetic, D.~Tran, T.~Kipf, M.~Lucic, X.~Zhai, D.~Keysers, J.~J. Harmsen, and N.~Houlsby.
+\newblock Scaling {Vision} {Transformers} to 22 {Billion} {Parameters}.
+\newblock In \emph{Proceedings of the 40th {International} {Conference} on {Machine} {Learning}}, pages 7480--7512. PMLR, July 2023.
+\newblock URL \url{https://proceedings.mlr.press/v202/dehghani23a.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Devlin et~al.(2019)Devlin, Chang, Lee, and Toutanova]{Devlin2019BERTPretrainingDeep}
+J.~Devlin, M.-W. Chang, K.~Lee, and K.~Toutanova.
+\newblock {BERT}: {Pre}-training of {Deep} {Bidirectional} {Transformers} for {Language} {Understanding}.
+\newblock In J.~Burstein, C.~Doran, and T.~Solorio, editors, \emph{Proceedings of the 2019 {Conference} of the {North} {American} {Chapter} of the {Association} for {Computational} {Linguistics}: {Human} {Language} {Technologies}, {Volume} 1 ({Long} and {Short} {Papers})}, pages 4171--4186, Minneapolis, Minnesota, June 2019. Association for Computational Linguistics.
+\newblock \doi{10.18653/v1/N19-1423}.
+\newblock URL \url{https://aclanthology.org/N19-1423/}.
+
+\bibitem[Dong et~al.(2024)Dong, Li, Dai, Zheng, Ma, Li, Xia, Xu, Wu, Liu, Chang, Sun, Li, and Sui]{Dong2024SurveyIncontextLearning}
+Q.~Dong, L.~Li, D.~Dai, C.~Zheng, J.~Ma, R.~Li, H.~Xia, J.~Xu, Z.~Wu, T.~Liu, B.~Chang, X.~Sun, L.~Li, and Z.~Sui.
+\newblock A {Survey} on {In}-context {Learning}, Oct. 2024.
+\newblock URL \url{http://arxiv.org/abs/2301.00234}.
+\newblock arXiv:2301.00234 [cs].
+
+\bibitem[Dosovitskiy et~al.(2021)Dosovitskiy, Beyer, Kolesnikov, Weissenborn, Zhai, Unterthiner, Dehghani, Minderer, Heigold, Gelly, Uszkoreit, and Houlsby]{Dosovitskiy2021ImageWorth16x16}
+A.~Dosovitskiy, L.~Beyer, A.~Kolesnikov, D.~Weissenborn, X.~Zhai, T.~Unterthiner, M.~Dehghani, M.~Minderer, G.~Heigold, S.~Gelly, J.~Uszkoreit, and N.~Houlsby.
+\newblock An image is worth 16x16 words: {Transformers} for image recognition at scale.
+\newblock In \emph{International conference on learning representations}, 2021.
+\newblock URL \url{https://openreview.net/forum?id=YicbFdNTTy}.
+
+\bibitem[Duchi et~al.(2011)Duchi, Hazan, and Singer]{Duchi2011AdaptiveSubgradientMethods}
+J.~Duchi, E.~Hazan, and Y.~Singer.
+\newblock Adaptive subgradient methods for online learning and stochastic optimization.
+\newblock \emph{Journal of Machine Learning Research}, 12\penalty0 (61):\penalty0 2121--2159, 2011.
+\newblock URL \url{http://jmlr.org/papers/v12/duchi11a.html}.
+
+\bibitem[Fan(2018)]{Fan2018LocalPolynomialModelling}
+J.~Fan.
+\newblock \emph{Local {Polynomial} {Modelling} and {Its} {Applications}: {Monographs} on {Statistics} and {Applied} {Probability} 66}.
+\newblock Routledge, New York, May 2018.
+\newblock ISBN 978-0-203-74872-5.
+\newblock \doi{10.1201/9780203748725}.
+
+\bibitem[Fu et~al.(2022)Fu, Dao, Saab, Thomas, Rudra, and Re]{Fu2022HungryHungryHippos}
+D.~Y. Fu, T.~Dao, K.~K. Saab, A.~W. Thomas, A.~Rudra, and C.~Re.
+\newblock Hungry {Hungry} {Hippos}: {Towards} {Language} {Modeling} with {State} {Space} {Models}.
+\newblock In \emph{The {Eleventh} {International} {Conference} on {Learning} {Representations}}, Sept. 2022.
+\newblock URL \url{https://openreview.net/forum?id=COZDy0WYGg}.
+
+\bibitem[Garg et~al.(2022)Garg, Tsipras, Liang, and Valiant]{Garg2022WhatCanTransformers}
+S.~Garg, D.~Tsipras, P.~Liang, and G.~Valiant.
+\newblock What can transformers learn in-context? {A} case study of simple function classes.
+\newblock In A.~H. Oh, A.~Agarwal, D.~Belgrave, and K.~Cho, editors, \emph{Advances in neural information processing systems}, 2022.
+\newblock URL \url{https://openreview.net/forum?id=flNZJ2eOet}.
+
+\bibitem[Garnelo and Czarnecki(2023)]{Garnelo2023ExploringSpaceKeyValueQuery}
+M.~Garnelo and W.~M. Czarnecki.
+\newblock Exploring the {Space} of {Key}-{Value}-{Query} {Models} with {Intention}, May 2023.
+\newblock URL \url{http://arxiv.org/abs/2305.10203}.
+\newblock arXiv:2305.10203.
+
+\bibitem[Gehring et~al.(2017)Gehring, Auli, Grangier, Yarats, and Dauphin]{Gehring2017ConvolutionalSequenceSequence}
+J.~Gehring, M.~Auli, D.~Grangier, D.~Yarats, and Y.~N. Dauphin.
+\newblock Convolutional {Sequence} to {Sequence} {Learning}.
+\newblock In \emph{Proceedings of the 34th {International} {Conference} on {Machine} {Learning}}, pages 1243--1252. PMLR, July 2017.
+\newblock URL \url{https://proceedings.mlr.press/v70/gehring17a.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Goel and Bartlett(2024)]{Goel2024CanTransformerRepresent}
+G.~Goel and P.~Bartlett.
+\newblock Can a transformer represent a {Kalman} filter?
+\newblock In A.~Abate, M.~Cannon, K.~Margellos, and A.~Papachristodoulou, editors, \emph{Proceedings of the 6th annual learning for dynamics \&amp; control conference}, volume 242 of \emph{Proceedings of machine learning research}, pages 1502--1512. PMLR, July 2024.
+\newblock URL \url{https://proceedings.mlr.press/v242/goel24a.html}.
+
+\bibitem[Greff et~al.(2017)Greff, Srivastava, Koutník, Steunebrink, and Schmidhuber]{Greff2017LSTMSearchSpace}
+K.~Greff, R.~K. Srivastava, J.~Koutník, B.~R. Steunebrink, and J.~Schmidhuber.
+\newblock {LSTM}: {A} {Search} {Space} {Odyssey}.
+\newblock \emph{IEEE Transactions on Neural Networks and Learning Systems}, 28\penalty0 (10):\penalty0 2222--2232, Oct. 2017.
+\newblock ISSN 2162-237X, 2162-2388.
+\newblock \doi{10.1109/TNNLS.2016.2582924}.
+\newblock URL \url{http://arxiv.org/abs/1503.04069}.
+\newblock arXiv:1503.04069 [cs].
+
+\bibitem[Gruver et~al.(2023)Gruver, Finzi, Qiu, and Wilson]{Gruver2023LargeLanguageModels}
+N.~Gruver, M.~Finzi, S.~Qiu, and A.~G. Wilson.
+\newblock Large {Language} {Models} {Are} {Zero}-{Shot} {Time} {Series} {Forecasters}.
+\newblock \emph{Advances in Neural Information Processing Systems}, 36:\penalty0 19622--19635, Dec. 2023.
+\newblock URL \url{https://proceedings.neurips.cc/paper_files/paper/2023/hash/3eb7ca52e8207697361b2c0fb3926511-Abstract-Conference.html}.
+
+\bibitem[Gu and Dao(2024)]{Gu2024MambaLinearTimeSequence}
+A.~Gu and T.~Dao.
+\newblock Mamba: {Linear}-{Time} {Sequence} {Modeling} with {Selective} {State} {Spaces}.
+\newblock In \emph{First {Conference} on {Language} {Modeling}}, Aug. 2024.
+\newblock URL \url{https://openreview.net/forum?id=tEYskw1VY2#discussion}.
+
+\bibitem[Gu et~al.(2020)Gu, Dao, Ermon, Rudra, and Ré]{Gu2020HiPPORecurrentMemory}
+A.~Gu, T.~Dao, S.~Ermon, A.~Rudra, and C.~Ré.
+\newblock {HiPPO}: {Recurrent} {Memory} with {Optimal} {Polynomial} {Projections}.
+\newblock In \emph{Advances in {Neural} {Information} {Processing} {Systems}}, volume~33, pages 1474--1487. Curran Associates, Inc., 2020.
+\newblock URL \url{https://proceedings.neurips.cc/paper/2020/hash/102f0bb6efb3a6128a3c750dd16729be-Abstract.html}.
+
+\bibitem[Gu et~al.(2021)Gu, Goel, and Re]{Gu2021EfficientlyModelingLong}
+A.~Gu, K.~Goel, and C.~Re.
+\newblock Efficiently {Modeling} {Long} {Sequences} with {Structured} {State} {Spaces}.
+\newblock In \emph{International {Conference} on {Learning} {Representations}}, Oct. 2021.
+\newblock URL \url{https://openreview.net/forum?id=uYLFoz1vlAC}.
+
+\bibitem[Gu et~al.(2022)Gu, Gupta, Goel, and Ré]{Gu2022ParameterizationInitializationDiagonal}
+A.~Gu, A.~Gupta, K.~Goel, and C.~Ré.
+\newblock On the parameterization and initialization of diagonal state space models.
+\newblock In \emph{Proceedings of the 36th {International} {Conference} on {Neural} {Information} {Processing} {Systems}}, {NIPS} '22, pages 35971--35983, Red Hook, NY, USA, 2022. Curran Associates Inc.
+\newblock ISBN 978-1-7138-7108-8.
+
+\bibitem[Han et~al.(2024)Han, Wang, Xia, Han, Pu, Ge, Song, Song, Zheng, and Huang]{Han2024DemystifyMambaVision}
+D.~Han, Z.~Wang, Z.~Xia, Y.~Han, Y.~Pu, C.~Ge, J.~Song, S.~Song, B.~Zheng, and G.~Huang.
+\newblock Demystify {Mamba} in {Vision}: {A} {Linear} {Attention} {Perspective}, May 2024.
+\newblock URL \url{https://arxiv.org/abs/2405.16605v1}.
+
+\bibitem[Haykin(2014)]{Haykin2014AdaptiveFilterTheory}
+S.~S. Haykin.
+\newblock \emph{Adaptive {Filter} {Theory}}.
+\newblock Pearson, 2014.
+\newblock ISBN 978-0-13-267145-3.
+\newblock Google-Books-ID: J4GRKQEACAAJ.
+
+\bibitem[Hinton and Anderson(1989)]{Hinton1989ParallelModelsAssociative}
+G.~E. Hinton and J.~A. Anderson.
+\newblock \emph{Parallel {Models} of {Associative} {Memory}}.
+\newblock Psychology Press, 1989.
+
+\bibitem[Hochreiter and Schmidhuber(1997)]{Hochreiter1997LongShortTermMemory}
+S.~Hochreiter and J.~Schmidhuber.
+\newblock Long {Short}-{Term} {Memory}.
+\newblock \emph{Neural Computation}, 9\penalty0 (8):\penalty0 1735--1780, Nov. 1997.
+\newblock ISSN 0899-7667.
+\newblock \doi{10.1162/neco.1997.9.8.1735}.
+\newblock URL \url{https://ieeexplore.ieee.org/abstract/document/6795963}.
+\newblock Conference Name: Neural Computation.
+
+\bibitem[Hoffmann et~al.(2022)Hoffmann, Borgeaud, Mensch, Buchatskaya, Cai, Rutherford, Casas, Hendricks, Welbl, Clark, Hennigan, Noland, Millican, Driessche, Damoc, Guy, Osindero, Simonyan, Elsen, Rae, Vinyals, and Sifre]{Hoffmann2022TrainingComputeOptimalLarge}
+J.~Hoffmann, S.~Borgeaud, A.~Mensch, E.~Buchatskaya, T.~Cai, E.~Rutherford, D.~d.~L. Casas, L.~A. Hendricks, J.~Welbl, A.~Clark, T.~Hennigan, E.~Noland, K.~Millican, G.~v.~d. Driessche, B.~Damoc, A.~Guy, S.~Osindero, K.~Simonyan, E.~Elsen, J.~W. Rae, O.~Vinyals, and L.~Sifre.
+\newblock Training {Compute}-{Optimal} {Large} {Language} {Models}, Mar. 2022.
+\newblock URL \url{http://arxiv.org/abs/2203.15556}.
+\newblock arXiv:2203.15556 [cs].
+
+\bibitem[Hopfield(1982)]{Hopfield1982NeuralNetworksPhysical}
+J.~J. Hopfield.
+\newblock Neural networks and physical systems with emergent collective computational abilities.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 79\penalty0 (8):\penalty0 2554--2558, Apr. 1982.
+\newblock \doi{10.1073/pnas.79.8.2554}.
+\newblock URL \url{https://www.pnas.org/doi/abs/10.1073/pnas.79.8.2554}.
+\newblock Publisher: Proceedings of the National Academy of Sciences.
+
+\bibitem[Hua et~al.(2022)Hua, Dai, Liu, and Le]{Hua2022TransformerQualityLinear}
+W.~Hua, Z.~Dai, H.~Liu, and Q.~Le.
+\newblock Transformer {Quality} in {Linear} {Time}.
+\newblock In \emph{Proceedings of the 39th {International} {Conference} on {Machine} {Learning}}, pages 9099--9117. PMLR, June 2022.
+\newblock URL \url{https://proceedings.mlr.press/v162/hua22a.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Johnstone et~al.(1982)Johnstone, Johnson, Bitmead, and O.~Anderson]{Johnstone1982ExponentialConvergenceRecursive}
+R.~M. Johnstone, C.~R. Johnson, R.~R. Bitmead, and B.~D. O.~Anderson.
+\newblock Exponential convergence of recursive least squares with exponential forgetting factor.
+\newblock In \emph{1982 21st {IEEE} {Conference} on {Decision} and {Control}}, pages 994--997, Dec. 1982.
+\newblock \doi{10.1109/CDC.1982.268295}.
+\newblock URL \url{https://ieeexplore.ieee.org/document/4047398}.
+
+\bibitem[Jumper et~al.(2021)Jumper, Evans, Pritzel, Green, Figurnov, Ronneberger, Tunyasuvunakool, Bates, Žídek, Potapenko, Bridgland, Meyer, Kohl, Ballard, Cowie, Romera-Paredes, Nikolov, Jain, Adler, Back, Petersen, Reiman, Clancy, Zielinski, Steinegger, Pacholska, Berghammer, Bodenstein, Silver, Vinyals, Senior, Kavukcuoglu, Kohli, and Hassabis]{Jumper2021HighlyAccurateProtein}
+J.~Jumper, R.~Evans, A.~Pritzel, T.~Green, M.~Figurnov, O.~Ronneberger, K.~Tunyasuvunakool, R.~Bates, A.~Žídek, A.~Potapenko, A.~Bridgland, C.~Meyer, S.~A.~A. Kohl, A.~J. Ballard, A.~Cowie, B.~Romera-Paredes, S.~Nikolov, R.~Jain, J.~Adler, T.~Back, S.~Petersen, D.~Reiman, E.~Clancy, M.~Zielinski, M.~Steinegger, M.~Pacholska, T.~Berghammer, S.~Bodenstein, D.~Silver, O.~Vinyals, A.~W. Senior, K.~Kavukcuoglu, P.~Kohli, and D.~Hassabis.
+\newblock Highly accurate protein structure prediction with {AlphaFold}.
+\newblock \emph{Nature}, 596\penalty0 (7873):\penalty0 583--589, Aug. 2021.
+\newblock ISSN 1476-4687.
+\newblock \doi{10.1038/s41586-021-03819-2}.
+\newblock URL \url{https://www.nature.com/articles/s41586-021-03819-2}.
+\newblock Publisher: Nature Publishing Group.
+
+\bibitem[Kaczmarz(1937)]{Kaczmarz1937AngenaherteAuflosungSystemen}
+S.~Kaczmarz.
+\newblock Angenaherte auflosung von systemen linearer glei-chungen.
+\newblock \emph{Bull. Int. Acad. Pol. Sic. Let., Cl. Sci. Math. Nat.}, pages 355--357, 1937.
+\newblock URL \url{https://cir.nii.ac.jp/crid/1570009749812709888}.
+
+\bibitem[Kaplan et~al.(2020)Kaplan, McCandlish, Henighan, Brown, Chess, Child, Gray, Radford, Wu, and Amodei]{Kaplan2020ScalingLawsNeural}
+J.~Kaplan, S.~McCandlish, T.~Henighan, T.~B. Brown, B.~Chess, R.~Child, S.~Gray, A.~Radford, J.~Wu, and D.~Amodei.
+\newblock Scaling {Laws} for {Neural} {Language} {Models}, Jan. 2020.
+\newblock URL \url{http://arxiv.org/abs/2001.08361}.
+\newblock arXiv:2001.08361 [cs].
+
+\bibitem[Kasai et~al.(2021)Kasai, Peng, Zhang, Yogatama, Ilharco, Pappas, Mao, Chen, and Smith]{Kasai2021FinetuningPretrainedTransformers}
+J.~Kasai, H.~Peng, Y.~Zhang, D.~Yogatama, G.~Ilharco, N.~Pappas, Y.~Mao, W.~Chen, and N.~A. Smith.
+\newblock Finetuning {Pretrained} {Transformers} into {RNNs}.
+\newblock In M.-F. Moens, X.~Huang, L.~Specia, and S.~W.-t. Yih, editors, \emph{Proceedings of the 2021 {Conference} on {Empirical} {Methods} in {Natural} {Language} {Processing}}, pages 10630--10643, Online and Punta Cana, Dominican Republic, Nov. 2021. Association for Computational Linguistics.
+\newblock \doi{10.18653/v1/2021.emnlp-main.830}.
+\newblock URL \url{https://aclanthology.org/2021.emnlp-main.830}.
+
+\bibitem[Katharopoulos et~al.(2020)Katharopoulos, Vyas, Pappas, and Fleuret]{Katharopoulos2020TransformersAreRNNs}
+A.~Katharopoulos, A.~Vyas, N.~Pappas, and F.~Fleuret.
+\newblock Transformers are {RNNs}: {Fast} {Autoregressive} {Transformers} with {Linear} {Attention}.
+\newblock In \emph{Proceedings of the 37th {International} {Conference} on {Machine} {Learning}}, pages 5156--5165. PMLR, Nov. 2020.
+\newblock URL \url{https://proceedings.mlr.press/v119/katharopoulos20a.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Katsch(2024)]{Katsch2024GateLoopFullyDataControlled}
+T.~Katsch.
+\newblock {GateLoop}: {Fully} {Data}-{Controlled} {Linear} {Recurrence} for {Sequence} {Modeling}, Jan. 2024.
+\newblock URL \url{http://arxiv.org/abs/2311.01927}.
+\newblock arXiv:2311.01927 [cs].
+
+\bibitem[Kingma and Ba(2015)]{Kingma2015AdamMethodStochastic}
+D.~P. Kingma and J.~Ba.
+\newblock Adam: {A} {Method} for {Stochastic} {Optimization}.
+\newblock 2015.
+\newblock URL \url{https://arxiv.org/abs/1412.6980}.
+
+\bibitem[Kohonen(1972)]{Kohonen1972CorrelationMatrixMemories}
+T.~Kohonen.
+\newblock Correlation {Matrix} {Memories}.
+\newblock \emph{IEEE Transactions on Computers}, C-21\penalty0 (4):\penalty0 353--359, Apr. 1972.
+\newblock ISSN 1557-9956.
+\newblock \doi{10.1109/TC.1972.5008975}.
+\newblock URL \url{https://ieeexplore.ieee.org/abstract/document/5008975}.
+\newblock Conference Name: IEEE Transactions on Computers.
+
+\bibitem[Kohonen(1989)]{Kohonen1989SelfOrganizationAssociativeMemory}
+T.~Kohonen.
+\newblock \emph{Self-{Organization} and {Associative} {Memory}}, volume~8 of \emph{Springer {Series} in {Information} {Sciences}}.
+\newblock Springer, Berlin, Heidelberg, 1989.
+\newblock ISBN 978-3-540-51387-2 978-3-642-88163-3.
+\newblock \doi{10.1007/978-3-642-88163-3}.
+\newblock URL \url{http://link.springer.com/10.1007/978-3-642-88163-3}.
+
+\bibitem[Krotov and Hopfield(2021)]{Krotov2021LargeAssociativeMemory}
+D.~Krotov and J.~Hopfield.
+\newblock Large {Associative} {Memory} {Problem} in {Neurobiology} and {Machine} {Learning}, Apr. 2021.
+\newblock URL \url{http://arxiv.org/abs/2008.06996}.
+\newblock arXiv:2008.06996.
+
+\bibitem[Krotov and Hopfield(2016)]{Krotov2016DenseAssociativeMemory}
+D.~Krotov and J.~J. Hopfield.
+\newblock Dense {Associative} {Memory} for {Pattern} {Recognition}.
+\newblock In \emph{Advances in {Neural} {Information} {Processing} {Systems}}, volume~29. Curran Associates, Inc., 2016.
+\newblock URL \url{https://proceedings.neurips.cc/paper_files/paper/2016/hash/eaae339c4d89fc102edd9dbdb6a28915-Abstract.html}.
+
+\bibitem[Liu et~al.(2024)Liu, Wang, Wu, Feng, Stone, and Liu]{Liu2024LonghornStateSpace}
+B.~Liu, R.~Wang, L.~Wu, Y.~Feng, P.~Stone, and Q.~Liu.
+\newblock Longhorn: {State} {Space} {Models} are {Amortized} {Online} {Learners}, Oct. 2024.
+\newblock URL \url{http://arxiv.org/abs/2407.14207}.
+\newblock arXiv:2407.14207.
+
+\bibitem[Loshchilov and Hutter(2019)]{Loshchilov2019DecoupledWeightDecay}
+I.~Loshchilov and F.~Hutter.
+\newblock Decoupled weight decay regularization.
+\newblock In \emph{International conference on learning representations}, 2019.
+\newblock URL \url{https://openreview.net/forum?id=Bkg6RiCqY7}.
+
+\bibitem[Lu et~al.(2021)Lu, Yao, Zhang, Zhu, Xu, Gao, XU, Xiang, and Zhang]{Lu2021SOFTSoftmaxfreeTransformer}
+J.~Lu, J.~Yao, J.~Zhang, X.~Zhu, H.~Xu, W.~Gao, C.~XU, T.~Xiang, and L.~Zhang.
+\newblock {SOFT}: {Softmax}-free {Transformer} with {Linear} {Complexity}.
+\newblock In \emph{Advances in {Neural} {Information} {Processing} {Systems}}, volume~34, pages 21297--21309. Curran Associates, Inc., 2021.
+\newblock URL \url{https://proceedings.neurips.cc/paper/2021/hash/b1d10e7bafa4421218a51b1e1f1b0ba2-Abstract.html}.
+
+\bibitem[Mehta et~al.(2023)Mehta, Gupta, Cutkosky, and Neyshabur]{Mehta2023LongRangeLanguage}
+H.~Mehta, A.~Gupta, A.~Cutkosky, and B.~Neyshabur.
+\newblock Long range language modeling via gated state spaces.
+\newblock In \emph{The eleventh international conference on learning representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=5MkYIYCbva}.
+
+\bibitem[Millidge et~al.(2022)Millidge, Salvatori, Song, Lukasiewicz, and Bogacz]{Millidge2022UniversalHopfieldNetworks}
+B.~Millidge, T.~Salvatori, Y.~Song, T.~Lukasiewicz, and R.~Bogacz.
+\newblock Universal {Hopfield} {Networks}: {A} {General} {Framework} for {Single}-{Shot} {Associative} {Memory} {Models}.
+\newblock In \emph{Proceedings of the 39th {International} {Conference} on {Machine} {Learning}}, pages 15561--15583. PMLR, June 2022.
+\newblock URL \url{https://proceedings.mlr.press/v162/millidge22a.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Nguyen et~al.(2024)Nguyen, Poli, Durrant, Kang, Katrekar, Li, Bartie, Thomas, King, Brixi, Sullivan, Ng, Lewis, Lou, Ermon, Baccus, Hernandez-Boussard, Ré, Hsu, and Hie]{Nguyen2024SequenceModelingDesign}
+E.~Nguyen, M.~Poli, M.~G. Durrant, B.~Kang, D.~Katrekar, D.~B. Li, L.~J. Bartie, A.~W. Thomas, S.~H. King, G.~Brixi, J.~Sullivan, M.~Y. Ng, A.~Lewis, A.~Lou, S.~Ermon, S.~A. Baccus, T.~Hernandez-Boussard, C.~Ré, P.~D. Hsu, and B.~L. Hie.
+\newblock Sequence modeling and design from molecular to genome scale with {Evo}.
+\newblock \emph{Science}, 386\penalty0 (6723):\penalty0 eado9336, Nov. 2024.
+\newblock \doi{10.1126/science.ado9336}.
+\newblock URL \url{https://www.science.org/doi/10.1126/science.ado9336}.
+\newblock Publisher: American Association for the Advancement of Science.
+
+\bibitem[Nichani et~al.(2024)Nichani, Lee, and Bietti]{Nichani2024UnderstandingFactualRecall}
+E.~Nichani, J.~D. Lee, and A.~Bietti.
+\newblock Understanding {Factual} {Recall} in {Transformers} via {Associative} {Memories}, Dec. 2024.
+\newblock URL \url{http://arxiv.org/abs/2412.06538}.
+\newblock arXiv:2412.06538 [cs].
+
+\bibitem[Olsson et~al.(2022)Olsson, Elhage, Nanda, Joseph, DasSarma, Henighan, Mann, Askell, Bai, Chen, Conerly, Drain, Ganguli, Hatfield-Dodds, Hernandez, Johnston, Jones, Kernion, Lovitt, Ndousse, Amodei, Brown, Clark, Kaplan, McCandlish, and Olah]{Olsson2022ContextLearningInduction}
+C.~Olsson, N.~Elhage, N.~Nanda, N.~Joseph, N.~DasSarma, T.~Henighan, B.~Mann, A.~Askell, Y.~Bai, A.~Chen, T.~Conerly, D.~Drain, D.~Ganguli, Z.~Hatfield-Dodds, D.~Hernandez, S.~Johnston, A.~Jones, J.~Kernion, L.~Lovitt, K.~Ndousse, D.~Amodei, T.~Brown, J.~Clark, J.~Kaplan, S.~McCandlish, and C.~Olah.
+\newblock In-context {Learning} and {Induction} {Heads}, Sept. 2022.
+\newblock URL \url{http://arxiv.org/abs/2209.11895}.
+\newblock arXiv:2209.11895 [cs].
+
+\bibitem[OpenAI(2024)]{OpenAI2024OpenAIO1System}
+OpenAI.
+\newblock {OpenAI} o1 {System} {Card}, 2024.
+\newblock URL \url{https://openai.com/index/openai-o1-system-card/}.
+
+\bibitem[Orvieto et~al.(2023)Orvieto, Smith, Gu, Fernando, Gulcehre, Pascanu, and De]{Orvieto2023ResurrectingRecurrentNeural}
+A.~Orvieto, S.~L. Smith, A.~Gu, A.~Fernando, C.~Gulcehre, R.~Pascanu, and S.~De.
+\newblock Resurrecting {Recurrent} {Neural} {Networks} for {Long} {Sequences}.
+\newblock In \emph{Proceedings of the 40th {International} {Conference} on {Machine} {Learning}}, pages 26670--26698. PMLR, July 2023.
+\newblock URL \url{https://proceedings.mlr.press/v202/orvieto23a.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Oswald et~al.(2023)Oswald, Niklasson, Randazzo, Sacramento, Mordvintsev, Zhmoginov, and Vladymyrov]{Oswald2023TransformersLearnInContext}
+J.~V. Oswald, E.~Niklasson, E.~Randazzo, J.~Sacramento, A.~Mordvintsev, A.~Zhmoginov, and M.~Vladymyrov.
+\newblock Transformers {Learn} {In}-{Context} by {Gradient} {Descent}.
+\newblock In \emph{Proceedings of the 40th {International} {Conference} on {Machine} {Learning}}, pages 35151--35174. PMLR, July 2023.
+\newblock URL \url{https://proceedings.mlr.press/v202/von-oswald23a.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Peng et~al.(2024)Peng, Goldstein, Anthony, Albalak, Alcaide, Biderman, Cheah, Du, Ferdinan, Hou, Kazienko, GV, Kocoń, Koptyra, Krishna, Jr, Lin, Muennighoff, Obeid, Saito, Song, Tu, Wirawan, Woźniak, Zhang, Zhao, Zhao, Zhou, Zhu, and Zhu]{Peng2024EagleFinchRWKV}
+B.~Peng, D.~Goldstein, Q.~Anthony, A.~Albalak, E.~Alcaide, S.~Biderman, E.~Cheah, X.~Du, T.~Ferdinan, H.~Hou, P.~Kazienko, K.~K. GV, J.~Kocoń, B.~Koptyra, S.~Krishna, R.~M. Jr, J.~Lin, N.~Muennighoff, F.~Obeid, A.~Saito, G.~Song, H.~Tu, C.~Wirawan, S.~Woźniak, R.~Zhang, B.~Zhao, Q.~Zhao, P.~Zhou, J.~Zhu, and R.-J. Zhu.
+\newblock Eagle and {Finch}: {RWKV} with {Matrix}-{Valued} {States} and {Dynamic} {Recurrence}, Sept. 2024.
+\newblock URL \url{http://arxiv.org/abs/2404.05892}.
+\newblock arXiv:2404.05892.
+
+\bibitem[Peng et~al.(2020)Peng, Pappas, Yogatama, Schwartz, Smith, and Kong]{Peng2020RandomFeatureAttention}
+H.~Peng, N.~Pappas, D.~Yogatama, R.~Schwartz, N.~Smith, and L.~Kong.
+\newblock Random {Feature} {Attention}.
+\newblock In \emph{International {Conference} on {Learning} {Representations}}, Oct. 2020.
+\newblock URL \url{https://openreview.net/forum?id=QtTKTdVrFBB}.
+
+\bibitem[Poggio(1975)]{Poggio1975OptimalNonlinearAssociative}
+T.~Poggio.
+\newblock On optimal nonlinear associative recall.
+\newblock \emph{Biological Cybernetics}, 19\penalty0 (4):\penalty0 201--209, Sept. 1975.
+\newblock ISSN 1432-0770.
+\newblock \doi{10.1007/BF02281970}.
+\newblock URL \url{https://doi.org/10.1007/BF02281970}.
+
+\bibitem[Poli et~al.(2023)Poli, Massaroli, Nguyen, Fu, Dao, Baccus, Bengio, Ermon, and Ré]{Poli2023HyenaHierarchyLarger}
+M.~Poli, S.~Massaroli, E.~Nguyen, D.~Y. Fu, T.~Dao, S.~Baccus, Y.~Bengio, S.~Ermon, and C.~Ré.
+\newblock Hyena hierarchy: towards larger convolutional language models.
+\newblock In \emph{Proceedings of the 40th {International} {Conference} on {Machine} {Learning}}, volume 202 of \emph{{ICML}'23}, pages 28043--28078, Honolulu, Hawaii, USA, July 2023. JMLR.org.
+
+\bibitem[Qin et~al.(2021)Qin, Sun, Deng, Li, Wei, Lv, Yan, Kong, and Zhong]{Qin2021CosFormerRethinkingSoftmax}
+Z.~Qin, W.~Sun, H.~Deng, D.~Li, Y.~Wei, B.~Lv, J.~Yan, L.~Kong, and Y.~Zhong.
+\newblock {cosFormer}: {Rethinking} {Softmax} {In} {Attention}.
+\newblock In \emph{International {Conference} on {Learning} {Representations}}, Oct. 2021.
+\newblock URL \url{https://openreview.net/forum?id=Bl8CQrx2Up4}.
+
+\bibitem[Qin et~al.(2022)Qin, Han, Sun, Li, Kong, Barnes, and Zhong]{Qin2022DevilLinearTransformer}
+Z.~Qin, X.~Han, W.~Sun, D.~Li, L.~Kong, N.~Barnes, and Y.~Zhong.
+\newblock The {Devil} in {Linear} {Transformer}.
+\newblock In Y.~Goldberg, Z.~Kozareva, and Y.~Zhang, editors, \emph{Proceedings of the 2022 {Conference} on {Empirical} {Methods} in {Natural} {Language} {Processing}}, pages 7025--7041, Abu Dhabi, United Arab Emirates, Dec. 2022. Association for Computational Linguistics.
+\newblock \doi{10.18653/v1/2022.emnlp-main.473}.
+\newblock URL \url{https://aclanthology.org/2022.emnlp-main.473}.
+
+\bibitem[Qin et~al.(2023)Qin, Han, Sun, He, Li, Li, Dai, Kong, and Zhong]{Qin2023ToeplitzNeuralNetwork}
+Z.~Qin, X.~Han, W.~Sun, B.~He, D.~Li, D.~Li, Y.~Dai, L.~Kong, and Y.~Zhong.
+\newblock Toeplitz neural network for sequence modeling.
+\newblock In \emph{The eleventh international conference on learning representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=IxmWsm4xrua}.
+
+\bibitem[Qin et~al.(2024)Qin, Yang, Sun, Shen, Li, Sun, and Zhong]{Qin2024HGRN2GatedLinear}
+Z.~Qin, S.~Yang, W.~Sun, X.~Shen, D.~Li, W.~Sun, and Y.~Zhong.
+\newblock {HGRN2}: {Gated} {Linear} {RNNs} with {State} {Expansion}.
+\newblock In \emph{First {Conference} on {Language} {Modeling}}, Aug. 2024.
+\newblock URL \url{https://openreview.net/forum?id=y6SqbJfCSk#discussion}.
+
+\bibitem[Ramsauer et~al.(2021)Ramsauer, Schäfl, Lehner, Seidl, Widrich, Gruber, Holzleitner, Adler, Kreil, Kopp, Klambauer, Brandstetter, and Hochreiter]{Ramsauer2020HopfieldNetworksAll}
+H.~Ramsauer, B.~Schäfl, J.~Lehner, P.~Seidl, M.~Widrich, L.~Gruber, M.~Holzleitner, T.~Adler, D.~Kreil, M.~K. Kopp, G.~Klambauer, J.~Brandstetter, and S.~Hochreiter.
+\newblock Hopfield {Networks} is {All} {You} {Need}.
+\newblock In \emph{International {Conference} on {Learning} {Representations}}, 2021.
+\newblock URL \url{https://openreview.net/forum?id=tL89RnzIiCd}.
+
+\bibitem[Ren et~al.(2023)Ren, Liu, Wang, Xu, Zhu, and Zhai]{Ren2023SparseModularActivation}
+L.~Ren, Y.~Liu, S.~Wang, Y.~Xu, C.~Zhu, and C.~Zhai.
+\newblock Sparse modular activation for efficient sequence modeling.
+\newblock In \emph{Thirty-seventh conference on neural information processing systems}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=TfbzX6I14i}.
+
+\bibitem[Ren et~al.(2024)Ren, Li, and Liu]{Ren2024CanMambaAlways}
+R.~Ren, Z.~Li, and Y.~Liu.
+\newblock Can {Mamba} {Always} {Enjoy} the "{Free} {Lunch}"?, Oct. 2024.
+\newblock URL \url{http://arxiv.org/abs/2410.03810}.
+\newblock arXiv:2410.03810 [cs].
+
+\bibitem[Rush(2024)]{SashaRush2024ThereAre4}
+S.~Rush.
+\newblock There are like 4 more linear {RNN} papers out today, Apr. 2024.
+\newblock URL \url{https://x.com/srush_nlp/status/1780231813820002771}.
+
+\bibitem[Salinas et~al.(2020)Salinas, Flunkert, Gasthaus, and Januschowski]{Salinas2020DeepARProbabilisticForecasting}
+D.~Salinas, V.~Flunkert, J.~Gasthaus, and T.~Januschowski.
+\newblock {DeepAR}: {Probabilistic} forecasting with autoregressive recurrent networks.
+\newblock \emph{International Journal of Forecasting}, 36\penalty0 (3):\penalty0 1181--1191, July 2020.
+\newblock ISSN 0169-2070.
+\newblock \doi{10.1016/j.ijforecast.2019.07.001}.
+\newblock URL \url{https://www.sciencedirect.com/science/article/pii/S0169207019301888}.
+
+\bibitem[Schlag et~al.(2021)Schlag, Irie, and Schmidhuber]{Schlag2021LinearTransformersAre}
+I.~Schlag, K.~Irie, and J.~Schmidhuber.
+\newblock Linear {Transformers} {Are} {Secretly} {Fast} {Weight} {Programmers}.
+\newblock In \emph{Proceedings of the 38th {International} {Conference} on {Machine} {Learning}}, pages 9355--9366. PMLR, July 2021.
+\newblock URL \url{https://proceedings.mlr.press/v139/schlag21a.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Schmidhuber(1992)]{Schmidhuber1992LearningControlFastWeight}
+J.~Schmidhuber.
+\newblock Learning to {Control} {Fast}-{Weight} {Memories}: {An} {Alternative} to {Dynamic} {Recurrent} {Networks}.
+\newblock \emph{Neural Computation}, 4\penalty0 (1):\penalty0 131--139, Jan. 1992.
+\newblock ISSN 0899-7667.
+\newblock \doi{10.1162/neco.1992.4.1.131}.
+\newblock URL \url{https://doi.org/10.1162/neco.1992.4.1.131}.
+
+\bibitem[Schölkopf and Smola(2001)]{Scholkopf2001LearningKernelsSupport}
+B.~Schölkopf and A.~J. Smola.
+\newblock \emph{Learning with {Kernels}: {Support} {Vector} {Machines}, {Regularization}, {Optimization}, and {Beyond}}.
+\newblock The MIT Press, Dec. 2001.
+\newblock ISBN 978-0-262-25693-3.
+\newblock \doi{10.7551/mitpress/4175.001.0001}.
+\newblock URL \url{https://direct.mit.edu/books/monograph/1821/Learning-with-KernelsSupport-Vector-Machines}.
+
+\bibitem[Shazeer(2019)]{Shazeer2019FastTransformerDecoding}
+N.~Shazeer.
+\newblock Fast {Transformer} {Decoding}: {One} {Write}-{Head} is {All} {You} {Need}, Nov. 2019.
+\newblock URL \url{http://arxiv.org/abs/1911.02150}.
+\newblock arXiv:1911.02150 [cs].
+
+\bibitem[Shi et~al.(2023)Shi, Wang, and Fox]{Shi2023SequenceModelingMultiresolutiona}
+J.~Shi, K.~A. Wang, and E.~B. Fox.
+\newblock Sequence modeling with multiresolution convolutional memory.
+\newblock In \emph{Proceedings of the 40th {International} {Conference} on {Machine} {Learning}}, volume 202 of \emph{{ICML}'23}, pages 31312--31327, Honolulu, Hawaii, USA, July 2023. JMLR.org.
+
+\bibitem[Siems et~al.(2025)Siems, Carstensen, Zela, Hutter, Pontil, and Grazzi]{Siems2025DeltaProductIncreasingExpressivity}
+J.~Siems, T.~Carstensen, A.~Zela, F.~Hutter, M.~Pontil, and R.~Grazzi.
+\newblock {DeltaProduct}: {Increasing} the {Expressivity} of {DeltaNet} {Through} {Products} of {Householders}, Feb. 2025.
+\newblock URL \url{http://arxiv.org/abs/2502.10297}.
+\newblock arXiv:2502.10297 [cs].
+
+\bibitem[Smith et~al.(2023)Smith, Warrington, and Linderman]{Smith2023SimplifiedStateSpace}
+J.~T. Smith, A.~Warrington, and S.~Linderman.
+\newblock Simplified state space layers for sequence modeling.
+\newblock In \emph{The eleventh international conference on learning representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=Ai8Hw3AXqks}.
+
+\bibitem[Sukhbaatar et~al.(2019)Sukhbaatar, Grave, Lample, Jegou, and Joulin]{Sukhbaatar2019AugmentingSelfattentionPersistent}
+S.~Sukhbaatar, E.~Grave, G.~Lample, H.~Jegou, and A.~Joulin.
+\newblock Augmenting {Self}-attention with {Persistent} {Memory}, July 2019.
+\newblock URL \url{http://arxiv.org/abs/1907.01470}.
+\newblock arXiv:1907.01470.
+
+\bibitem[Sun et~al.(2020)Sun, Wang, Liu, Miller, Efros, and Hardt]{Sun2020TestTimeTrainingSelfSupervision}
+Y.~Sun, X.~Wang, Z.~Liu, J.~Miller, A.~Efros, and M.~Hardt.
+\newblock Test-{Time} {Training} with {Self}-{Supervision} for {Generalization} under {Distribution} {Shifts}.
+\newblock In \emph{Proceedings of the 37th {International} {Conference} on {Machine} {Learning}}, pages 9229--9248. PMLR, Nov. 2020.
+\newblock URL \url{https://proceedings.mlr.press/v119/sun20b.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Sun et~al.(2023)Sun, Dong, Huang, Ma, Xia, Xue, Wang, and Wei]{Sun2023RetentiveNetworkSuccessor}
+Y.~Sun, L.~Dong, S.~Huang, S.~Ma, Y.~Xia, J.~Xue, J.~Wang, and F.~Wei.
+\newblock Retentive {Network}: {A} {Successor} to {Transformer} for {Large} {Language} {Models}, Aug. 2023.
+\newblock URL \url{http://arxiv.org/abs/2307.08621}.
+\newblock arXiv:2307.08621 [cs].
+
+\bibitem[Sun et~al.(2024)Sun, Li, Dalal, Xu, Vikram, Zhang, Dubois, Chen, Wang, Koyejo, Hashimoto, and Guestrin]{Sun2024LearningLearnTest}
+Y.~Sun, X.~Li, K.~Dalal, J.~Xu, A.~Vikram, G.~Zhang, Y.~Dubois, X.~Chen, X.~Wang, S.~Koyejo, T.~Hashimoto, and C.~Guestrin.
+\newblock Learning to ({Learn} at {Test} {Time}): {RNNs} with {Expressive} {Hidden} {States}, Aug. 2024.
+\newblock URL \url{http://arxiv.org/abs/2407.04620}.
+\newblock arXiv:2407.04620.
+
+\bibitem[Sutskever et~al.(2014)Sutskever, Vinyals, and Le]{Sutskever2014SequenceSequenceLearning}
+I.~Sutskever, O.~Vinyals, and Q.~V. Le.
+\newblock Sequence to {Sequence} {Learning} with {Neural} {Networks}.
+\newblock In \emph{Advances in {Neural} {Information} {Processing} {Systems}}, volume~27. Curran Associates, Inc., 2014.
+\newblock URL \url{https://proceedings.neurips.cc/paper/2014/hash/a14ac55a4f27472c5d894ec1c3c743d2-Abstract.html}.
+
+\bibitem[Sutton(2019)]{Sutton2019BitterLesson}
+R.~Sutton.
+\newblock The {Bitter} {Lesson}, 2019.
+\newblock URL \url{http://www.incompleteideas.net/IncIdeas/BitterLesson.html}.
+
+\bibitem[Tanabe(1971)]{Tanabe1971ProjectionMethodSolving}
+K.~Tanabe.
+\newblock Projection method for solving a singular system of linear equations and its applications.
+\newblock \emph{Numerische Mathematik}, 17\penalty0 (3):\penalty0 203--214, June 1971.
+\newblock ISSN 0945-3245.
+\newblock \doi{10.1007/BF01436376}.
+\newblock URL \url{https://doi.org/10.1007/BF01436376}.
+
+\bibitem[Tay et~al.(2022)Tay, Dehghani, Bahri, and Metzler]{Tay2022EfficientTransformersSurvey}
+Y.~Tay, M.~Dehghani, D.~Bahri, and D.~Metzler.
+\newblock Efficient {Transformers}: {A} {Survey}.
+\newblock \emph{ACM Comput. Surv.}, 55\penalty0 (6):\penalty0 109:1--109:28, Dec. 2022.
+\newblock ISSN 0360-0300.
+\newblock \doi{10.1145/3530811}.
+\newblock URL \url{https://dl.acm.org/doi/10.1145/3530811}.
+
+\bibitem[Trockman et~al.(2024)Trockman, Harutyunyan, Kolter, Kumar, and Bhojanapalli]{Trockman2024MimeticInitializationHelps}
+A.~Trockman, H.~Harutyunyan, J.~Z. Kolter, S.~Kumar, and S.~Bhojanapalli.
+\newblock Mimetic {Initialization} {Helps} {State} {Space} {Models} {Learn} to {Recall}, Oct. 2024.
+\newblock URL \url{http://arxiv.org/abs/2410.11135}.
+\newblock arXiv:2410.11135 [cs].
+
+\bibitem[van~der Westhuizen and Lasenby(2018)]{vanderWesthuizen2018UnreasonableEffectivenessForget}
+J.~van~der Westhuizen and J.~Lasenby.
+\newblock The unreasonable effectiveness of the forget gate, Sept. 2018.
+\newblock URL \url{http://arxiv.org/abs/1804.04849}.
+\newblock arXiv:1804.04849 [cs, stat].
+
+\bibitem[Vaswani et~al.(2017)Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, and Polosukhin]{Vaswani2017AttentionAllYou}
+A.~Vaswani, N.~Shazeer, N.~Parmar, J.~Uszkoreit, L.~Jones, A.~N. Gomez, L.~Kaiser, and I.~Polosukhin.
+\newblock Attention is {All} you {Need}.
+\newblock In \emph{Advances in {Neural} {Information} {Processing} {Systems}}, volume~30. Curran Associates, Inc., 2017.
+\newblock URL \url{https://papers.nips.cc/paper_files/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html}.
+
+\bibitem[von Oswald et~al.(2023)von Oswald, Niklasson, Schlegel, Kobayashi, Zucchet, Scherrer, Miller, Sandler, y~Arcas, Vladymyrov, Pascanu, and Sacramento]{vonOswald2023UncoveringMesaoptimizationAlgorithms}
+J.~von Oswald, E.~Niklasson, M.~Schlegel, S.~Kobayashi, N.~Zucchet, N.~Scherrer, N.~Miller, M.~Sandler, B.~A. y~Arcas, M.~Vladymyrov, R.~Pascanu, and J.~Sacramento.
+\newblock Uncovering mesa-optimization algorithms in {Transformers}.
+\newblock \emph{CoRR}, abs/2309.05858, 2023.
+\newblock URL \url{https://doi.org/10.48550/arXiv.2309.05858}.
+\newblock tex.cdate: 1672531200000 tex.publtype: informal.
+
+\bibitem[Wang et~al.(2019)Wang, Pleiss, Gardner, Tyree, Weinberger, and Wilson]{Wang2019ExactGaussianProcesses}
+K.~A. Wang, G.~Pleiss, J.~Gardner, S.~Tyree, K.~Q. Weinberger, and A.~G. Wilson.
+\newblock Exact {Gaussian} {Processes} on a {Million} {Data} {Points}.
+\newblock \emph{Advances in Neural Information Processing Systems}, 32, 2019.
+\newblock URL \url{https://papers.nips.cc/paper/2019/hash/01ce84968c6969bdd5d51c5eeaa3946a-Abstract.html}.
+
+\bibitem[Wasserman(2006)]{Wasserman2006AllNonparametricStatistics}
+L.~Wasserman.
+\newblock \emph{All of {Nonparametric} {Statistics}}.
+\newblock Springer {Texts} in {Statistics}. Springer, New York, NY, 2006.
+\newblock ISBN 978-0-387-25145-5.
+\newblock \doi{10.1007/0-387-30623-4}.
+\newblock URL \url{http://link.springer.com/10.1007/0-387-30623-4}.
+
+\bibitem[Widrow and Hoff(1988)]{Widrow1988AdaptiveSwitchingCircuits}
+B.~Widrow and M.~E. Hoff.
+\newblock Adaptive switching circuits.
+\newblock In \emph{Neurocomputing: foundations of research}, pages 123--134. MIT Press, Cambridge, MA, USA, Jan. 1988.
+\newblock ISBN 978-0-262-01097-9.
+
+\bibitem[Willshaw(1989)]{Willshaw1989HolographyAssociativeMemory}
+D.~Willshaw.
+\newblock Holography, {Associative} {Memory}, and {Inductive} {Generalization}.
+\newblock In \emph{Parallel {Models} of {Associative} {Memory}}. Psychology Press, 1989.
+\newblock ISBN 978-1-315-80799-7.
+\newblock Num Pages: 22.
+
+\bibitem[Willshaw et~al.(1969)Willshaw, Buneman, and Longuet-Higgins]{Willshaw1969NonHolographicAssociativeMemory}
+D.~J. Willshaw, O.~P. Buneman, and H.~C. Longuet-Higgins.
+\newblock Non-{Holographic} {Associative} {Memory}.
+\newblock \emph{Nature}, 222\penalty0 (5197):\penalty0 960--962, June 1969.
+\newblock ISSN 1476-4687.
+\newblock \doi{10.1038/222960a0}.
+\newblock URL \url{https://www.nature.com/articles/222960a0}.
+\newblock Publisher: Nature Publishing Group.
+
+\bibitem[Wortsman et~al.(2023)Wortsman, Liu, Xiao, Everett, Alemi, Adlam, Co-Reyes, Gur, Kumar, Novak, Pennington, Sohl-Dickstein, Xu, Lee, Gilmer, and Kornblith]{Wortsman2023SmallscaleProxiesLargescale}
+M.~Wortsman, P.~J. Liu, L.~Xiao, K.~E. Everett, A.~A. Alemi, B.~Adlam, J.~D. Co-Reyes, I.~Gur, A.~Kumar, R.~Novak, J.~Pennington, J.~Sohl-Dickstein, K.~Xu, J.~Lee, J.~Gilmer, and S.~Kornblith.
+\newblock Small-scale proxies for large-scale {Transformer} training instabilities.
+\newblock In \emph{The {Twelfth} {International} {Conference} on {Learning} {Representations}}, Oct. 2023.
+\newblock URL \url{https://openreview.net/forum?id=d8w0pmvXbZ}.
+
+\bibitem[Xu et~al.(2024)Xu, Cheng, Wang, and Chen]{Xu2024KVShiftingAttention}
+M.~Xu, W.~Cheng, B.~Wang, and W.~Chen.
+\newblock {KV} {Shifting} {Attention} {Enhances} {Language} {Modeling}, Dec. 2024.
+\newblock URL \url{http://arxiv.org/abs/2411.19574}.
+\newblock arXiv:2411.19574 [cs].
+
+\bibitem[Yang et~al.(2024{\natexlab{a}})Yang, Kautz, and Hatamizadeh]{Yang2024GatedDeltaNetworks}
+S.~Yang, J.~Kautz, and A.~Hatamizadeh.
+\newblock Gated {Delta} {Networks}: {Improving} {Mamba2} with {Delta} {Rule}, Dec. 2024{\natexlab{a}}.
+\newblock URL \url{http://arxiv.org/abs/2412.06464}.
+\newblock arXiv:2412.06464 [cs] version: 1.
+
+\bibitem[Yang et~al.(2024{\natexlab{b}})Yang, Wang, Shen, Panda, and Kim]{Yang2024GatedLinearAttention}
+S.~Yang, B.~Wang, Y.~Shen, R.~Panda, and Y.~Kim.
+\newblock Gated {Linear} {Attention} {Transformers} with {Hardware}-{Efficient} {Training}.
+\newblock In \emph{Proceedings of the 41st {International} {Conference} on {Machine} {Learning}}, pages 56501--56523. PMLR, July 2024{\natexlab{b}}.
+\newblock URL \url{https://proceedings.mlr.press/v235/yang24ab.html}.
+\newblock ISSN: 2640-3498.
+
+\bibitem[Yang et~al.(2024{\natexlab{c}})Yang, Wang, Zhang, Shen, and Kim]{Yang2024ParallelizingLinearTransformers}
+S.~Yang, B.~Wang, Y.~Zhang, Y.~Shen, and Y.~Kim.
+\newblock Parallelizing {Linear} {Transformers} with the {Delta} {Rule} over {Sequence} {Length}, Aug. 2024{\natexlab{c}}.
+\newblock URL \url{http://arxiv.org/abs/2406.06484}.
+\newblock arXiv:2406.06484.
+
+\bibitem[Zhang et~al.(2025)Zhang, Nolte, Sadhukhan, Chen, and Bottou]{Zhang2025MemoryMosaics}
+J.~Zhang, N.~Nolte, R.~Sadhukhan, B.~Chen, and L.~Bottou.
+\newblock Memory mosaics.
+\newblock In \emph{The thirteenth international conference on learning representations}, 2025.
+\newblock URL \url{https://openreview.net/forum?id=IiagjrJNwF}.
+
+\bibitem[Zhang et~al.(2023{\natexlab{a}})Zhang, Bhatia, Kumbong, and Re]{Zhang2023HedgehogPorcupineExpressive}
+M.~Zhang, K.~Bhatia, H.~Kumbong, and C.~Re.
+\newblock The {Hedgehog} \& the {Porcupine}: {Expressive} {Linear} {Attentions} with {Softmax} {Mimicry}.
+\newblock In \emph{The {Twelfth} {International} {Conference} on {Learning} {Representations}}, Oct. 2023{\natexlab{a}}.
+\newblock URL \url{https://openreview.net/forum?id=4g02l2N2Nx}.
+
+\bibitem[Zhang et~al.(2023{\natexlab{b}})Zhang, Zhang, Yang, and Wang]{Zhang2023WhatHowDoes}
+Y.~Zhang, F.~Zhang, Z.~Yang, and Z.~Wang.
+\newblock What and {How} does {In}-{Context} {Learning} {Learn}? {Bayesian} {Model} {Averaging}, {Parameterization}, and {Generalization}, Oct. 2023{\natexlab{b}}.
+\newblock URL \url{http://arxiv.org/abs/2305.19420}.
+\newblock arXiv:2305.19420 [stat].
+
+\bibitem[Zhang et~al.(2024)Zhang, Liu, Cai, Wang, and Wang]{Zhang2024AnalysisAttentionLens}
+Y.~Zhang, B.~Liu, Q.~Cai, L.~Wang, and Z.~Wang.
+\newblock An {Analysis} of {Attention} via the {Lens} of {Exchangeability} and {Latent} {Variable} {Models}, Apr. 2024.
+\newblock URL \url{http://arxiv.org/abs/2212.14852}.
+\newblock arXiv:2212.14852 [cs].
+
+\bibitem[Zhou and Troyanskaya(2015)]{Zhou2015PredictingEffectsNoncoding}
+J.~Zhou and O.~G. Troyanskaya.
+\newblock Predicting effects of noncoding variants with deep learning–based sequence model.
+\newblock \emph{Nature Methods}, 12\penalty0 (10):\penalty0 931--934, Oct. 2015.
+\newblock ISSN 1548-7105.
+\newblock \doi{10.1038/nmeth.3547}.
+\newblock URL \url{https://www.nature.com/articles/nmeth.3547}.
+\newblock Publisher: Nature Publishing Group.
+
+\bibitem[Zinkevich(2003)]{Zinkevich2003OnlineConvexProgramming}
+M.~Zinkevich.
+\newblock Online convex programming and generalized infinitesimal gradient ascent.
+\newblock In \emph{Proceedings of the {Twentieth} {International} {Conference} on {International} {Conference} on {Machine} {Learning}}, {ICML}'03, pages 928--935, Washington, DC, USA, Aug. 2003. AAAI Press.
+\newblock ISBN 978-1-57735-189-4.
+
+\end{thebibliography}

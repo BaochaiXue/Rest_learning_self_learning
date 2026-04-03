@@ -1,0 +1,173 @@
+%%%%%%%% ICML 2020 EXAMPLE LATEX SUBMISSION FILE %%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+
+% Recommended, but optional, packages for figures and better typesetting:
+\usepackage{microtype}
+\usepackage{graphicx}
+
+\usepackage{booktabs} % for professional tables
+\usepackage{wrapfig,lipsum}
+\usepackage{subcaption}
+
+
+% hyperref makes hyperlinks in the resulting PDF.
+% If your build breaks (sometimes temporarily if a hyperlink spans a page)
+% please comment out the following usepackage line and replace
+% \usepackage{icml2020} with \usepackage[nohyperref]{icml2020} above.
+
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{inconsolata}
+
+\newcommand{\scrX}{\mathcal{X}}
+\newcommand{\scrY}{\mathcal{Y}}
+\newcommand{\scrS}{\mathcal{S}}
+\newcommand{\scrT}{\mathcal{T}}
+
+\usepackage{tabu}
+\usepackage{amsmath,amsthm,verbatim,amssymb,amsfonts,amscd,mathrsfs}
+\usepackage{cleveref}
+
+\input{theorems}
+\input{macros_theory}
+\input{math_commands.tex}
+
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Use the following line for the initial blind version submitted for review:
+%\usepackage{icml2020}
+
+% If accepted, instead use the following line for the camera-ready submission:
+\usepackage[accepted]{icml2020}
+
+% The \icmltitle you define below is probably too long as a header.
+% Therefore, a short form for the running title is supplied here:
+\icmltitlerunning{Test-Time Training with Self-Supervision
+for Generalization under Distribution Shifts}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{Test-Time Training with Self-Supervision\\
+	for Generalization under Distribution Shifts}
+
+% It is OKAY to include author information, even for blind
+% submissions: the style file will automatically remove it for you
+% unless you've provided the [accepted] option to the icml2020
+% package.
+
+% List of affiliations: The first argument should be a (short)
+% identifier you will use later to specify author affiliations
+% Academic affiliations should list Department, University, City, Region, Country
+% Industry affiliations should list Company, City, Region, Country
+
+% You can specify symbols, otherwise they are numbered in order.
+% Ideally, you should not use this facility. Affiliations will be numbered
+% in order of appearance and this is the preferred way.
+\icmlsetsymbol{equal}{*}
+
+\begin{icmlauthorlist}
+\icmlauthor{Yu Sun}{to}
+\icmlauthor{Xiaolong Wang}{to,ucsd}
+\icmlauthor{Zhuang Liu}{to}
+\icmlauthor{John Miller}{to}
+\icmlauthor{Alexei A. Efros}{to}
+\icmlauthor{Moritz Hardt}{to}
+\end{icmlauthorlist}
+
+\icmlaffiliation{to}{University of California, Berkeley}
+\icmlaffiliation{ucsd}{University of California, San Diego}
+
+\icmlcorrespondingauthor{Yu Sun}{yusun@berkeley.edu}
+
+\icmlkeywords{Test-Time Training, distribution shifts}
+
+\vskip 0.3in
+]
+
+% this must go after the closing bracket ] following \twocolumn[ ...
+
+% This command actually creates the footnote in the first column
+% listing the affiliations and the copyright notice.
+% The command takes one argument, which is text to display at the start of the footnote.
+% The \icmlEqualContribution command is standard text for equal contribution.
+% Remove it (just {}) if you do not need this facility.
+
+%\printAffiliationsAndNotice{}  % leave blank if no need to mention equal contribution
+\printAffiliationsAndNotice{} % otherwise use the standard text.
+
+\begin{abstract}
+In this paper, we propose Test-Time Training, a general approach for improving the performance of predictive models when training and test data come from different distributions. We turn a single unlabeled test sample into a self-supervised learning problem, on which we update the model parameters before making a prediction. This also extends naturally to data in an online stream. Our simple approach leads to improvements on diverse image classification benchmarks aimed at evaluating robustness to distribution shifts.
+\end{abstract}
+
+\input{tex/intro}
+\input{tex/method}
+\input{tex/results}
+\input{tex/theory}
+\input{tex/related}
+\input{tex/conclusion}
+
+\paragraph{Acknowledgements.}
+This work is supported by NSF grant 1764033, DARPA and Berkeley DeepDrive.
+This paper took a long time to develop, and benefited from conversations with many of our colleagues, including
+Ben Recht and his students Ludwig Schmidt, Vaishaal Shanker and Becca Roelofs;
+Ravi Teja Mullapudi, Achal Dave and Deva Ramanan;
+and Armin Askari, Allan Jabri, Ashish Kumar,
+Angjoo Kanazawa and Jitendra Malik.
+
+\bibliography{ttt}
+\bibliographystyle{icml2020}
+
+%\includepdf[pages=1-last]{appendix.pdf}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Supplementary Information
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Supplementary Information hacks from http://jshodges.com/index.php?qs=kb_001
+% For section headers starting with S
+\renewcommand{\thesection}{A\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+
+\newcommand{\beginsupplementary}{%
+	\setcounter{table}{0}
+	\renewcommand{\thetable}{A\arabic{table}}%
+	\setcounter{figure}{0}
+	\renewcommand{\thefigure}{A\arabic{figure}}%
+	\setcounter{section}{0}
+}
+\beginsupplementary
+\newcommand{\suptitl}{Appendix: Test-Time Training with Self-Supervision\\
+	for Generalization under Distribution Shifts}
+\newcommand{\suptitlrunning}{Test-Time Training with Self-Supervision
+	for Generalization under Distribution Shifts}
+\icmltitlerunning{\suptitlrunning}
+\twocolumn[
+\icmltitle{\suptitl}
+% \authorinfo
+\vskip 0.3in
+]
+
+\input{tex/appendix}
+
+\newpage
+\begin{figure*}[ht]
+	\centering
+	\includegraphics[width=0.9\textwidth]{plots/c7_samples/c7_airplane}
+	\includegraphics[width=0.9\textwidth]{plots/c7_samples/c7_bird}
+	\includegraphics[width=0.9\textwidth]{plots/c7_samples/c7_car}	\includegraphics[width=0.9\textwidth]{plots/c7_samples/c7_dog}	\includegraphics[width=0.9\textwidth]{plots/c7_samples/c7_domestic_cat}	\includegraphics[width=0.9\textwidth]{plots/c7_samples/c7_horse}
+	\includegraphics[width=0.9\textwidth]{plots/c7_samples/c7_watercraft}
+	\caption{
+		Sample Images from the VID-Robust dataset \citep{shankar2019systematic} in
+		the results section adapted to CIFAR-10. 
+		Each row shows eight sample images from one class.
+		The seven classes shown are, in order:
+		airplane, bird, car, dog, cat, horse, ship.
+	}
+	\label{vid_samples}
+\end{figure*}
+\end{document}

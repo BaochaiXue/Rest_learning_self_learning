@@ -1,0 +1,69 @@
+\section{Related Work}
+\label{related}
+
+\paragraph{Learning on test instances.}
+\citet{shocher2018zero} provide a key inspiration for our work by showing that image super-resolution could be learned at test time simply by trying to upsample a downsampled version of the input image. More recently, \citet{bau2019semantic} improve photo manipulation by adapting a pre-trained GAN to the statistics of the input image.   One of the earlier examples of this idea comes from \citet{jain2011online}, who improve Viola-Jones face detection \citep{viola2001rapid} by bootstrapping the more difficult faces in an image from the more easily detected faces in that same image. 
+The online version of our algorithm is inspired by the work of \citet{mullapudi2018online}, which makes video segmentation more efficient by using a student model that learns online from a teacher model.
+The idea of online updates has also been used in \citet{kalal2011tracking} for tracking and detection.
+A recent work in echocardiography \citep{zhu2019neural} improves the deep learning model that tracks myocardial motion and cardiac blood flow with sequential updates.
+Lastly, we share the philosophy of transductive learning \citep{vapnik2013nature, gammerman1998learning}, but have little in common with their classical algorithms;
+recent work by \citet{nilesh} theoretically explores this for linear prediction, in the context of debiasing the LASSO estimator.
+
+\paragraph{Self-supervised learning} studies how to create labels from the data, by designing various pretext tasks that can learn semantic information without human annotations, 
+such as context prediction \citep{doersch2015unsupervised}, solving jigsaw puzzles \citep{noroozi2016unsupervised}, colorization \citep{larsson2017colorproxy,zhang2016colorful}, noise prediction \citep{bojanowski2017unsupervised}, feature clustering \citep{caron2018deep}. 
+Our paper uses rotation prediction \citep{gidaris2018unsupervised}.
+\citet{asano2019surprising} show that self-supervised learning on only a single image, surprisingly, can produce low-level features that generalize well.
+Closely related to our work, \citet{hendrycks2019using} propose that jointly training a main task and a self-supervised task (our joint training baseline in \Cref{results}) can improve robustness on the main task.
+The same idea is used in few-shot learning  \citep{su2019boosting}, domain generalization \citep{carlucci2019domain}, and unsupervised domain adaptation \citep{sun2019uda}.
+
+\paragraph{Adversarial robustness}
+studies the robust risk
+$
+R_{P, \Delta}(\vtheta) = \E_{x,y\sim P} \max_{\delta \in \Delta}  l(x+\delta, y; ~\vtheta),
+$
+where $l$ is some loss function, and $\Delta$ is the set of perturbations; $\Delta$ is often chosen as the $L_p$ ball, for $p\in \{1, 2, \infty\}$.
+Many popular algorithms formulate and solve this as a robust optimization problem \citep{goodfellow2014explaining, madry2017towards, sinha2017certifying, raghunathan2018certified, wong2017provable, croce2018provable}, and the most well known technique is adversarial training.
+Another line of work is based on randomized smoothing \citep{cohen2019certified, salman2019provably}, while some other approaches, such as input transformations
+\citep{guo2017countering, song2017pixeldefend}, are shown to be less effective \citep{athalye2018obfuscated}.
+There are two main problems with the approaches above.
+First, all of them can be seen as \emph{smoothing} the decision boundary.
+This establishes a theoretical tradeoff between accuracy and robustness \citep{tsipras2018robustness, zhang2019theoretically}, which we also observe empirically with our adversarial training baseline in \Cref{results}.
+Intuitively, the more diverse $\Delta$ is, the less effective this \emph{one-boundary-fits-all} approach can be for a particular element of $\Delta$.
+Second, adversarial methods rely heavily on the mathematical structure of $\Delta$, which might not accurately model perturbations in the real world. 
+Therefore, generalization remains hard outside of the $\Delta$ we know in advance or can mathematically model, especially for non-adversarial distribution shifts.
+Empirically, \citet{kang2019transfer} shows that robustness for one $\Delta$ might not transfer to another, and training on the $L_\infty$ ball actually hurts robustness on the $L_1$ ball.
+
+\paragraph{Non-adversarial robustness} studies the effect of corruptions, perturbations, out-of-distribution examples, and real-world distribution shifts
+\citep{hendrycks2019improving, hendrycks2019using, hendrycks2018using, hendrycks2016baseline}.
+\citet{geirhos2018generalisation} show that training on images corrupted by Gaussian noise makes deep learning models robust to this particular noise type, but does not improve performance on images corrupted by another noise type e.g. salt-and-pepper noise.
+
+\paragraph{Unsupervised domain adaptation}
+(a.k.a. transfer learning) studies the problem of distribution shifts, when an unlabeled dataset from the test distribution (target domain) is available at training time, 
+in addition to a labeled dataset from the training distribution (source domain)
+\citep{chen2011co, gong2012geodesic, long2015learning, ganin2016domain, long2016unsupervised, tzeng2017adversarial,hoffman2017cycada,csurka2017domain, chen2018adversarial}.
+The limitation of the problem setting, however, is that generalization might only be improved for this specific test distribution, which can be difficult to anticipate in advance.
+Prior work try to anticipate broader distributions by using multiple and evolving domains \citep{hoffman2018algorithms, hoffman2012discovering, hoffman2014continuous}.
+Test-Time Training does not anticipate any test distribution, by changing the setting of unsupervised domain adaptation, while taking inspiration from its algorithms.
+Our paper is a follow-up to \citet{sun2019uda}, which we explain and empirically compare with in \Cref{results}.
+Our update rule can be viewed as performing \emph{one-sample unsupervised domain adaptation} on the fly, with the caveat that standard domain adaptation techniques might become ill-defined when there is only one sample from the target domain.
+
+\paragraph{Domain generalization} studies the setting where a meta distribution generates multiple environment distributions, some of which are available during training (source), while others are used for testing (target)
+\citep{li2018deep, shankar2018generalizing, muandet2013domain, balaji2018metareg, ghifary2015domain, motiian2017unified, li2017deeper, gan2016learning}. 
+With only a few environments, information on the meta distribution is often too scarce to be helpful,
+and with many environments, we are back to the i.i.d. setting where each environment can be seen as a sample, and a strong baseline is to simply train on all the environments \citep{li2019episodic}.
+The setting of domain generalization is limited by the inherent tradeoff between specificity and generality of a fixed decision boundary, and the fact that generalization is again elusive outside of the meta distribution i.e. the actual $P$ learned by the algorithm.
+
+\paragraph{One (few)-shot learning} studies how to learn a new task or a new classification category using only one (or a few) sample(s), on top of a general representation that has been learned on diverse samples 
+\citep{snell2017prototypical, vinyals2016matching, fei2006one, ravi2016optimization, li2017meta, finn2017model, gidaris2018dynamic}.
+Our update rule can be viewed as performing \emph{one-shot self-supervised learning} and can potentially be improved by progress in one-shot learning.
+% For example, the method of \citet{finn2017model} (MAML) might be used to modify the gradient steps of our method.
+
+\paragraph{Continual learning} (a.k.a. learning without forgetting) studies the setting where a model is made to learn a sequence of tasks, and not forget about the earlier ones while training for the later \citep{li2017learning, lopez2017gradient, kirkpatrick2017overcoming, santoro2016meta}. In contrast, with Test-Time Training, we are not concerned about forgetting the past test samples since they have already been evaluated on; and if a past sample comes up by any chance, it would go through Test-Time Training again. In addition, the impact of forgetting the training set is minimal, because both tasks have already been jointly trained.
+
+\paragraph{Online learning} (a.k.a. online optimization) is a well-studied area of learning theory
+\citep{shalev2012online, hazan2016introduction}. 
+The basic setting repeats the following: receive $x_t$, predict $\hat{y}_t$, receive $y_t$ from a worst-case oracle, and learn.
+Final performance is evaluated using the regret, which colloquially translates to how much worse the online learning algorithm performs in comparison to the best fixed model in hindsight.
+In contrast, our setting never reveals any $y_t$ during testing even for the online version, so we do not need to invoke the concept of the worst-case oracle or the regret.
+Also, due to the lack of feedback from the environment after predicting, our algorithm is motivated to learn (with self-supervision) before predicting $\hat{y}_t$ instead of after.
+Note that some of the previously covered papers \cite{hoffman2014continuous, jain2011online, mullapudi2018online} use the term ``online learning'' outside of the learning theory setting, so the term can be overloaded.

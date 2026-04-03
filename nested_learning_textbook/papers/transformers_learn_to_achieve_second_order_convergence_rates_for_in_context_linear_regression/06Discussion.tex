@@ -1,0 +1,15 @@
+\vspace{-1mm}
+\section{Conclusion and Discussion}
+\vspace{-1mm}
+
+In this work, we studied how Transformers perform in-context learning for linear regression.
+In contrast with the hypothesis that Transformers learn in-context by implementing gradient descent,
+\new{our experimental results show that different Transformer layers match iterations of \newton\  \textit{linearly} and \gd\ \textit{exponentially}. This suggests that Transformers share a similar rate of convergence to \newton\ but not to \gd.}
+%our experimental results show that predictions made by different Transformer layers match iterations of \newton's method better than those of \gd. 
+Moreover, Transformers can perform well empirically on ill-conditioned linear regression, whereas first-order methods such as \gd\ struggle. {This empirical evidence --- when combined with existing lower bounds in optimization --- suggests that Transformers use second-order information for solving linear regression, and we also prove that Transformers can indeed represent second-order methods. } 
+
+An interesting direction is to explore a wider range of second-order methods that Transformers can implement. It also seems promising to  extend our analysis to classification problems, especially given 
+recent work showing that Transformers resemble SVMs in classification tasks \citep{Li2023TransformersAA,AtaeeTarzanagh2023TransformersAS}. 
+Finally, a natural question is to understand the differences in the  model architecture that make Transformers better in-context learners than LSTMs. Based on our investigations with LSTMs, we hypothesize that Transformers can implement more powerful algorithms because of having access to a longer history of examples. 
+ Investigating the role of this additional memory in learning appears to be an intriguing direction.
+

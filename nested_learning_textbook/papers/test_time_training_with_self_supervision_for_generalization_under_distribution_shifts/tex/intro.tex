@@ -1,0 +1,39 @@
+\section{Introduction}
+\label{intro}
+
+Supervised learning remains notoriously weak at generalization under distribution shifts.
+Unless training and test data are drawn from the same distribution, even seemingly minor differences turn out to defeat state-of-the-art models \citep{recht2018cifar}.
+Adversarial robustness and domain adaptation are but a few existing paradigms that try to \textit{anticipate} differences between the training and test distribution with either topological structure or data from the test distribution available during training.
+We explore a new take on generalization that \textit{does not} anticipate the distribution shifts, but instead learns from them at test time.
+
+We start from a simple observation. 
+The unlabeled test sample $x$ presented at test time gives us a hint about the distribution from which it was drawn. 
+We propose to take advantage of this hint on the test distribution by allowing the model parameters $\vtheta$
+to depend on the test sample $x$, but not its unknown label $y$.
+The concept of a variable decision boundary $\vtheta(x)$ is powerful in theory since it breaks away from the limitation of fixed model capacity (see additional discussion in \Cref{vdb}), but the design of a feedback mechanism from $x$ to $\vtheta(x)$ raises new challenges in practice that we only begin to address here.
+
+Our proposed test-time training method creates a self-supervised learning problem based on this single test sample $x$, updating $\vtheta$ at test time before making a prediction. 
+Self-supervised learning uses an auxiliary task that automatically creates labels from unlabeled inputs.
+In our experiments, we use the task of rotating each input image by a multiple of 90 degrees and predicting its angle~\citep{gidaris2018unsupervised}.
+
+This approach can also be easily modified to work outside the standard supervised learning setting. 
+If several test samples arrive in a batch, we can use the entire batch for test-time training.
+If samples arrive in an online stream, we obtain further improvements by keeping the state of the parameters.
+After all, prediction is rarely a single event. The online version can be the natural mode of deployment under the additional assumption that test samples are produced by the same or smoothly changing distribution shifts.
+
+We experimentally validate our method in the context of object recognition on several standard benchmarks. These include images with diverse types of corruption at various levels \citep{hendrycks2019benchmarking},  video frames of moving objects \citep{shankar2019systematic}, and a new test set of unknown shifts collected by \cite{recht2018cifar}. 
+Our algorithm makes substantial improvements under distribution shifts, while maintaining the same performance on the original distribution.
+
+In our experiments, we compare with a strong baseline (labeled joint training) that uses both supervised and self-supervised learning at training-time, but keeps the model fixed at test time.
+Recent work shows that \emph{training-time} self-supervision improves robustness \citep{hendrycks2019using}; our joint training baseline corresponds to an improved implementation of this work. 
+A comprehensive review of related work follows in \Cref{related}.
+
+We complement the empirical results with theoretical investigations in \Cref{theory}, and establish an intuitive sufficient condition on a convex model of when Test-Time Training helps; this condition, roughly speaking, is to have correlated gradients between the loss functions of the two tasks.
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}
+\blfootnote{Project website: {\scriptsize \url{https://test-time-training.github.io/}}.}
+\newpage

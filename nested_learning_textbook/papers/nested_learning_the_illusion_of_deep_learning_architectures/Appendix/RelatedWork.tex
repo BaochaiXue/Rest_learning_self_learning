@@ -1,0 +1,182 @@
+\section{Generalized Formulation for Nested Learning and Nested Systems}
+In this section, we discuss the generalized version of nested systems and \nsam, we discussed in \autoref{sec:nested-learning}:
+
+
+\begin{dfn}[(Generalized) Nested System]
+    A (ordered) nested system is a system with $K$ (ordered) levels such that each level $1 \leq k \leq K$ consists of a set of optimization problems $\{ (\mathcal{L}^{(k)}_{i},  \mathcal{C}^{(k)}_i, \boldsymbol{\Theta}^{(k)}_{i}) \}_{i = 1}^{N_k}$, where $\mathcal{L}_{i}(\cdot; \cdot)$ is the optimization objective in the $i$-th problem, $\mathcal{C}_i$ is its context (the data that is optimized on), $\boldsymbol{\Theta}_{i}$ is the set of its parameters, and each optimization problem is optimized using gradient descent, or equivalently:
+    \begin{align}
+        {\boldsymbol{\theta}_{i}}^{(k)}_{t+1} = \arg\min_{\boldsymbol{\Phi}^{(k)}_{i}} \:\:  \mathcal{L}^{(k)}_i(\boldsymbol{\Phi}^{(k)}_{i}; x_{t+1}) + \frac{1}{2{\eta_{i}}^{(k)}_{t+1}}\:\|\boldsymbol{\Phi}^{(k)}_{i} - {\boldsymbol{\theta}_{i}}^{(k)}_{t} \|^{2}_2 \qquad \text{where}\:\: x_{t+1} \thicksim \mathcal{C}^{(k)}_i, \quad \text{and} \quad {\boldsymbol{\Phi}_{i}}^{(k)} \in  \boldsymbol{\Theta}^{(k)}_{i}.
+    \end{align}
+\end{dfn} 
+
+
+
+
+
+
+
+
+
+\begin{dfn}[(Generalized) Nested System of Associative Memories] \label{dfn:gnsam}
+    A nested system of associative memory (\nsam) is a system with $K$ (ordered) levels such that each level $1 \leq k \leq K$ consists of a set of optimization problems $\{ (\mathcal{L}^{(k)}_{i},  \mathcal{C}^{(k)}_i, \boldsymbol{\Theta}^{(k)}_{i}) \}_{i = 1}^{N_k}$, where $\mathcal{C}_i = \{(\vk^{(i)}_j, \vv^{(i)}_j) \}_{j = 1}^{L_{i}}$ is a set of ground-truth mappings, $\mathcal{L}_{i}(\cdot; \cdot, \cdot)$ is the optimization objective that measures the quality of memory learned mappings in the $i$-th problem, $\boldsymbol{\Theta}_{i}$ is the set of memory parameters, and each optimization problem is optimized using gradient descent:
+    \begin{align}
+        {\boldsymbol{\theta}_{i}}^{(k)}_{t+1} = \arg\min_{\boldsymbol{\Phi}^{(k)}_{i}} \:\:  \mathcal{L}^{(k)}_i(\boldsymbol{\Phi}^{(k)}_{i}; \vk^{(i)}_{t+1}, \vv^{(i)}_{t+1}) + \frac{1}{2{\eta_{i}}^{(k)}_{t+1}}\:\|\boldsymbol{\Phi}^{(k)}_{i} - {\boldsymbol{\theta}_{i}}^{(k)}_{t} \|^{2}_2 \quad \:\: \text{where}\:\: (\vk^{(i)}_{t+1}, \vv^{(i)}_{t+1}) \thicksim \mathcal{C}^{(k)}_i, \:\:\:\: \text{and} \:\:\: \:{\boldsymbol{\Phi}_{i}}^{(k)} \in  \boldsymbol{\Theta}^{(k)}_{i}.
+    \end{align}
+\end{dfn} 
+
+
+
+
+
+
+
+
+
+\section{Adam, AdaGrad, and Other Similar Optimizers as Associative Memory Modules}\label{app:adam}
+Revisiting the momentum term without using the chain rule in backpropagation,
+\begin{align}\nonumber
+    &{W_{\ell}}_{_{t+1}} = {W_{\ell}}_{_{t}} + {\boldsymbol{m}_{\ell}}_{_{t+1}}\\ \label{eq:momentum2}
+    &{\boldsymbol{m}_{\ell}}_{_{t+1}} = \alpha_{\ell, t+1} {\boldsymbol{m}_{\ell}}_{_{t}} - \eta_{\ell, t+1} \nabla_{{W_{\ell}}_{_{t}}} \mathcal{L}\left({W_{\ell}}_{_{t}}; \boldsymbol{x}_{t+1}\right), 
+\end{align}
+one can interpret the momentum as a key or value-less associative memory~\citep[see Section 5]{behrouz2025Miras}, where the gradient terms $\nabla_{{W_{\ell}}_{_{t}}} \mathcal{L}\left({W_{\ell}}_{_{t}}; \boldsymbol{x}_{t+1}\right)$ are compressed into the momentum. We expect from a powerful momentum term to perfectly memorize all the past gradients in the training process so it can better model the current update to the weights. To this end, one can  start from  defining a simple objective as:
+\begin{align}\label{eq:adam-objective2}
+    \tilde{\mathcal{L}}_t = \sum_{i = 1}^{t} \| {\boldsymbol{m}_{\ell}}_{_{t}}  \odot {\boldsymbol{g}_{\ell}}_{_{i + 1}} - \vp_{\ell_{t}} \|_{2}^{2} \:\: +\:\: \lambda_{\ell} \|{\boldsymbol{m}_{\ell}}_{_{t}}\|^2_F ,
+\end{align}
+where ${\boldsymbol{g}_{\ell}}_{_{t + 1}} = - \nabla_{{W_{\ell}}_{_{t}}} \mathcal{L}\left({W_{\ell}}_{_{t}}; \boldsymbol{x}_{t+1}\right)$. This objective aims to find a momentum term that does not simply map the gradients to 1 (which also results in limited memory management in momentum), but it maps gradients to a global property of past data samples. The more expressive this global property is, the more accurately the momentum can incorporate the compressed information from past. Accordingly, the objective in \autoref{eq:adam-objective2} admits an optimal associative memory that maps gradients to $\vp_{\ell_{t+1}}$ as:
+\begin{align}\nonumber
+    &{\boldsymbol{m}^{(t)}_{\ell, i}}^{*} = \left[  \left( \boldsymbol{H}^{(t)}_{\ell, i} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1}\right] \odot \left( \boldsymbol{M}^{(t)}_{\ell, i}\right) = \left[  \left( \boldsymbol{H}^{(t)}_{\ell, i} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1}\right] \odot \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} \odot \vp_{\ell_{t}}, \qquad \text{where} \\ \nonumber
+    &\boldsymbol{M}^{(t)}_{\ell, i+1} = \boldsymbol{M}^{(t)}_{\ell, i} \: + \:  \beta_1 \: {\boldsymbol{g}_{\ell}}_{_{i + 1}} \odot \vp_{\ell_{t}} = \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} \odot \vp_{\ell_{t}},\\ \nonumber
+    &\tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} = \boldsymbol{M}^{(t)}_{\ell, i} \: + \:  \beta_1 \: {\boldsymbol{g}_{\ell}}_{_{i + 1}},\\ \label{eq:solution2}
+    &\boldsymbol{H}^{(t)}_{\ell, i+1} = \boldsymbol{H}^{(t)}_{\ell, i} + \beta_2 \: {\boldsymbol{g}_{\ell}}_{_{i + 1}} \odot {\boldsymbol{g}_{\ell}}_{_{i + 1}} = \boldsymbol{H}^{(t)}_{\ell, i} + \beta_2 \: {\boldsymbol{g}_{\ell}}_{_{i + 1}}^{2}.
+\end{align}
+Given this solution, one can write the update step as:
+\begin{align}\label{eq:general-adam}
+    {W_{\ell}}_{_{i+1}} = {W_{\ell}}_{_{i}} - \eta_t \: {\boldsymbol{m}^{(t)}_{\ell, i}}^{*} = {W_{\ell}}_{_{i}} - \eta_i \: \left[  \left( \boldsymbol{H}^{(t)}_{\ell, i} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1}\right] \odot \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} \odot \vp_{\ell_{t}}. 
+\end{align}
+We start with a simple case, where $\vp_{\ell_{t}}$ is the summation of the square of past gradients: i.e., $\vp_{\ell_{t}} = \sum_{i = 1}^{t} \vg_{\ell_{i+1}}^2$. With the choice of $\lambda \rightarrow 0$, \autoref{eq:general-adam} recovers simple gradient descent with momentum. That is, let $\lambda = 0$, we have:
+\begin{align}
+    {W_{\ell}}_{_{i+1}} = {W_{\ell}}_{_{i}} - \eta_t \: {\boldsymbol{m}^{(t)}_{\ell, i}}^{*} = {W_{\ell}}_{_{i}} - \eta_i \:  \left( \boldsymbol{H}^{(t)}_{\ell, i} \right)^{-1} \odot \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} \odot \undermath{\boldsymbol{H}^{(t)}_{\ell, i} / \beta_2}{\vp_{\ell_{t}}} = {W_{\ell}}_{_{i}} - \eta_t \beta_2 \: \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1},
+\end{align}
+which based on the definition of $\tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1}$, this update rule is equivalent to gradient descent with momentum. Next, we explore a more sophisticated design choice, where we use $\vp_{\ell_{t}}$ as the variance of data samples before token $t + 1$. In this case, formally,  $\vp_{\ell_{t}} = \sqrt{\sum_{i = 1}^{t} \vg_{\ell_{i+1}}^2}$ and so the update rule is as follows:
+\begin{align}
+    &{W_{\ell}}_{_{i+1}} = {W_{\ell}}_{_{i}} - \eta_t \: {\boldsymbol{m}^{(t)}_{\ell, i}}^{*} = {W_{\ell}}_{_{i}} - \eta_i \:  \left[  \left( \boldsymbol{H}^{(t)}_{\ell, i} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1}\right] \odot \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} \odot \undermath{\boldsymbol{H}^{(t)^{\frac{1}{2}}}_{\ell, i} / \sqrt{\beta_2}}{\vp_{\ell_{t}}} \approx {W_{\ell}}_{_{i}} - \frac{\eta_t}{\sqrt{\beta_2}} \: \frac{\tilde{\boldsymbol{M}}^{(t)}_{\ell, i}}{\boldsymbol{H}^{(t)^{1/2}}_{\ell, i} \: + \varepsilon}
+\end{align}
+which is equivalent to the popular Adam optimizer~\citep{kingma2014adam}. Therefore, Adam is an optimal associative memory given the $L_2$ regression objective that is defined in \autoref{eq:adam-objective2}. In fact, the update component of Adam at each state aims to learn a mapping between the gradients and their variance (as a global property of past data samples). One interesting point about this formulation is about the frequency of elements. Looking at the first and second momentum in Adam optimizer, the frequency of update for both of these memories are the same as both are updated after each sample. Furthermore, the computation of each of them can be done in parallel and so are independent. Accordingly, it is one of the few examples that two components without any internal gradient flow, are placed in the same frequency and so level (see \autoref{sec:nop}).  
+
+Going beyond element-wise update, we reformulate \autoref{eq:adam-objective2} with outer-product operation as:
+\begin{align}\label{eq:adgrad-objective2}
+    \tilde{\mathcal{L}}_t = \sum_{i = 1}^{t} \| {\boldsymbol{m}_{\ell}}_{_{t}}   {\boldsymbol{g}_{\ell}}_{_{i + 1}} - \vp_{\ell_{t}} \|_{2}^{2} \:\: +\:\: \lambda_{\ell} \|{\boldsymbol{m}_{\ell}}_{_{t}}\|^2_F ,
+\end{align}
+where ${\boldsymbol{g}_{\ell}}_{_{t + 1}} = - \nabla_{{W_{\ell}}_{_{t}}} \mathcal{L}\left({W_{\ell}}_{_{t}}; \boldsymbol{x}_{t+1}\right)$. Similar to \autoref{eq:solution2}, finding the optimal solution to the above objective is defined as:
+\begin{align}\label{eq:solution-adagrad}
+    &{\boldsymbol{m}^{(t)}_{\ell, i}}^{*} = \left[  \left( \boldsymbol{H}^{(t)}_{\ell, i} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1}\right]  \left( \boldsymbol{M}^{(t)}_{\ell, i}\right) = \left[  \left( \boldsymbol{H}^{(t)}_{\ell, i} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1}\right]  \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} \vp_{\ell_{t}}, \qquad \text{where} \\
+    &\boldsymbol{M}^{(t)}_{\ell, i+1} = \boldsymbol{M}^{(t)}_{\ell, i} \: + \:  \beta_1 \: \vp_{\ell_{t}} \: {\boldsymbol{g}_{\ell}}_{_{i + 1}}^{\top}   = \vp_{\ell_{t}}  \: \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1}  ,\\
+    &\tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} = \boldsymbol{M}^{(t)}_{\ell, i} \: + \:  \beta_1 \: {\boldsymbol{g}_{\ell}}_{_{i + 1}}^{\top},\\
+    &\boldsymbol{H}^{(t)}_{\ell, i+1} = \boldsymbol{H}^{(t)}_{\ell, i} + \beta_2 \: {\boldsymbol{g}_{\ell}}_{_{i + 1}} {\boldsymbol{g}_{\ell}}_{_{i + 1}}^{\top}.
+\end{align}
+With a similar choice as Adam, i.e., letting $\vp_{\ell_{t}}$ be the variance of the gradients so far, $\vp_{\ell_{t}} = \sqrt{\sum_{i = 1}^{t} \vg_{\ell_{i+1}} \vg_{\ell_{i+1}}^{\top}}$, then the above solution can be simplified as:
+\begin{align}
+    &{W_{\ell}}_{_{i+1}} = {W_{\ell}}_{_{i}} - \eta_t \: {\boldsymbol{m}^{(t)}_{\ell, i}}^{*} = {W_{\ell}}_{_{i}} - \eta_i \:  \left[  \left( \boldsymbol{H}^{(t)}_{\ell, i} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1}\right] \: \undermath{\boldsymbol{H}^{(t)^{\frac{1}{2}}}_{\ell, i} / \sqrt{\beta_2}}{\vp_{\ell_{t}}} \: \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1}   \approx {W_{\ell}}_{_{i}} - \frac{\eta_t}{\sqrt{\beta_2}} \: \boldsymbol{H}^{(t)^{-1/2}}_{\ell, i} \:\tilde{\boldsymbol{M}}^{(t)}_{\ell, i}
+\end{align}
+The above formulation is the AdaGrad with momentum~\citep{defossez2022a} and so generalizes the AdaGrad~\citep{duchi2011adaptive}, i.e., when $\beta_1 = 1$. Similarly, based on the connection of Adam optimizer~\citep{kingma2014adam} with other algorithms such as RMSProp~\citep{hinton2012neural}, SignSGD and its momentum-based variants~\citep{bernstein2018signsgd}, NAdam~\citep{dozat2016incorporating}, AMSGrad~\citep{reddi2016stochastic}, RAdam~\citep{Liu2020On}, and Lion~\citep{chen2023symbolic}, as well as considering AdaGrad's connection with optimizers such as Shampoo~\citep{gupta2018shampoo} and Soap~\citep{vyas2025soap}–i.e., as the approximation of the preconditioning term–we can conclude that all these optimizers can be re-formulated as associative memory that aims to compress the gradients. 
+
+
+
+
+
+
+
+
+
+% Optimizing the above objective results in an associative memory that maps gradients to $\vp_{\ell_{t+1}}$. The above objective, admits the optimal solution
+% \begin{align}
+%     &{\boldsymbol{m}^{(t)}_{\ell, i}}^{*} = \left[  \left( \boldsymbol{H}^{(t)}_{\ell, i} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1}\right] \odot \left( \boldsymbol{M}^{(t)}_{\ell, i}\right) = \left[  \left( \boldsymbol{H}^{(t)}_{\ell, i} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1}\right] \odot \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} \odot \vp_{\ell_{t}}, \qquad \text{where} \\
+%     &\boldsymbol{M}^{(t)}_{\ell, i+1} = \boldsymbol{M}^{(t)}_{\ell, i} \: + \:  \beta_1 \: {\boldsymbol{g}_{\ell}}_{_{i + 1}} \odot \vp_{\ell_{t}} = \tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} \odot \vp_{\ell_{t}},\\
+%     &\tilde{\boldsymbol{M}}^{(t)}_{\ell, i+1} = \boldsymbol{M}^{(t)}_{\ell, i} \: + \:  \beta_1 \: {\boldsymbol{g}_{\ell}}_{_{i + 1}},\\
+%     &\boldsymbol{H}^{(t)}_{\ell, i+1} = \boldsymbol{H}^{(t)}_{\ell, i} + \beta_2 \: {\boldsymbol{g}_{\ell}}_{_{i + 1}} \odot {\boldsymbol{g}_{\ell}}_{_{i + 1}} = \boldsymbol{H}^{(t)}_{\ell, i} + \beta_2 \: {\boldsymbol{g}_{\ell}}_{_{i + 1}}^{2}.
+% \end{align}
+% Given this optimal memory, when $\vp_{\ell_{t+1}}$ is the variance, i.e., $\vp_{\ell_{t+1}} = \mathbb{E}_{\boldsymbol{x}}\left[ {\boldsymbol{g}_{\ell}}_{_{t + 1}}^{2} \right]^{1/2}$, the update rule is as:
+% \begin{align}
+%     {W_{\ell}}_{_{t+1}} = {W_{\ell}}_{_{t}} - \eta_t \: {\boldsymbol{m}_{\ell, t}}^{*} = {W_{\ell}}_{_{t}} - \eta_t \: \left[  \left( \boldsymbol{H}_{\ell, t} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1}\right] \odot \tilde{\boldsymbol{M}}_{\ell, t+1} \odot \vp_{\ell_{t+1}} \approx {W_{\ell}}_{_{t}} - \eta_t \: \frac{\tilde{\boldsymbol{M}}_{\ell, t}}{\boldsymbol{H}_{\ell, t}^{1/2} \: + \varepsilon},
+% \end{align}
+
+
+
+% \begin{align}\label{eq:adgrad-objective}
+%     \tilde{\mathcal{L}}_t = \sum_{i = 1}^{t} \| {\boldsymbol{m}_{\ell}}_{_{t}} \: {\boldsymbol{g}_{\ell}}_{_{t + 1}} - \mathds{1}\|_{2}^{2} \:\: +\:\: \lambda_{\ell} \|{\boldsymbol{m}_{\ell}}_{_{t}}\|^2_F ,
+% \end{align}
+% where ${\boldsymbol{g}_{\ell}}_{_{t + 1}} = - \nabla_{{W_{\ell}}_{_{t}}} \mathcal{L}\left({W_{\ell}}_{_{t}}; \boldsymbol{x}_{t+1}\right)$. Similar to the above example of Adam, optimization of the above objective results in a value-less associative memory that compress gradients into its parameters with an optimal solution of:
+% \begin{align}
+%     &{\boldsymbol{m}_{\ell, t}}^{*} (\cdot)  = \left[ \left( \boldsymbol{H}_{\ell, t} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1} \right] (\cdot) \: \left( \boldsymbol{M}_{\ell, t}\right), \qquad \text{where} \\
+%     &\boldsymbol{M}_{\ell, t+1} = (1 - \beta_1) \boldsymbol{M}_{\ell, t} \: + \:  \beta_1 \: {\boldsymbol{g}_{\ell}}_{_{t + 1}}^{\top},\\
+%     &\boldsymbol{H}_{\ell, t+1} = \boldsymbol{H}_{\ell, t} + \: {\boldsymbol{g}_{\ell}}_{_{t + 1}}  {\boldsymbol{g}_{\ell}}_{_{t + 1}}^{\top}.
+% \end{align}
+% With the same choice as above for the distance metric, i.e., whitening metric~\citep{yang2008principal} as $f_{\ell}(\boldsymbol{x_{t+1}}) = \mathbb{E}_{\boldsymbol{x}}\left[ {\boldsymbol{g}_{\ell}}_{_{t + 1}}{\boldsymbol{g}_{\ell}}_{_{t + 1}}^{\top} \right]^{1/2}$ results in:
+% \begin{align}
+%     &{\boldsymbol{m}_{\ell, t}}^{*} \left(\mathbb{E}_{\boldsymbol{x}}\left[ {\boldsymbol{g}_{\ell}}_{_{t + 1}}{\boldsymbol{g}_{\ell}}_{_{t + 1}}^{\top} \right]^{1/2}\right)  = \left[ \left( \boldsymbol{H}_{\ell, t} \: + \: \lambda_{\ell}\: \boldsymbol{I} \right)^{-1} \right] \left( \mathbb{E}_{\boldsymbol{x}}\left[ {\boldsymbol{g}_{\ell}}_{_{t + 1}}{\boldsymbol{g}_{\ell}}_{_{t + 1}}^{\top} \right]^{1/2} \right) \left( \boldsymbol{M}_{\ell, t}\right) \\
+%     \Rightarrow\:\:&{W_{\ell}}_{_{t+1}} = {W_{\ell}}_{_{t}} - \eta_t \: {\boldsymbol{m}_{\ell, t}}^{*} (f_{\ell}(\boldsymbol{x_{t+1}})) =  {W_{\ell}}_{_{t}} - \eta_t \: \boldsymbol{H}_{\ell, t}^{-1/2} \boldsymbol{M}_{\ell, t}.
+% \end{align}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Delta Gradient Descent with Normalization}\label{app:DGD}
+In \autoref{sec:L2-backprop} we discussed that gradient descent can be see as an associative memory, and be reformulated as:
+\begin{align}
+    W_{t+1} = \arg\min_{W} \:\: \inner{W\boldsymbol{x}_t}{\nabla_{y_t} \mathcal{L}(W_t;\boldsymbol{x}_t)} + \frac{1}{2\eta_t} \: \|W - W_{t}\|^{2}_2,
+\end{align}
+where each step aims at learning the negative of the gradient direction. Due to the fact that this learning rule only use update terms that depends on the current gradient, we defined $\mathbf{u}_t = -\nabla_{y_t} \mathcal{L}(W_t;\boldsymbol{x}_t)$, and extended the above process to Delta Gradient Descent with more expressive objective of $\mathcal{L}_2$ regression loss:
+\begin{align}
+    W_{t+1} = \arg\min_{W} \:\: \frac{1}{2}\|W\boldsymbol{x}_t - \mathbf{u}_t \|^{2}_2 +  \frac{1}{2\eta_t}\|W - W_{t}\|^{2}_2.
+\end{align}
+We assume that $\vx_t$ is normalized (e.g.  in normalized memory systems or in neural networks with normalization layers, $\|\vx_t\|_2 = \lambda$). Taking gradient to optimize the above objective, 
+\begin{align}
+    2(W_{t+1}\vx_t - \nabla_{y_t} \mathcal{L}(W_t,\vx_t))\vx_t^{\top} + 2 \eta_t (W_{t+1}-W_t) = 0,
+\end{align}
+which results in:
+\begin{align}
+    &W_{t+1}(\vx_t \vx_t^{\top} + \eta_t I) = \nabla_{y_t} \mathcal{L}(W_t,\vx_t) \vx_t^{\top} + \eta_t W_t, \\
+    \Rightarrow\:\:&W_{t+1} = (\nabla_{y_t} \mathcal{L}(W_t,x_t) x_t^{\top} + \eta_t W_t)(\vx_t \vx_t^{\top} + \eta_t I)^{-1}.
+\end{align}
+To compute $( \vx_t \vx_t^{\top} + \eta_t I)^{-1}$ term with  Sherman-Morrison lemma, we have:
+\begin{align}
+    (x_tx_t^{\top} + \eta_t I)^{-1} = \frac{1}{\eta_t} (I - \frac{1}{\lambda^2+\eta_t} \vx_t \vx_t^{\top}),
+\end{align}
+and so:
+\begin{align}
+    &W_{t+1} = (\nabla_{y_t} \mathcal{L}(W_t,\vx_t) \vx_t^{\top} + \eta_t W_t)\frac{1}{\eta_t} (I - \frac{1}{\lambda^2+\eta_t}  \vx_t \vx_t^{\top}) \\
+    \Rightarrow \:\:& W_{t+1} = W_t \left(I - \frac{1}{\lambda^2+\eta_t}  \vx_t \vx_t^{\top} \right) +  \frac{1}{\eta_t} \nabla_{y_t} \mathcal{L}(W_t,\vx_t) \vx_t^{\top} - \undermath{\frac{\lambda}{\lambda^2\eta_t+\eta^2_t} \nabla_{y_t} \mathcal{L}(W_t,\vx_t) \vx_t^{\top}}{\frac{1}{\lambda^2\eta_t+\eta^2_t} \nabla_{y_t} \mathcal{L}(W_t,\vx_t) \vx_t^{\top}\vx_t \vx_t^{\top}} \\
+    \Rightarrow \:\:&W_{t+1} = W_t \left(I - \frac{1}{\lambda^2+\eta_t}  \vx_t \vx_t^{\top} \right)  - \left( \frac{\lambda}{\lambda^2\eta_t+\eta^2_t}  - \frac{1}{\eta_t} \right) \nabla_{y_t} \mathcal{L}(W_t,\vx_t) \vx_t^{\top} \\
+    \Rightarrow \:\:&W_{t+1} = W_t \left(I - \alpha_t \vx_t \vx_t^{\top} \right)  - \beta \:\: \nabla_{y_t} \mathcal{L}(W_t,\vx_t) \vx_t^{\top}
+\end{align}
+
+
+
+
+
+
+
+
+
+

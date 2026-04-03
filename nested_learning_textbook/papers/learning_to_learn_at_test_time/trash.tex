@@ -1,0 +1,65 @@
+Generalization in machine learning is about making good predictions on new, unlabeled instances.
+To reason about generalization, researchers have been relying on the concept of a test distribution, often represented by a test set.
+However, prediction on a test set consists of many independent events of prediction, each on a single test instance.
+When facing only an individual test instance in isolation,
+it is ambiguous which distribution this instance actually belongs to.
+
+One source of ambiguity is the scope of the candidate distribution.
+In one extreme, the instance could have been drawn from the broadest distribution possible -- say uniform in a ball around it, with radius approaching infinity.
+On the other extreme, the instance could be its own distribution -- with probability mass one exactly on the instance and zero elsewhere, \textit{i.e.} the delta distribution.
+
+To reduce ambiguity, the most common default in the machine learning community is to always consider the entire test set as a whole, instead of each instance in isolation.
+This default helps justify the conventional view that all the test instances are merely samples from a test distribution.
+It also rules out, among others, the inconvenient possibility of each instance being its own distribution, since no delta distribution on any single instance can cover the entire test set at once.
+
+But a model only needs to generalize to a single test instance at a time, instead of an entire test set or distribution.
+Generalization to a smaller domain with lower entropy, therefore less uncertainty, is strictly easier.
+This is the core idea behind \emph{test-time training} (TTT) -- each test instance defines its own learning problem, with its own target of generalization~\citep{sun2020test}.
+
+% Whether there is a \textit{distribution shift} and what the shift is depends upon resolving the ambiguity in the scope of the test distribution. 
+
+---
+
+Most models in machine learning today are fixed during deployment. 
+As a consequence, a trained model must prepare to be robust to all possible futures. 
+This can be very hard, because being ready for all futures limits the model’s capacity to be good at any particular one. 
+But only one future is actually going to happen. 
+
+Not surprisingly, this idea has been especially helpful under distribution shifts, that is, when the test distribution differs from training.
+Consider the future as the unknown test distribution,
+Might need to explain why?
+Our goal is to make test-time training helpful even without any distribution shift. 
+
+But how is this possible? Since the test distribution here is exactly the same as training, isn't it trivial to anticipate the future?
+The 50,000 images in imagenet can be seen as one test set, or 50,000 test sets. Each has tremendous distribution shift from the rest. If we are willing to fit a different model for each, effective model capacity could be larger, then should also improve. 
+For distribution shifts, this incorporates our human priors on what. But without distribution shifts, this can be learned from data. 
+
+---
+
+Consider the typical machine learning workflow. 
+We train a model on, say the ImageNet training set, and evaluate on the test set, of 50,000 samples in this case.
+Since the two sets are split from a randomly shuffled collection, their elements can be viewed as samples from the same distribution.
+In today's popular research terms, there is no distribution shift.
+
+But we can also view this so-called test set as a ``benchmark" of 50k tasks. The goal of each task is to perform well on its only test instance, in this case a single image.
+From the perspective of distribution shift or domain adaptation, the test instance in each of these tasks represents a very different domain from each other, and from the entire training domain as a whole.
+In other words, we are always suffering from a ``distribution shift" when testing on each of the 50k tasks. 
+
+Each of these 50k test sets occupies only a tiny corner of the entire domain.
+In order to make a good prediction on each of these singleton test sets, 
+we actually do not need the same model to perform well on the entire domain all at once. 
+The key insight of test-time training is that we only need to do well for each individual test instance.
+
+While the ImageNet test set of 50,000 instances is usually together viewed as one distribution for evaluating generalization performance, we see it as a collection of 50,000 individual scenarios for generalization, in each scenario generalizing from the training data to a new, unseen instance.
+
+---
+
+% tracking objects in videos \cite{fu2021learning},
+% and even medical imaging \cite{karani2021test}.
+
+% In prior work on TTT~\citep{ttt-mae, wang2023test}, 
+% Determine $W_0$, $g$, and $h$ in a separate pre-cursor step (referred to as ``training-time training'') before TTT. The most popular implementation was to jointly train $W_0$, $g$, and $h$, end-to-end, with both the self-supervised loss and the main task loss summed together~\citep{sun2020test, wang2023test} on all training data.
+
+% For TTT to work as intended, the main task prediction head $h$ must already have knowledge of the main task before TTT.
+% In addition, the two prediction heads $g$ and $h$ should be equipped to share features---otherwise, optimizing $f$ for $g$ only makes $f$ less useful for $h$.
+% While proven to be effective, this existing approach does not directly optimize our actual objective: the final prediction loss on the main task after TTT on the self-supervised task.

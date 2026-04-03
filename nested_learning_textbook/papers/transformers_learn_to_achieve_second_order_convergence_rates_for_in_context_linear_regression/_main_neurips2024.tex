@@ -1,0 +1,189 @@
+\documentclass[11pt]{article}
+
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2024
+
+
+% ready for submission
+% \usepackage[final]{neurips_2024}
+%\usepackage{neurips_2024}
+%%% remove when using neurips template %%%
+\usepackage{natbib}
+\usepackage[margin=1in]{geometry}
+\usepackage{palatino} 
+\setlength{\parskip}{1mm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \title{\textbf{Transformers Learn Higher-Order Optimization Methods for In-Context Learning:  A Study with Linear Models}}
+\title{Transformers Learn to Achieve Second-Order Convergence Rates for In-Context Linear Regression}
+
+\newcommand{\aspace}{\hspace{5mm}}
+
+\author{%
+\textbf{Deqing Fu} \aspace
+\textbf{Tian-Qi Chen} \aspace
+\textbf{Robin Jia}\aspace
+\textbf{Vatsal Sharan}\\ % \vspace{3mm}\\
+Department of Computer Science\\
+University of Southern California\\
+\texttt{\{deqingfu,tchen939,robinjia,vsharan\}@usc.edu} \\
+}
+
+\date{}
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+%     \usepackage[preprint]{neurips_2024}
+
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+%     \usepackage[final]{neurips_2024}
+
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2024}
+
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+%\usepackage{hyperref}       % hyperlinks
+\usepackage[backref=section]{hyperref}
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+
+
+
+
+% Recommended, but optional, packages for figures and better typesetting:
+\usepackage{graphicx}
+\usepackage{subfigure}
+
+\usepackage{hyperref}
+\hypersetup{breaklinks=true,colorlinks=true,citecolor=violet}
+
+
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+
+
+% For theorems and such
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+% if you use cleveref..
+\usepackage[capitalize,noabbrev]{cleveref}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% THEOREMS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\usepackage[textsize=tiny]{todonotes}
+
+
+% Import my packages
+\input{header}
+\input{math_commands}
+\renewcommand{\paragraph}[1]{\vspace{1mm}\noindent\textbf{#1}}
+
+% if using numeric citation style
+% \renewcommand{\citet}[1]{\cite{#1}}
+% \renewcommand{\citep}[1]{\cite{#1}}
+
+\begin{document}
+\maketitle
+
+
+
+\begin{abstract}
+\input{00Abstract}
+\end{abstract}
+
+\input{01Introduction}
+\input{02RelatedWork}
+\input{03ProblemDefinition}
+\input{04Experiments}
+\input{05Mechanism}
+\input{06Discussion}
+
+\section*{Acknowledgement}
+We would like to thank the USC NLP Group and Center for AI Safety for providing compute resources. DF would like to thank Oliver Liu and Ameya Godbole for their extensive discussions. 
+DF and RJ were supported by a Google Research Scholar Award.
+RJ was also supported by an Open Philanthropy research grant.
+VS was supported by NSF CAREER Award CCF-2239265 and an Amazon Research Award.
+
+\bibliography{Reference}
+\bibliographystyle{plainnat}
+
+\clearpage
+\onecolumn
+\section*{Appendix}
+\appendix
+\startcontents[appendix]
+\addcontentsline{toc}{chapter}{Appendix}
+\renewcommand{\thesection}{\Alph{section}} 
+
+\printcontents[appendix]{}{1}{\setcounter{tocdepth}{3}}
+
+\setcounter{section}{0}
+\input{AAAdditionalResults}
+\input{ABMechanism} 
+
+
+%%%% NeurIPS things %%%%
+
+\iffalse
+% \section{Further Related Work} \label{app:more-related}
+% \paragraph{In-context learning by large language models. }
+% GPT-3 \citep{brown2020lm} first showed that Transformer-based large language models can ``learn'' to perform new tasks from in-context demonstrations (i.e., input-output pairs).
+% Since then, a large body of work in NLP has studied in-context learning, for instance by understanding how the choice and order of demonstrations affects results \citep{lu-etal-2022-fantastically,liu-etal-2022-makes,rubin-etal-2022-learning,su2023selective,chang-jia-2023-data,nguyen2023context}, studying the effect of label noise \citep{min-etal-2022-rethinking,yoo-etal-2022-ground,wei2023larger}, and proposing methods to improve ICL accuracy \citep{zhao2021calibrate,min-etal-2022-noisy,min-etal-2022-metaicl}.
+
+
+\section{Computes} \label{sec:compute}
+All experiments involving fine-tuning GPT2 models to learn in-context linear regressions are trained on one NVIDIA A6000. Linear probing experiments also used one NVIDIA A6000. 
+\section{License} \label{sec:license}
+We used PyTorch \cite{paszke2019pytorch} as our code framework and we used PyTorch implementation of LSTMs. PyTorch is licensed under the Modified BSD license.
+
+We used GPT-2 Model as our backbone, and it's released under MIT License. We used trained GPT-2 checkpoints for linear regression by \cite{Garg2022WhatCT} and it's released under MIT License. 
+
+\section{Limitations} \label{sec:limitations}
+In this work, our analyses of Transformers are mostly based on only one simple task: linear regression. It might not be able to extrapolate to any arbitrary algorithmic tasks. It would be interesting for future work to extend such analysis to an extensive class of problems. 
+
+\section{Broader Impacts} \label{sec:impacts}
+\vscomment{Since this was the ICML placeholder and the new prompt seems a bit more specific, we should say something here.} 
+This paper presents work whose goal is to advance the field of Machine Learning. Through a mechanistic understanding of Transformers, the backbone of modern large language models (LLMs), this work can help advance building safe and trustworthy models.
+\input{Checklist}
+\fi
+\end{document}
+
+
+% This document was modified from the file originally made available by
+% Pat Langley and Andrea Danyluk for ICML-2K. This version was created
+% by Iain Murray in 2018, and modified by Alexandre Bouchard in
+% 2019 and 2021 and by Csaba Szepesvari, Gang Niu and Sivan Sabato in 2022.
+% Modified again in 2023 and 2024 by Sivan Sabato and Jonathan Scarlett.
+% Previous contributors include Dan Roy, Lise Getoor and Tobias
+% Scheffer, which was slightly modified from the 2010 version by
+% Thorsten Joachims & Johannes Fuernkranz, slightly modified from the
+% 2009 version by Kiri Wagstaff and Sam Roweis's 2008 version, which is
+% slightly modified from Prasad Tadepalli's 2007 version which is a
+% lightly changed version of the previous year's version by Andrew
+% Moore, which was in turn edited from those of Kristian Kersting and
+% Codrina Lauth. Alex Smola contributed to the algorithmic style files.

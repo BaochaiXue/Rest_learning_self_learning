@@ -1,0 +1,216 @@
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+\usepackage{graphicx}
+\usepackage{mathtools}
+\usepackage{enumerate}
+\usepackage{enumitem}
+\usepackage{footnote}
+\usepackage{float}
+\usepackage{xspace}
+\usepackage{multirow}
+\usepackage{nicefrac}
+\usepackage{wrapfig}
+\usepackage{framed}
+\usepackage{url}
+\usepackage{caption}
+\usepackage{blkarray}
+\usepackage{makecell}
+\usepackage[makeroom]{cancel}
+\usepackage{soul}
+\usepackage{comment}
+\usepackage{lipsum}  
+\usepackage{titletoc}
+\usepackage{thmtools,thm-restate}
+\newenvironment{sketch}
+  {\begin{proof}[Proof Sketch]}
+  {\end{proof}}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows,chains,matrix,positioning,scopes}
+
+% \usepackage[symbol]{footmisc}
+
+\newtheorem*{theorem*}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem{question}{Question}
+\newtheorem{property}{Property}
+
+\newcommand{\calA}{{\mathcal{A}}}
+\newcommand{\calC}{{\mathcal{C}}}
+\newcommand{\calH}{{\mathcal{H}}}
+\newcommand{\calL}{{\mathcal{L}}}
+\newcommand{\calX}{{\mathcal{X}}}
+\newcommand{\calS}{{\mathcal{S}}}
+\newcommand{\calI}{{\mathcal{I}}}
+\newcommand{\calD}{{\mathcal{D}}}
+\newcommand{\calK}{{\mathcal{K}}}
+\newcommand{\calE}{{\mathcal{E}}}
+\newcommand{\calR}{{\mathcal{R}}}
+\newcommand{\calT}{{\mathcal{T}}}
+\newcommand{\calP}{{\mathcal{P}}}
+\newcommand{\calZ}{{\mathcal{Z}}}
+\newcommand{\calM}{{\mathcal{M}}}
+\newcommand{\calN}{{\mathcal{N}}}
+\newcommand{\ips}{\wh{r}}
+\newcommand{\whpi}{\wh{\pi}}
+\newcommand{\whE}{\wh{\E}}
+\newcommand{\whV}{\wh{V}}
+\newcommand{\preg}{{\mathcal{PR}}}
+\newcommand{\breg}{{\mathcal{\bar{R}}}}
+\newcommand{\hmu}{\wh{\mu}}
+\newcommand{\tmu}{\wt{\mu}}
+\newcommand{\one}{\boldsymbol{1}}
+\newcommand{\zero}{\boldsymbol{0}}
+\newcommand{\loss}{\ell}
+\newcommand{\hloss}{\wh{\ell}}
+\newcommand{\bloss}{\bar{\ell}}
+\newcommand{\tloss}{\wt{\ell}}
+\newcommand{\htheta}{\wh{\theta}}
+\newcommand{\hp}{\wh{p}}
+\renewcommand{\^}[1]{^{(#1)}}
+
+
+\newcommand{\bA}{\boldsymbol{A}}
+\newcommand{\bB}{\boldsymbol{B}}
+\newcommand{\bc}{\boldsymbol{c}}
+\newcommand{\bd}{\boldsymbol{d}}
+\newcommand{\bz}{\boldsymbol{z}}
+\newcommand{\bx}{\boldsymbol{x}}
+\newcommand{\bxi}{\boldsymbol{\xi}}
+\newcommand{\bh}{\boldsymbol{h}}
+\newcommand{\br}{\boldsymbol{r}}
+\newcommand{\bJ}{\boldsymbol{J}}
+\newcommand{\bK}{\boldsymbol{K}}
+\newcommand{\bX}{\boldsymbol{X}}
+\newcommand{\bG}{\boldsymbol{G}}
+\newcommand{\bO}{\boldsymbol{O}}
+\newcommand{\bM}{\boldsymbol{M}}
+\newcommand{\bu}{\boldsymbol{u}}
+\newcommand{\by}{\boldsymbol{y}}
+\newcommand{\bY}{\boldsymbol{Y}}
+\newcommand{\bg}{\boldsymbol{g}}
+\newcommand{\ba}{\boldsymbol{a}}
+\newcommand{\bD}{\boldsymbol{D}}
+\newcommand{\be}{\boldsymbol{e}}
+\newcommand{\bq}{\boldsymbol{q}}
+\newcommand{\bH}{\boldsymbol{H}}
+\newcommand{\bQ}{\boldsymbol{Q}}
+\newcommand{\bp}{\boldsymbol{p}}
+\newcommand{\bP}{\boldsymbol{P}}
+\newcommand{\bI}{\boldsymbol{I}}
+\newcommand{\bZ}{\boldsymbol{Z}}
+\newcommand{\bS}{\boldsymbol{S}}
+\newcommand{\bT}{\boldsymbol{T}}
+\newcommand{\bw}{\boldsymbol{w}}
+\newcommand{\bW}{\boldsymbol{W}}
+\newcommand{\bU}{\boldsymbol{U}}
+\newcommand{\bv}{\boldsymbol{v}}
+\newcommand{\bV}{\boldsymbol{V}}
+\newcommand{\bs}{\boldsymbol{s}}
+\newcommand{\bzero}{\boldsymbol{0}}
+\newcommand{\bmu}{\boldsymbol{\mu}}
+\newcommand{\bSigma}{\boldsymbol{\Sigma}}
+\newcommand{\hSigma}{\hat{\bSigma}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bnu}{\boldsymbol{\nu}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+
+\newcommand{\blue}[1]{{\color{blue}#1}}
+
+\DeclareMathOperator*{\arginf}{arginf}
+\DeclareMathOperator*{\argsup}{argsup}
+\DeclareMathOperator*{\range}{range}
+\DeclareMathOperator*{\mydet}{det_{+}}
+
+\newcommand{\field}[1]{\mathbb{#1}}
+\newcommand{\fY}{\field{Y}}
+\newcommand{\fX}{\field{X}}
+\newcommand{\fH}{\field{H}}
+\newcommand{\fR}{\field{R}}
+\newcommand{\fB}{\field{B}}
+\newcommand{\fS}{\field{S}}
+\newcommand{\fN}{\field{N}}
+\renewcommand{\P}{\field{P}}
+
+\newcommand{\theset}[2]{ \left\{ {#1} \,:\, {#2} \right\} }
+\newcommand{\inner}[1]{ \left\langle {#1} \right\rangle }
+\newcommand{\Ind}[1]{ \field{I}_{\{{#1}\}} }
+\newcommand{\eye}[1]{ \boldsymbol{I}_{#1} }
+\newcommand{\norm}[1]{\left\|{#1}\right\|}
+%\newcommand{\trace}[1]{\text{tr}\left({#1}\right)}
+\newcommand{\trace}[1]{\textsc{tr}({#1})}
+\newcommand{\diag}[1]{\mathrm{diag}\!\left({#1}\right)}
+\newcommand{\RE}{{\text{\rm RE}}}
+\newcommand{\LCB}{{\text{\rm LCB}}}
+\newcommand{\Reg}{{\text{\rm Reg}}}
+\newcommand{\Rel}{{\text{\rm Rel}}}
+\newcommand{\ERM}{{\text{\rm ERM}}\xspace}
+
+\newcommand{\defeq}{\stackrel{\rm def}{=}}
+\newcommand{\sgn}{\mbox{\sc sgn}}
+\newcommand{\scI}{\mathcal{I}}
+\newcommand{\scO}{\mathcal{O}}
+\newcommand{\scN}{\mathcal{N}}
+
+\newcommand{\dt}{\displaystyle}
+\renewcommand{\ss}{\subseteq}
+\newcommand{\wh}{\widehat}
+\newcommand{\wt}{\widetilde}
+\newcommand{\hlambda}{\wh{\lambda}}
+\newcommand{\yhat}{\wh{y}}
+
+\newcommand{\hDelta}{\wh{\Delta}}
+\newcommand{\hdelta}{\wh{\delta}}
+\newcommand{\spin}{\{-1,+1\}}
+
+\newcommand{\paren}[1]{\left({#1}\right)}
+\newcommand{\brackets}[1]{\left[{#1}\right]}
+\newcommand{\braces}[1]{\left\{{#1}\right\}}
+
+\newcommand{\normt}[1]{\norm{#1}_{t}}
+\newcommand{\dualnormt}[1]{\norm{#1}_{t,*}}
+
+\newcommand{\order}{\ensuremath{\mathcal{O}}}
+\newcommand{\otil}{\ensuremath{\widetilde{\mathcal{O}}}}
+
+\newcommand{\rulesep}{\unskip\ \vrule\ }
+\usepackage{cleveref}
+
+\newtheorem{innercustomprop}{Proposition}
+\newenvironment{customprop}[1]
+  {\renewcommand\theinnercustomprop{#1}\innercustomprop}
+  {\endinnercustomprop}
+
+\makeatletter
+\renewcommand*\env@matrix[1][\arraystretch]{%
+  \edef\arraystretch{#1}%
+  \hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{*\c@MaxMatrixCols c}}
+\makeatother
+
+\makeatletter
+\def\blfootnote{\xdef\@thefnmark{}\@footnotetext}
+\makeatother
+
+%\newcommand{\fix}{\marginpar{FIX}}
+%\newcommand{\new}{\marginpar{NEW}}
+\newcommand{\gd}{Gradient Descent}
+\newcommand{\newton}{Iterative Newton}
+\newcommand{\iid}{\overset{\text{i.i.d.}}{\sim}}
+%macros for inline comments/suggestions
+% \newcommand{\deqing}[1]{{\color{blue} [Deqing: {#1}]}}
+% \newcommand{\robin}[1]{{\color{red} [Robin: {#1}]}}
+% %\newcommand{\vscomment}[1]{{\color{purple} [Vatsal: {#1}]}}
+% \newcommand{\tianqi}[1]{{\color{orange} [Tianqi: {#1}]}}
+
+% \usepackage[suppress]{color-edits}
+% %\usepackage{color-edits}
+% % \addauthor[Deqing]{df}{orange}
+% % \addauthor[Vatsal]{vs}{blue}
+% % \addauthor[Robin]{rj}{red}
+
+\newcommand{\new}[1]{{\color{black} {#1}}}
+\newcommand{\newwrapfigure}[1]{\textcolor{blue}{#1}}

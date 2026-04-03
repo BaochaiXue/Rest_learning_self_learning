@@ -1,0 +1,30 @@
+\begin{table*}[t!]
+\begin{center}
+{
+\setlength\tabcolsep{4pt}
+\begin{tabular}{c|ccccccc|c}
+\toprule
+Accuracy (\%)
+		&Airplane	&Bird	&Car &Dog &Cat &Horse	&Ship  	&\textbf{Average}\\
+\midrule
+{\small Object recognition task only} & 67.9 & 35.8 & 42.6 & 14.7 & 52.0 & 42.0 & 66.7
+&\textbf{41.4}\\
+\midrule
+{\small Joint training {\scriptsize \citep{hendrycks2019using}}} & 70.2 & 36.7 & 42.6 & 15.5 & 52.0 & 44.0 & 66.7
+&\textbf{42.4}\\
+\midrule
+TTT (standard version) & 70.2 & 39.2 & 42.6 & 21.6 & 54.7 & 46.0 & 77.8
+&\textbf{45.2}\\
+\midrule 
+TTT-Online & 70.2 & 39.2 & 42.6 & 22.4 & 54.7 & 46.0 & 77.8
+&\textbf{45.4}\\
+\bottomrule
+\end{tabular}
+}
+\end{center}
+\caption{
+Class-wise and average classification accuracy (\%) on CIFAR classes in VID-Robust, adapted from \cite{shankar2019systematic}. Test-Time Training (TTT) and online Test-Time Training (TTT-Online) improve over the two baselines on average, and by a large margin on ``ship'' and ``dog'' classes where the rotation task is more meaningful than in classes like ``airplane'' (sample images in \autoref{vid_samples}). 
+}
+\label{table.cifar7}
+\vspace{-1ex}
+\end{table*} 

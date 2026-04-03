@@ -1,0 +1,36 @@
+We now describe a general methodology for training a model that can in-context learn a function class $\mathcal{F}$ with respect to a distribution $D_{\mathcal{F}}$ over functions, and $D_\mathcal{X}$ over inputs. To do so, we start by constructing random training prompts as follows.
+For each prompt, we first sample a random function $f$ from the class according to $D_{\mathcal{F}}$, then create a set of random inputs $x_1, \ldots, x_{k+1}$ drawn independently from  $D_{\mathcal{X}}$, and finally evaluate $f$ on these inputs to produce the prompt
+$P = (x_1, f(x_1), \ldots, x_{k+1}, f(x_{k+1}))$.
+For example, in the case of linear functions, inputs could be drawn from the isotropic Gaussian distribution $N(0, I_d)$, and a random function chosen by sampling weight vector $w$ from $N(0, I_d)$ and setting $f(x) = w^\top x$.
+
+Now, given such prompts, we train a model to predict $f(x_i)$ for a given $x_i$ based on a set of preceding in-context examples.
+Concretely, let $P^{i}$ denote the prompt prefix containing $i$ in-context examples (the first $i$ input-output pairs) and the $(i+1)^{\text{th}}$ input: $P^i = (x_1, f(x_1), x_2, f(x_2), \ldots, x_{i}, f(x_{i}), x_{i+1})$. 
+Then, we train a model $M_\theta$ parameterized by $\theta$ aiming to minimize the expected loss over all the prompt prefixes:
+\begin{equation}
+\min_\theta \ 
+\mathds{E}_{P}\left[\frac{1}{k+1}
+\sum_{i=0}^k \ell\left(M_\theta\left(P^i\right), f\left(x_{i+1}\right)\right) 
+\right],
+\label{eq:training_objective}
+\end{equation}
+where $\ell(\cdot, \cdot)$ is an appropriately chosen loss function.
+Below, we describe how this general methodology can be implemented for a concrete model family (see Appendix~\ref{app:setup} for additional details).
+
+\paragraph{Model structure.}
+We use a decoder-only Transformer architecture~\citep{vaswani2017attention} from the GPT-2 family~\citep{radford2019language}. 
+Our model consists of 12 layers, 8 attention heads, and a 256-dimensional embedding space (9.5M parameters).
+This architecture takes as input a sequence of vectors in its embedding space and predicts the next vector in the sequence within the same space (in language modeling, these vectors correspond to input tokens).
+We apply this architecture to our prompt format of $(x_1,f(x_1),\ldots,x_{k+1},f(x_{k+1}))$ as follows.
+We map each prompt output $f(x_i)$ to the same dimension as prompt inputs $x_i$ by appending zeros, and map the prompt inputs and outputs into the latent embedding space of the Transformer through a (learnable) linear transformation.
+We then use another (learnable) linear transformation to map the vector predicted by the model to a scalar.
+Note that the Transformer architecture allows us to compute the prediction ($M_\theta(P^i)$) for all prompt prefixes in a single forward pass.
+
+\paragraph{Training.}
+We train the model according to the training objective in~\eqref{eq:training_objective} using squared error as the loss function. 
+We do so by sampling a batch of random prompts at each training step and then updating the model through a gradient update (we use a batch size of 64 and train for 500k total steps). 
+This training is done from scratch, that is, we do \emph{not} fine-tune a pre-trained language model, nor do we train on actual text.
+
+\paragraph{Curriculum learning.}
+Many natural function classes contain functions of varying complexity. We exploit this by training our model using a curriculum \citep{bengio2009curriculum, elman1993learning, sanger1994neural, wu2020curricula}, where we train on a simpler distribution of functions in the beginning (e.g., linear functions with weight vectors restricted to a low-dimensional subspace) and gradually increase the function complexity.
+This speeds up training drastically, 
+often allowing us to train models that would be significantly more expensive to train without a curriculum (see Section \ref{sec:factors} for details).

@@ -1,0 +1,55 @@
+\section{Introduction} \label{sec:intro}
+\vspace{-1mm}
+
+Transformer neural networks \citep{Vaswani2017AttentionIA} have become the default architecture for natural language processing \citep{devlin-etal-2019-bert,brown2020lm,openai2023gpt}.
+    As first demonstrated by GPT-3 \citep{brown2020lm}, Transformers excel at \textit{in-context learning} (ICL)---learning from prompts consisting of input-output pairs, without updating model parameters. 
+Through in-context learning, Transformer-based Large Language Models (LLMs) can achieve state-of-the-art few-shot performance across a variety of downstream tasks \citep{rae2022scaling,smith2022using,thoppilan2022lamda,chowdhery2022palm}.
+
+
+
+
+
+Given the importance of Transformers and ICL, many prior efforts have attempted to understand how Transformers perform in-context learning.
+%Prior work suggests Transformers learn classification similar to support vector machines \citep{tarzanagh2023maxmargin,AtaeeTarzanagh2023TransformersAS} and can approximate linear functions well in-context \citep{Garg2022WhatCT}. 
+Prior work suggests Transformers can approximate various linear functions well in-context \citep{Garg2022WhatCT}.
+Specifically to linear regression tasks, prior work has tried to understand the ICL mechanism, and the dominant hypothesis is that Transformers learn in-context by running optimization internally through gradient-based algorithms \citep{Oswald2022TransformersLI,Oswald2023UncoveringMA,Ahn2023TransformersLT,Dai2023WhyCG,mahankali2024one}. %leave out vladymyrov2024linear
+
+This paper presents strong evidence for a competing hypothesis:
+%Instead of the gradient descents (GD) hypothesis, 
+Transformers trained to perform in-context linear regression learn a strategy much more similar to a second-order optimization method than a first-order method like \gd\ (GD). 
+In particular, Transformers approximately implement a second-order method with a convergence rate very similar to Newton-Schulz's Method, also known as the \textit{Iterative Newton's Method}, which iteratively improves an estimate of the inverse of the data matrix to compute the optimal weight vector.
+Across many Transformer layers, subsequent layers approximately compute more and more iterations of Newton's Method, with increasingly better predictions; both eventually converge to the optimal minimum-norm solution found by ordinary least squares (OLS). 
+Interestingly, this mechanism is specific to Transformers: LSTMs do not learn these same second-order methods, as their predictions do not even improve across layers.
+
+
+% \dfcomment{We need to rewrite this paragraph.}
+% We present both empirical and theoretical evidence for our claims.
+% Empirically, Transformer induced weights and residuals are similar to Iterative Newton and deeper layers match Newton with more iterations (see \Cref{fig:progression,fig:over_layers}). Transformers can also handle ill-conditioned problems without requiring significantly more layers, where GD would suffer from slow convergence but \newton\ would not. \new{Crucially, Transformers share the same rate of convergence as \newton\ and are exponentially faster than \gd.} Additionally, existing impossibility results in optimization theory provide evidence that it is not possible to achieve the convergence rate exhibited by Transformers and \newton\ using \emph{any} first-order method such as some variant of \gd.
+% To provide theoretical grounding to our empirical results, we show that Transformer circuits can efficiently implement \newton, with the number of layers depending linearly on the number of iterations and the dimensionality of the hidden states depending linearly on the dimensionality of the data. 
+% Overall, our work provides a mechanistic account of how Transformers perform \dfreplace{in-context learning}{ICL} that not only explains model behavior better than previous hypotheses, but also hints at what makes Transformers so well-suited for ICL compared with other neural architectures. 
+
+% \dfcomment{Rewrites start here\\
+% -------------------------}
+
+
+We present both empirical and theoretical evidence for our claims. Empirically, Transformer layers demonstrate a similar rate of convergence to the OLS solution as second-order methods such as \newton, which is substantially faster than the rate of convergence of GD (\cref{fig:convergence}). 
+%\dfreplace{By comparing the prediction error and induced weights of Transformer layers with \newton\ and \gd, we find that Transformer layers match \newton\ iterations linearly, and match \gd\ exponentially (\Cref{fig:heatmap}).}{By comparing the prediction error and induced weights of Transformer layers with \newton\ and \gd, we find that Transformer layers approximate linearly amount of Newton iterations but exponentially more GD steps --- demonstrating both Transformer and \newton\ converge exponentially faster than GD (\Cref{fig:heatmap}).}\vsmargincomment{feels a bit awkward to refer to fig in appendix in intro.}\dfmargincomment{Removed the appendix one (which was old fig.1).} 
+The predictions made by the Transformer at successive layers closely match the predictions made by \newton\ after a proportional number of iterations, showing that they progress in similar ways at the same rate.
+In contrast, to match the Transformer's predictions after $k$ layers, GD would have to run for  exponential in $k$ many steps (\cref{fig:heatmap}). Some individual Transformer layers make progress equivalent to hundreds of GD steps: these layers must be doing something more sophisticated than GD.
+Furthermore, a crucial aspect of second-order methods is that they can handle ill-conditioned problems by correcting the curvature. We find that the convergence rate of Transformers is not significantly affected by ill-conditioning, which again matches \newton\ but not GD. %where GD  suffers from slow convergence but \newton\ does not. 
+To provide theoretical grounding to our empirical results, we show that Transformer circuits can efficiently implement \newton: one transformer layer can compute one Newton iteration (given $\mathcal O(1)$ pre/post-processing layers), and requires hidden states of dimension $\mathcal O(d)$ for a $d$-dimensional linear regression problem.
+Overall, our work provides a mechanistic account of how Transformers perform ICL that explains model behavior better than previous hypotheses, and hints at why Transformers are well-suited for ICL relative to other architectures. 
+
+\iffalse
+
+
+\dfedit{
+We present both empirical and theoretical evidence for our claims. 
+Empirically, Transformers' prediction errors and induced weights converge exponentially faster than \gd --- only \textit{second-order} optimization methods could achieve such $\log \log \left(1/\epsilon\right)$ convergence rate to achieve an $\epsilon$ error. 
+We further compare Transformers with an exemplar second-order method, \newton, and demonstrate that Transformers' convergence rate matches \newton's linearly (see \Cref{fig:convergence,fig:progression,fig:heatmap}). 
+Transformers can also handle ill-conditioned problems without requiring significantly more layers, where GD would suffer from slow convergence but \newton\ would not. 
+To provide theoretical grounding to our empirical results, we show that Transformer circuits can efficiently implement \newton: one transformer layer can compute one Newton iteration, and requires hidden states of dimension $\mathcal O(d)$ for a $d$-dimensional linear regression problem.
+Overall, our work provides a mechanistic account of how Transformers perform \dfreplace{in-context learning}{ICL} that not only explains model behavior better than previous hypotheses, but also hints at what makes Transformers so well-suited for ICL compared with other neural architectures. 
+}
+
+\fi

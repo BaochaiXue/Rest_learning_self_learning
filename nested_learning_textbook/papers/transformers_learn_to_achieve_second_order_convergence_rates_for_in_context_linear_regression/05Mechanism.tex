@@ -1,0 +1,113 @@
+\vspace{-1mm}
+\section{Theoretical Justification}
+\label{sec:mechanism}
+\vspace{-1mm}
+
+Our empirical evidence demonstrates that Transformers behave much more similarly to \newton's than to GD. \newton\ is a second-order optimization method, and is algorithmically more involved than GD. We begin by first examining this difference in complexity. As discussed in Section \ref{sec:problem_definition}, the updates for \newton\ are of the form,
+\begin{align}
+   &\hat{\bw}^\mathrm{Newton}_{k+1} =  \bM_{k+1}  \bX^\top \by  \qquad \text{where } \bM_{k+1} = 2 \bM_{k} - \bM_k \bS \bM_k 
+\end{align}
+and $\bM_{0}=\alpha \bS $ for some $\alpha>0.$ We can express $\bM_k$ in terms of powers of $\bS$ by expanding iteratively, for example $\bM_{1}=2 \alpha \bS - 4 \alpha^2 \bS^3, \bM_{2}= 4 \alpha \bS - 12 \alpha^2 \bS^3  + 16 \alpha^3 \bS^5 - 16\alpha^4 \bS^7$, and in general $\bM_k = \sum_{s=1}^{2^{k+1} - 1} \beta_s \bS^s$ for some $\beta_s\in \R$ (see Appendix \ref{sec:newton_moment} for detailed calculations). Note that $k$ steps of \newton's requires computing $\Omega(2^k)$ moments of $\bS$. Let us contrast this with GD. GD updates for linear regression take the  form,
+\begin{align}
+\hat{\bw}^\mathrm{GD}_{k+1} = \hat{\bw}^\mathrm{GD}_{k} - \eta (\bS \hat{\bw}^\mathrm{GD}_{k} -\bX^\top \by).
+\end{align}
+Like \newton, we can express $\hat{\bw}^\mathrm{GD}_{k}$  in terms of powers of $\bS$ and $\bX^\top \by$. However, after $k$ steps of GD, the highest power of $\bS$ is only $O(k)$. This exponential separation is consistent with the exponential gap in terms of the parameter dependence in the convergence rate---$\mathcal O\left(\kappa(\bS) \log(1/\epsilon)\right)$ for GD vs. $\mathcal O(\log \kappa(\bS) + \log \log (1/\epsilon))$ for \newton. Therefore, a natural question is whether Transformers can actually as complicated of a method such as \newton\ with only polynomially many layers? Theorem \ref{thm:transformers_newton} shows that this is indeed possible. 
+    
+\begin{restatable}{theorem}{TransformersNewton}
+\label{thm:transformers_newton}
+For any $k$, there exist Transformer weights such that on any set of in-context examples  $\{\bx_i, y_i\}_{i=1}^n$ and test point  $\bx_\mathrm{test}$, the Transformer predicts on $\bx_\mathrm{test}$ using $\bx_\mathrm{test}^\top \hat{\bw}^\mathrm{Newton}_{k}$. Here $\hat{\bw}^\mathrm{Newton}_{k}$ are the \newton\ updates given by $ \hat{\bw}^\mathrm{Newton}_{k} =  \bM_{k}  \bX^\top \by$ where $\bM_{j}$ is updated as 
+\begin{align*}
+    \bM_{j} = 2 \bM_{j-1} - \bM_{j-1} \bS \bM_{j-1}, 1\le j\le k, \quad  \bM_{0}=\alpha \bS, 
+\end{align*}
+for some $\alpha>0$ and  $\bS = \bX^\top \bX$. The dimensionality of the hidden layers is $\mathcal{O}(d)$, and the number of layers is $k+8$. One transformer layer computes one Newton iteration. 3 initial transformer layers are needed for initializing $\bM_0$ and 5 layers at the end are needed to read out predictions from the computed pseudo-inverse $\bM_k$.
+\end{restatable}
+
+Here we provide a skecth of the proof. 
+We note that our proof uses full attention instead of causal attention and ReLU activations for the self-attention layers. The definitions of these and the full proof appear in Appendix \ref{app:mechanism}.
+% For $n$ sufficiently larger than $d$, our construction can be extended to causal attention. The definitions of these and the full proof {along with a discussion on its causal attention extension} appear in Appendix \ref{app:mechanism}. 
+
+
+
+\subsection{Proof Sketch for Theorem \ref{thm:transformers_newton}}
+The constructive proof leverages some key operators which \cite{Akyrek2022WhatLA} showed  a single Transformers layer can implement. We summarize these in Proposition \ref{prop:akyrek} . We mainly use the $\mathrm{mov}$ operator, which can copy parts of the hidden state from time stamp $i$ to time stamp $j$ for any $j \geq i$; the $\mathrm{mul}$ operator which can do multiplications; and the $\mathrm{aff}$ operator, which can be used to do addition and subtraction. 
+\paragraph{Transformers Implement Initialization $\bT^{(0)} = \alpha \bS$.} Given input sequence $\bH = \{\bx_1, \cdots, \bx_n \}$, we can first use the $\mathrm{mov}$ operator from Proposition \ref{prop:akyrek} %\vscomment{You should avoid a forward reference which is necessary to understand the current text. Here probably need to give some context for Prop 1 or the mov operation} 
+so that the input sequence becomes $\begin{bmatrix}
+    \bx_1 & \cdots & \bx_n \\
+    \bx_1 & \cdots & \bx_n 
+\end{bmatrix}$. We call each column $\bh_j$. With an full attention layer and normalized ReLU activations, one can construct two heads with query and value matrices of the form $\bQ_1^\top \bK_1 = -\bQ_2^\top \bK_2 = \begin{bmatrix}
+    \bI_{d \times d} & \bO_{d \times d} \\
+    \bO_{d \times d} & \bO_{d \times d}
+\end{bmatrix}$ and value matrices $\bV_m =n \alpha \begin{bmatrix}
+    \bI_{d \times d} & \bO_{d \times d} \\
+    \bO_{d \times d} & \bO_{d \times d}
+\end{bmatrix}$  for some $\alpha \in \mathbb R$.\footnote{The value matrices contain the number of in-context examples $n$. There are ways to avoid this by applying Proposition \ref{prop:akyrek} to count.} Combining the attention layer and skip connections we end up with $\bh_t \leftarrow \begin{bmatrix}
+        \bx_t + \alpha \bS \bx_t \\ \bx_t
+\end{bmatrix} $. Applying the $\mathrm{aff}$ operator from Proposition \ref{prop:akyrek} to do subtraction, we can have each column of the form $\begin{bmatrix}
+        \alpha \bS \bx_t \\ \bx_t
+\end{bmatrix}$. We denote $\bT^{(0)} :=  \alpha \bS$ so that Transformers and \newton\ have the similar initialization and we call these columns $\bh_t^{(0)}$.  
+
+\paragraph{Transformers implement Newton Iteration.}  We claim that we can construct  layer $\ell$'s hidden states to be of the form 
+    \begin{equation}
+        \bH^{(\ell)} = \begin{bmatrix}
+            \bh_1^{(\ell)} & \cdots & \bh_n^{(\ell)}
+        \end{bmatrix} = \begin{bmatrix}
+            \bT^{(\ell)} \bx_1 & \cdots & \bT^{(\ell)} \bx_n \\
+            \bx_1 & \cdots & \bx_n
+        \end{bmatrix} 
+    \end{equation}
+    We prove by induction that assuming our claim is true for $\ell$, we work on $\ell + 1$:
+Let $\bQ_m = \tilde{\bQ}_m \begin{bmatrix}
+        \bO_d & -\frac{n}{2} \bI_d \\
+        \bO_d & \bO_d 
+    \end{bmatrix} , \bK_m = \tilde{\bK}_m \begin{bmatrix}
+        \bI_d & \bO_d \\
+        \bO_d & \bO_d 
+    \end{bmatrix}$ where $\tilde{\bQ}_1^\top \tilde{\bK}_1 : = \bI$, $\tilde{\bQ}_2^\top \tilde{\bK}_2 : = -\bI$ and $\bV_1 = \bV_2 = \begin{bmatrix}
+        \bI_d & \bO_d \\
+        \bO_d & \bO_d 
+    \end{bmatrix}$. A 2-head self-attention layer gives 
+\begin{equation}
+    \bh_t^{(\ell+1)} = \begin{bmatrix}
+        \left(\bT^{(\ell)} - \frac{1}{2} \bT^{(\ell)} \bS {\bT^{(\ell)}}^\top \right) \bx_t \\ \bx_t 
+    \end{bmatrix}
+\end{equation}
+Note that all $\bT^{(\ell)}$ are symmetric. Passing over an MLP layer gives
+    \begin{equation}
+        \bh_t^{(\ell+1)} \leftarrow \bh_t^{(\ell+1)} + \begin{bmatrix}
+            \bI_d & \bO_d \\ 
+            \bO_d & \bO_d 
+        \end{bmatrix} \bh_t^{(\ell+1)} = \begin{bmatrix}
+        \left(2\bT^{(\ell)} -  \bT^{(\ell)} \bS {\bT^{(\ell)}} \right) \bx_t \\ \bx_t 
+    \end{bmatrix}
+    \end{equation}
+We denote $\bT^{(\ell+1)} := 2\bT^{(\ell)} -  \bT^{(\ell)} \bS {\bT^{(\ell)}}$ and this is the exactly same form as \newton\ updates. 
+
+\paragraph{Transformers can implement $\hat{\bw}_\ell^\mathrm{TF} = \bT^{(\ell)} \bX^\top \by$.}
+We insert columns with $[0, 0, \cdots, y_j]^\top$ after each $\bx_j$ (See \Cref{fig:transformer_illustration} for illustration) and keep them unchanged until reaching layer $\ell$. Applying $\mathrm{mov}$ and $\mathrm{mul}$, we have columns $\begin{bmatrix}
+    \bxi \\ \bT^{(\ell)} y_j \bx_j
+\end{bmatrix}$ where $\bxi$ are irrelevant quantities. Apply \Cref{lemma:sum} for summation, we can gather $\sum_{j=1}^n \bT^{(\ell)} y_j \bx_j = \bT^{(\ell)} \bX^\top \by$, which is again the same as \newton\ and we call this $\hat{\bw}_\ell^\mathrm{TF}$. 
+
+\paragraph{Transformers can make predictions on $\bx_{test}$ by $\inner{\hat{\bw}_\ell^\mathrm{TF}, \bx_\mathrm{test}}$.} 
+
+Now we can make predictions on text query $\bx_\mathrm{test}$:
+\begin{equation}
+    \begin{bmatrix}
+        \bxi &  \bx_\mathrm{test} \\
+        \hat{\bw}_\ell^\mathrm{TF} & \bx_\mathrm{test}
+    \end{bmatrix} \overset{\mathrm{mov}}{\longrightarrow} \begin{bmatrix}
+        \bxi &  \bx_\mathrm{test} \\
+        \hat{\bw}_\ell^\mathrm{TF} & \bx_\mathrm{test} \\
+        \zero & \hat{\bw}_\ell^\mathrm{TF}
+    \end{bmatrix} \overset{\mathrm{mul}}{\longrightarrow} \begin{bmatrix}
+        \bxi &  \bx_\mathrm{test} \\
+        \hat{\bw}_\ell^\mathrm{TF} & \bx_\mathrm{test} \\
+        \zero & \hat{\bw}_\ell^\mathrm{TF} \\
+        0 & \inner{\hat{\bw}_\ell^\mathrm{TF}, \bx_\mathrm{test}}
+    \end{bmatrix}
+\end{equation}
+A final readout layer can extract the prediction $\inner{\hat{\bw}_\ell^\mathrm{TF}, \bx_\mathrm{test}}$.
+
+Now we complete the proof that Transformers can perform exactly \newton. Finally, we count the number of layers and the dimension of hidden states. We can see all operations in the proof require a linear amount of hidden state dimensions, which are $\mathcal O(d)$. There are 3 Transformer layers needed to compute the Newton initialization and 5 layers needed for reading out predictions. Operations from Transformers index $\ell$ to $\ell+1$ require 1 Transformer layer. Hence, to perform $k$ \newton\ updates, Transformers require $k + 8$ layers. This implies that the rate of convergence of Transformers to solve linear regression in-context is the same as \newton's: $\mathcal O(\log \log (1/\epsilon))$ and this is consistent with our experimental results in \S\ref{sec:experiments}. 
+
+
+

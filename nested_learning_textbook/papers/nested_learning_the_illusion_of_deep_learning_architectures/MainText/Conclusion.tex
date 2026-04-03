@@ -1,0 +1,14 @@
+\section{Conclusion}\label{sec:concolusion}
+In this paper, we introduced \emph{Nested Learning (NL)} a new learning paradigm, in which modern machine learning systems are modeled as inter-connected, multi-level optimization problems, each with its own context flow and update frequency. Within this view, both architectures and optimizers are instances of nested systems of associative memories that compress their own context (either is tokens, gradients, or higher-level signals) into internal parameters. This perspective reframes pre-training, in-context learning, and continual learning as manifestations of the same underlying mechanism: learning to compress and reuse context at different levels and time scales. This perspective recasts backpropagation, momentum, and preconditioning as associative memory mechanisms, and explains a wide family of existing methods as specific design points in a larger (previously hidden) space.
+
+
+Building on NL's viewpoint, we derived generalized gradient-based updates: e.g., Delta Gradient Descent, Delta Momentum, Multi-scale Momentum Muon (M3), and reinterpreted modern sequence architectures nested associative memories. To enhance the memory processing, we introduced Continuum Memory System (CMS), a new formulation for memory that generalizes the traditional viewpoint of ``long-term/short-term memory blocks''. Our \model{} architecture based on a self-modifying Titans and CMS improves continual learning and long-context reasoning capabilitites, while remaining competitive as a general backbone.
+
+
+
+
+
+
+\headdot{Is Catastrophic Forgetting Solved?} 
+While \model{} and CMS have shown promising results in reducing catastrophic forgetting in the tasks we empirically studied, the undesirable phenomenon of catastrophic forgetting is not ``solved''  in general. From nested learning viewpoint on learning and backpropagation process, catastrophic forgetting is a natural consequence of compression, where the limited capacity of the network forces the model to forget so that it retains capacity for new information. We view NL as a roadmap rather than a destination: it suggests that progress on continual learning, long-context reasoning, modern optimizers, and self-modifying models will come from better exploiting the extra design axis of \emph{levels} rather than from ever-deeper static networks. 
+
