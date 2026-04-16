@@ -104,6 +104,8 @@ Run this checklist after each major phase.
 | ICL = GD framed as interpretation | Must say "一种视角" or equivalent, not "已证明等价于" | Manual |
 | NL framed as research agenda | Must not present NL as "社区共识" | Manual |
 | "共识层" and "解释层" distinguished in chapters | At least Ch 6 and Ch 11 have explicit distinction | Manual |
+| NL worldview claims are downgraded | "架构是幻像", "pre-training 是 ICL", "ICL 不是 emergent" must appear only as viewpoint / agenda wording | Manual |
+| Known NL proof caveats are not overstated | Muon and DGD appendix material must not be cited as theorem-level proof without an explicit caveat | Manual |
 
 ---
 

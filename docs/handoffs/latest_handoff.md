@@ -2,33 +2,44 @@
 
 ## Current State
 
-The root repository has been refactored into a harness-style research OS.
-`docs/index.md` is the primary map for the root layer.
-`AGENTS.md`, `README.md`, and `ARCHITECTURE.md` now point at the docs tree instead of acting like standalone policy blobs.
-`research/` is the live state layer, and `templates/sprint_contract.md` is the bounded execution contract for the next topic.
+The root research OS is active and now also contains a completed theory audit for Nested Learning plus textbook-facing guardrail work in the child project.
+
+The most important current fact is:
+
+- the NL paper has several valid local equivalences
+- its strongest worldview claims remain interpretive
+- the textbook subtree now explicitly warns readers and future agents not to blur those two layers
 
 ## What Changed
 
-- Added a root `docs/index.md` entrypoint.
-- Added `docs/design-docs/` for durable operating beliefs.
-- Added `docs/exec-plans/` for active plan structure.
-- Added `docs/handoffs/` for resumable checkpoints.
-- Added `docs/quality/` for claim honesty and quality gates.
-- Added `docs/reliability.md` for operating safeguards.
-- Added `docs/references/` for source inventory conventions.
-- Added `docs/generated/` for machine-produced audits and reports.
-- Added `docs/exec-plans/completed/` so root-level plans have an archive destination.
-- Added a live `research/research_plan.md` shell and stronger queue/checklist contracts.
-- Tightened `.codex/agents/` and `.agents/skills/` around explicit handoffs, skeptical review, and single-loop execution.
-- Added `scripts/research_check.py` and `make research-check` for root-level validation.
+- Added a root audit for NL theory under `research/nested_learning_theory_audit/`.
+- Added claim-level NL audit entries to `research/claims_registry.md`.
+- Hardened child-project policy and chapter wording through:
+  - `nested_learning_textbook/docs/quality/nested_learning_theory_guardrails.md`
+  - `nested_learning_textbook/docs/quality/claim_honesty_policy.md`
+  - `nested_learning_textbook/docs/quality/qa_rubric.md`
+  - `nested_learning_textbook/AGENTS.md`
+  - `nested_learning_textbook/book/chapters/11_nested_learning.tex`
+- Updated child-project notes so future NL work has a local claim-audit table and expanded paper note.
+
+## Verification
+
+- `python3 scripts/research_check.py` | ✅ Passed
+- `git diff --check` | ✅ Passed
+- `cd nested_learning_textbook && make book` | ✅ Passed
+- `cd nested_learning_textbook && make check` | ❌ Failed on the same 24 pre-existing absolute-path hits in downloaded paper sources and generated hygiene reports
 
 ## Open Follow-Ups
 
-- If a future task needs a concrete root-level plan, instantiate one under `docs/exec-plans/active/`.
-- If a future task needs evidence-backed writing, keep the claims in `research/` and cross-link from the relevant docs page.
-- If the child textbook project is touched, its own docs remain authoritative and must be updated separately.
-- `make check` still fails in the child textbook audit because of pre-existing absolute-path hits in downloaded paper sources and generated reports.
+- If future work touches Chapter 11 or NL theory language, start from:
+  - `nested_learning_textbook/docs/quality/nested_learning_theory_guardrails.md`
+  - `nested_learning_textbook/notes/tables/nested_learning_claim_audit.md`
+- The child-project absolute-path hygiene issue is still unresolved and remains the blocker for a clean `make check`.
+- The BCI sprint artifacts are still missing under `research/experiments/bci/`; that work is orthogonal to the NL guardrail changes.
 
 ## Next Recommended Action
 
-Before a new topic starts, read `docs/index.md`, instantiate the topic plan in `research/research_plan.md`, create a sprint contract from `templates/sprint_contract.md`, then spawn the narrow agents needed for that topic.
+If the next task is textbook-related, do one of these:
+
+1. propagate the new NL caution language into any other chapter or summary that currently overstates the theory
+2. clean up or formally exempt the 24 known absolute-path hits so textbook verification can go fully green

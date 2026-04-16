@@ -72,3 +72,6 @@ make clean    # 清理构建产物
 - 机制级共识 = 可作为事实陈述
 - 解释框架（ICL = GD，NL 作为统一视角）= 必须注明"一种视角"/"研究议程"
 - 推测性主张 = 绝不能写成定理
+- 如果任务触及第 11 章或任何 Nested Learning 理论主张，还必须先读：
+  - `docs/quality/nested_learning_theory_guardrails.md`
+  - `notes/tables/nested_learning_claim_audit.md`

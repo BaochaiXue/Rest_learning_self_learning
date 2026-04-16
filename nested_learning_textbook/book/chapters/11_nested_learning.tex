@@ -6,6 +6,24 @@
 \epigraph{``There is no architecture. Everything is just learning to learn to learn.
 Deep learning architectures as we know them are an illusion.''}{--- Behrouz, Zhong \& Mirrokni, 2025}
 
+\begin{viewpointbox}[title=开篇提醒：这句口号不是本章的定理]
+本章保留上面的引文，是因为它准确代表了 NL 论文的\textbf{研究野心}；
+但它不是本教材要你直接接受的结论。
+
+本章只把以下内容当作``事实层''：
+\begin{itemize}
+  \item 已经能独立核对的局部公式等价
+  \item 在明确假设下成立的 recurrence-level 重写
+\end{itemize}
+
+而像``架构是幻像''、``pre-training 就是 ICL''、``ICL 不是 emergent''这类句子，
+都只作为\textbf{Nested Learning 的统一视角}来讨论，不作为社区共识陈述。
+
+另外，原论文中个别推导（尤其 Muon 那段和 DGD appendix）
+在 as-written 形式下不应被当作``已经完全闭合的严格证明''；
+本章不会把它们当作 theorem-level 依据。
+\end{viewpointbox}
+
 %─────────────────────────────────────────────
 \section{本章想回答什么问题}
 \label{sec:nested_question}
@@ -86,8 +104,8 @@ $C$ 在整个训练集上学习 $\theta$，
 （每 token、每 $T_2$ 个 token、整个训练集）。
 \end{toybox}
 
-这个玩具问题揭示了 Nested Learning 的核心主张：
-\textit{深度网络的``层级结构''可以被还原为
+这个玩具问题帮助我们理解 Nested Learning 的核心主张：
+\textit{在 NL 的视角下，深度网络的``层级结构''可以被重写为
 多个时间尺度嵌套在一起的优化过程}。
 
 %─────────────────────────────────────────────
@@ -212,7 +230,7 @@ $\mS^{(l)}$ 退化为固定参数 $W_l$——
 \label{sec:nested_unification}
 %─────────────────────────────────────────────
 
-本书前面介绍的所有模型都可以被放入 Nested Learning 框架中，
+本书前面介绍的核心模型都可以在 Nested Learning 的语言中被统一描述，
 区别仅在于嵌套深度、优化算法、截断策略和时间尺度的选取。
 
 \begin{center}
@@ -325,6 +343,21 @@ Nested Learning 框架涉及两类性质截然不同的主张，
 并在后续研究中尝试证实或证伪其各部分主张。
 不要当做``已被应用证实一切''的终极定论。
 \end{viewpointbox}
+
+\begin{remark}[校勘提醒：哪些推导不能在本章里当作铁证]
+为了防止读者把``统一视角''误读为``每一步都已被严格证明''，
+这里补充两个教材层面的提醒：
+\begin{enumerate}
+  \item 原论文里关于 Muon 的``目标函数 $\Rightarrow$ 更新式''那段推导，
+        在 as-written 形式下并不闭合；
+        因此本章不会把它当作严格 theorem 引用。
+  \item 原论文 DGD appendix 的代数展开也有系数与符号层面的不干净之处；
+        因此本章只把 DGD 当作一个有启发性的设计方向，
+        不把 appendix 本身当成完全整理好的证明。
+\end{enumerate}
+换句话说：本章会使用 NL 中\textbf{可独立核对的局部等价}，
+但不会把论文里尚需修补的推导包装成``已证结论''。
+\end{remark}
 
 \subsection*{主张状态表}
 
@@ -550,9 +583,9 @@ Nested Learning 的``层''对应于模型中的计算单元，
   \item \textbf{来自第~\ref{ch:unified}~章}：
     Test-Time Regression 把第~\ref{ch:fastweights}--\ref{ch:titans}~章的所有模型
     统一到一个在线回归目标下。
-    Nested Learning 在此基础上把``统一''推到了更极端的位置：
+    Nested Learning 在此基础上把``统一''推到了更激进的解释层：
     不仅内层状态更新是优化，
-    连``网络架构本身''也可以被解读为多层优化的截断。
+    连``网络架构本身''也\textbf{尝试}被解读为多层优化的截断。
 
   \item \textbf{来自第~\ref{ch:bilevel}~章}：
     MAML 建立了二层嵌套优化的最基本形式。
@@ -561,7 +594,7 @@ Nested Learning 的``层''对应于模型中的计算单元，
   \item \textbf{全书总结}：
     这本书的旅程从``测试时做一步梯度更新''（第~\ref{ch:why_test_time}~章的 TTT 2020），
     走到``隐状态就是一个在线学习器''（第~\ref{ch:ttt_layers}~章的 TTT-Layer），
-    最终到`''所有的架构层级都可以被理解为嵌套的在线优化''。
+    最终到``在 NL 视角下，更高层的架构层级也可以尝试被理解为嵌套的在线优化''。
     这条主线的一致性说明了：
     \textbf{训练和推断之间的界限不是黑白分明的，
     而是一个多时间尺度的连续谱}。
@@ -704,9 +737,11 @@ Nested Learning 在\textbf{机制层面}提供了一种统一的
 %─────────────────────────────────────────────
 
 \begin{itemize}
-  \item \textbf{Nested Learning 的核心主张}：
-    深度网络的层级结构可以被理解为多时间尺度嵌套优化的截断。
-    ``架构设计'' 等价于``选择每一层的优化算法和截断策略''。
+  \item \textbf{Nested Learning 的核心 viewpoint}：
+    在 NL 的统一语言里，深度网络的层级结构
+    可以被理解为多时间尺度嵌套优化的截断。
+    ``架构设计'' 因而可以被重写为
+    ``选择每一层的优化算法和截断策略''。
 
   \item \textbf{形式化}：
     $L$ 层嵌套优化由递推公式~\eqref{eq:nested_update}
@@ -723,6 +758,7 @@ Nested Learning 在\textbf{机制层面}提供了一种统一的
     已被严格证明。
     ``架构是优化的幻像'' 是一个极具启发性的研究议程，
     但尚未在一般非线性情形下被完全证明。
+    原论文中个别推导（如 Muon 和 DGD appendix）也不应被直接当作本章的严格证明依据。
 
   \item \textbf{神经科学类比}：
     大脑的多时间尺度可塑性层级

@@ -39,6 +39,15 @@ This policy governs what kinds of claims can be stated as facts vs. must be fram
 - **What's interpretive**: "Nested Learning proves that all deep learning architectures are illusions." This is an interpretive claim about the *scope* of the framework. Must be framed as: *"这是 NL 论文提出的一个大统一视角，而不是已被整个社区接受的定论。"*
 - **Forbidden formulation**: "深度学习的本质已被 Nested Learning 完整揭示。"
 
+### Nested Learning Proof Hygiene
+
+- **What's stable**: Local recurrence-level equivalences such as "linear attention can be written as a one-step optimization update" or "delta-rule memory corresponds to an `L2` objective plus retention" may be stated as facts when the exact objective and assumptions are given.
+- **What's interpretive**: "Pre-training is in-context learning", "ICL is not emergent", and "all modern architectures are uniform feedforward layers" are useful NL framings, but they are not textbook-level consensus claims. They must be framed as: *"在 NL 视角下可以这样重写/理解，但这不是当前社区的定论。"*
+- **As-written proof caveat**: Do not cite the NL paper's Muon derivation or DGD appendix derivation as theorem-level proof without qualification. Safe wording: *"论文给出了设计动机或局部推导，但其 as-written derivation 仍需更严格整理。"*
+- **Forbidden formulation**: "NL 已经严格证明 pre-training 就是 ICL。"
+- **Forbidden formulation**: "NL 已经严格证明 ICL 不是 emergent。"
+- **Forbidden formulation**: "NL 已经严格证明所有现代架构都只是统一前馈层。"
+
 ---
 
 ## Writing Rules
@@ -48,6 +57,7 @@ This policy governs what kinds of claims can be stated as facts vs. must be fram
 3. **Use `\begin{openproblem}` for speculative claims and research directions.**
 4. **Always cite the paper** that is the source of any specific claim.
 5. **"教材解释" label**: When the textbook synthesizes across papers in a way that no single paper states, add: *（以下为教材归纳，非直接引用某篇论文结论）*
+6. **NL proof-hygiene label**: When the textbook mentions Muon or DGD as discussed in the NL paper, and the point depends on the paper's as-written derivation rather than an independently checked proof, add: *（以下只作为设计动机或启发性推导，不作为严格定理使用）*
 
 ---
 

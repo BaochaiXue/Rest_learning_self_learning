@@ -39,6 +39,7 @@
 |---|---|
 | [`quality/qa_rubric.md`](quality/qa_rubric.md) | Multi-dimensional quality checklist |
 | [`quality/claim_honesty_policy.md`](quality/claim_honesty_policy.md) | Rules for consensus vs. interpretation |
+| [`quality/nested_learning_theory_guardrails.md`](quality/nested_learning_theory_guardrails.md) | Specific warning labels for NL claims, proof caveats, and safe textbook wording |
 | [`quality/build_checklist.md`](quality/build_checklist.md) | Pre-release build verification |
 | [`quality/repo_hygiene.md`](quality/repo_hygiene.md) | Ongoing hygiene rules |
 

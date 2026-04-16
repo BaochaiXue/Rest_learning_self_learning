@@ -1,27 +1,57 @@
-# Latest Handoff — Session 2026-04-15 (Root Harness Research OS Refactor)
-**Timestamp**: 2026-04-15T23:05:00-04:00
+# Latest Handoff — Session 2026-04-16 (Nested Learning Guardrails Hardened)
+**Timestamp**: 2026-04-16T10:32:00-04:00
 
 ---
 
 ## What Was Done This Session
 
-Refined the repo-level research operating system into a more explicit harness-style structure at the root without changing canonical textbook content inside `nested_learning_textbook/book/`.
+Extended the earlier NL theory audit into textbook-facing guardrails so that readers and future agents do not accidentally overstate the paper.
 
-### New Root-Level Infrastructure
+### New Guardrail Files
 
-- Governance: `AGENTS.md`, `PLANS.md`, refreshed `README.md`, refreshed `ARCHITECTURE.md`
-- Codex config: `.codex/config.toml`, plus 7 project-level custom agents in `.codex/agents/`
-- Repo-scoped skills: 6 skills under `.agents/skills/` with `SKILL.md` and `agents/openai.yaml`
-- Root docs system of record: `docs/index.md`, `docs/design-docs/`, `docs/exec-plans/`, `docs/handoffs/`, `docs/quality/`, `docs/references/`, `docs/generated/`, `docs/reliability.md`
-- Research state: `research/README.md`, `research/research_plan.md`, `research/research_plan.template.md`, `research/findings.md`, `research/literature_map.md`, `research/claims_registry.md`, `research/decision_log.md`, `research/open_questions.md`, queue CSVs, and `research/reviews/repro_checklist.md`
-- Templates and operator docs: `templates/experiment_note.md`, `templates/paper_note.md`, `templates/sprint_contract.md`, `docs/USAGE.md`, `docs/BATCH_WORKFLOWS.md`
-- Root validation: `scripts/research_check.py` and `make research-check`
+- `docs/quality/nested_learning_theory_guardrails.md`
+- strengthened `docs/quality/claim_honesty_policy.md`
+- strengthened `docs/quality/qa_rubric.md`
+- updated `AGENTS.md` and `docs/index.md` so NL-sensitive tasks point to the new guardrail file
 
-### Textbook Subtree Status
+### Reader-Facing Textbook Changes
 
-- No chapter, appendix, bibliography, or manuscript content was modified.
-- The previous chapter-depth completion state remains the last content baseline for the book.
-- `nested_learning_textbook/` remains governed by its own `AGENTS.md` and `docs/` tree.
+- patched `book/chapters/11_nested_learning.tex` to:
+  - mark the opening “illusion” quote as slogan-level rather than theorem-level
+  - explicitly say the chapter uses local mechanism-level equivalences as facts
+  - warn that the paper's Muon and DGD appendix derivations should not be cited here as strict proofs
+  - soften a few bridge / summary sentences that previously read too much like settled ontology
+
+### Supporting Audit Artifacts Already In Place
+
+- Detailed paper note:
+  - `notes/papers/nested_learning_the_illusion_of_deep_learning_architectures.md`
+- Claim-audit table:
+  - `notes/tables/nested_learning_claim_audit.md`
+- Root durable audit:
+  - `../research/nested_learning_theory_audit/audit.md`
+
+### Main Interpretation From This Audit
+
+- Safe mechanism-level results:
+  - linear attention / Hebbian and delta-rule recurrences as optimization updates
+  - softmax attention as a non-parametric weighted-regression solution
+  - backpropagation as a proximal rewrite around local error signals
+- Safe only with qualifiers:
+  - momentum / Adam / AdaGrad as associative-memory-style reformulations
+  - DGD under normalized-input assumptions
+- Should not be stated as consensus facts:
+  - "architectures are an illusion"
+  - "pre-training is in-context learning"
+  - "ICL is not emergent"
+  - "all modern architectures are uniform feedforward layers"
+
+### Proof Issues To Remember
+
+1. Muon derivation:
+   - the shown gradient step does not follow from the displayed objective as written
+2. DGD appendix:
+   - coefficient and sign handling are inconsistent, even though the main-text update matches the normalized-input special case
 
 ---
 
@@ -29,40 +59,34 @@ Refined the repo-level research operating system into a more explicit harness-st
 
 | Check | Result |
 |---|---|
-| Repo-level TOML parse | ✅ Passed for `.codex/config.toml` and 7 agent TOMLs |
-| Repo-level skill YAML parse | ✅ Passed for 6 `agents/openai.yaml` files |
-| Repo-level skill frontmatter presence | ✅ Passed for 6 `SKILL.md` files |
-| Root research OS absolute-path scan | ✅ No `/Users/` or `/home/` hits in new root-layer files |
-| `python3 scripts/research_check.py` | ✅ Passed |
-| `make research-check` | ✅ Passed |
-| `python3 scripts/validate_manifest.py` | ✅ Passed |
-| `python3 scripts/check_book_structure.py` | ✅ No structural errors, warnings only |
-| `python3 scripts/check_absolute_paths.py` | ❌ Failed on 24 pre-existing absolute-path hits |
-| `make check` | ❌ Failed for the same reason |
+| `python3 ../scripts/research_check.py` | ✅ Passed |
+| `git diff --check` | ✅ Passed |
+| `make book` | ✅ Passed |
+| `make check` | ❌ Failed on 24 pre-existing absolute-path hits |
 
 ### Absolute-Path Failure Notes
 
-The current failure is not caused by the new root research OS files.
+The current failure is not caused by the new guardrail files or the Chapter 11 wording changes.
 The hits come from:
 
 - downloaded paper-source files under `papers/`
 - generated hygiene reports under `docs/generated/`
-- a documented string reference in `docs/project_state/current_repo_audit.md`
+- a documented string reference already present in generated/project-state docs
 
-This means the current `check_absolute_paths.py` behavior is stricter than the older handoff language that described these paper-source paths as known exemptions.
+This is the same known hygiene blocker already present before this session.
 
 ---
 
 ## Current Working Interpretation
 
-- The root research OS scaffold is ready for use and now includes explicit docs maps, handoffs, execution-contract templates, and a root-only validation path.
-- A fresh thread is recommended before using the new `.codex/agents/*.toml` files, because custom-agent hot-loading may be unstable in the same conversation.
-- If the next task touches textbook content, start from this handoff plus the prior 2026-04-03 content-completion baseline.
+- The NL paper is strongest when teaching local recurrence/objective equivalences.
+- The NL paper is weakest when it turns those local equivalences into broad ontological claims about all architectures.
+- The textbook now encodes that distinction directly in policy, QA, AGENTS guidance, and reader-facing Chapter 11 prose.
 
 ---
 
 ## Remaining Work
 
-1. Start the first concrete research topic by filling `research/research_plan.md` and creating a bounded contract from `templates/sprint_contract.md`.
-2. Decide whether to treat the 24 absolute-path hits in `nested_learning_textbook/` as permanent exemptions or clean them up in a dedicated hygiene pass.
-3. Continue the textbook roadmap from the existing child-project plans when content work resumes.
+1. If any other chapter or summary restates NL, reuse the new guardrail wording instead of inventing fresh phrasing.
+2. Decide later whether to repair the Muon / DGD proof presentation in derived notes, or keep them permanently labeled as motivation-only.
+3. Resolve or formally exempt the 24 absolute-path hits so `make check` can pass cleanly again.
