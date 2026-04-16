@@ -1,80 +1,64 @@
-# Latest Handoff — Session 2026-04-03 (Depth Pass Complete)
-**Timestamp**: 2026-04-03T23:09:00Z
+# Latest Handoff — Session 2026-04-15 (Root Research OS Bootstrap)
+**Timestamp**: 2026-04-15T22:48:00-04:00
 
 ---
 
 ## What Was Done This Session
 
-### Comprehensive Textbook Depth Pass — All Batches Complete
+Initialized a repo-level multi-agent research operating system at the root without changing canonical textbook content inside `nested_learning_textbook/book/`.
 
-Executed the full 4-batch deepening plan across all 11 chapters, 2 appendices, and QA infrastructure.
+### New Root-Level Infrastructure
 
-### Changes by Chapter
+- Governance: `AGENTS.md`, `PLANS.md`, refreshed `README.md`, refreshed `ARCHITECTURE.md`
+- Codex config: `.codex/config.toml`, plus 7 project-level custom agents in `.codex/agents/`
+- Repo-scoped skills: 6 skills under `.agents/skills/` with `SKILL.md` and `agents/openai.yaml`
+- Research state: `research/README.md`, `research/findings.md`, `research/literature_map.md`, `research/claims_registry.md`, `research/decision_log.md`, `research/open_questions.md`, queue CSVs, and `research/reviews/repro_checklist.md`
+- Templates and operator docs: `templates/experiment_note.md`, `templates/paper_note.md`, `docs/USAGE.md`, `docs/BATCH_WORKFLOWS.md`
 
-| Chapter | Before | After | Key Additions |
-|---------|--------|-------|---------------|
-| **Ch01** | 197 | **303** | Terminology crosswalk, timescale/notation table, forward-reference themes |
-| **Ch02** | 558 | 558 | Already at textbook-grade (verified, no changes needed) |
-| **Ch03** | 560 | 560 | Already at textbook-grade with MAML algorithm + FOMAML + Reptile |
-| **Ch04** | 576 | 576 | Already at textbook-grade (style reference) |
-| **Ch05** | 538 | 538 | Already at textbook-grade (verified, no changes needed) |
-| **Ch06** | 358 | **563** | Three-layer evidence hierarchy, "where equivalence breaks", "what is learning" |
-| **Ch07** | 306 | **431** | Full pseudocode, d=2 worked 3-step example, bilevel mapping table |
-| **Ch08** | 225 | **374** | GRU/LSTM/TTT comparison tables, complexity analysis, pseudocode, engineering section |
-| **Ch09** | 545 | 545 | Already at textbook-grade (target style reference) |
-| **Ch10** | 544 | **687** | Derivation tree, extended master table, "limits of unification" |
-| **Ch11** | 649 | **749** | Claim status table, "what NL does NOT prove", "synthesis not license" |
+### Textbook Subtree Status
 
-### Appendices
-
-| Appendix | Before | After | Key Additions |
-|----------|--------|-------|---------------|
-| **Math** | 63 | **280** | OLS, ridge, RLS derivation, Sherman-Morrison proof, matrix calc, online learning, notation table |
-| **Labs** | 44 | **263** | Per-lab structured guidance (objective, data, expected results, common bugs, extensions) |
-| Glossary | 287 | 287 | No changes (already complete) |
-
-### QA Infrastructure
-
-| Script | Status |
-|--------|--------|
-| `check_chapter_depth.py` | ✅ All 11 pass |
-| `check_chapter_quality.py` (NEW) | ✅ All 11 pass |
-| `docs/generated/chapter_depth_report.md` | ✅ Generated |
-
-### Build Status
-
-| Metric | Start of Session | End of Session |
-|--------|-----------------|----------------|
-| Pages | 133 | **153** |
-| Errors | 0 | **0** |
-| Total lines | ~5,500 | **6,714** |
-| Textbook-grade chapters | 7/11 | **11/11** |
+- No chapter, appendix, bibliography, or manuscript content was modified.
+- The previous chapter-depth completion state remains the last content baseline for the book.
+- `nested_learning_textbook/` remains governed by its own `AGENTS.md` and `docs/` tree.
 
 ---
 
-## Chapter Quality Matrix (Final)
+## Verification Run
 
-| Ch | Lines | 中文 | Toy | Thm | Neuro | Boundary | Lab | Ex | Status |
-|----|-------|------|-----|-----|-------|----------|-----|----|--------|
-| 01 | 303 | 4441 | ✅ | — | ✅ | ✅ | ✅ | 3 | ✅ |
-| 02 | 558 | 3754 | ✅ | ✅ | ✅ | ✅ | ✅ | 4 | ✅ |
-| 03 | 560 | 3716 | ✅ | ✅(4) | ✅ | ✅ | ✅ | 4 | ✅ |
-| 04 | 576 | 4486 | ✅ | ✅(2) | ✅ | ✅ | ✅ | 4 | ✅ |
-| 05 | 538 | 3625 | — | ✅(2) | ✅ | ✅ | ✅ | 4 | ✅ |
-| 06 | 563 | 5368 | ✅ | ✅ | ✅ | ✅ | ✅ | 5 | ✅ |
-| 07 | 431 | 4794 | ✅ | ✅ | ✅ | ✅ | ✅ | 2 | ✅ |
-| 08 | 374 | 4828 | ✅ | — | ✅ | ✅ | ✅ | 3 | ✅ |
-| 09 | 545 | 4063 | ✅ | ✅ | ✅ | ✅ | ✅ | 4 | ✅ |
-| 10 | 687 | 4551 | ✅ | ✅ | ✅ | ✅ | ✅ | 3 | ✅ |
-| 11 | 749 | 5660 | ✅ | ✅ | ✅ | ✅ | ✅ | 4 | ✅ |
+| Check | Result |
+|---|---|
+| Repo-level TOML parse | ✅ Passed for `.codex/config.toml` and 7 agent TOMLs |
+| Repo-level skill YAML parse | ✅ Passed for 6 `agents/openai.yaml` files |
+| Repo-level skill frontmatter presence | ✅ Passed for 6 `SKILL.md` files |
+| Root research OS absolute-path scan | ✅ No `/Users/` or `/home/` hits in new root-layer files |
+| `python3 scripts/validate_manifest.py` | ✅ Passed |
+| `python3 scripts/check_book_structure.py` | ✅ No structural errors, warnings only |
+| `python3 scripts/check_absolute_paths.py` | ❌ Failed on 24 pre-existing absolute-path hits |
+| `make check` | ❌ Failed for the same reason |
 
-**All 11 chapters at textbook-grade. All checks pass. 153-page manuscript.**
+### Absolute-Path Failure Notes
+
+The current failure is not caused by the new root research OS files.
+The hits come from:
+
+- downloaded paper-source files under `papers/`
+- generated hygiene reports under `docs/generated/`
+- a documented string reference in `docs/project_state/current_repo_audit.md`
+
+This means the current `check_absolute_paths.py` behavior is stricter than the older handoff language that described these paper-source paths as known exemptions.
 
 ---
 
-## Remaining Work (Low Priority)
+## Current Working Interpretation
 
-1. **Frontmatter**: Prerequisites roadmap, chapter dependency graph
-2. **Ch05**: Could add a dimensions table (minor enhancement)
-3. **Literature layer**: Rewrite 24 paper notes in `notes/papers/` as pedagogical assets
-4. **Final proofreading pass**: Tone consistency, typo fixes
+- The root research OS scaffold is ready for use.
+- A fresh thread is recommended before using the new `.codex/agents/*.toml` files, because custom-agent hot-loading may be unstable in the same conversation.
+- If the next task touches textbook content, start from this handoff plus the prior 2026-04-03 content-completion baseline.
+
+---
+
+## Remaining Work
+
+1. Start the first concrete research topic by creating `research/research_plan.md` from `research/research_plan.template.md`.
+2. Decide whether to treat the 24 absolute-path hits in `nested_learning_textbook/` as permanent exemptions or clean them up in a dedicated hygiene pass.
+3. Continue the textbook roadmap from the existing child-project plans when content work resumes.
