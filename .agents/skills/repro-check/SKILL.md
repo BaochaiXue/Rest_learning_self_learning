@@ -15,6 +15,7 @@ description: Review whether a result is reproducible enough for sharing by check
 
 - updated `research/reviews/repro_checklist.md`
 - blocking items or risk notes in `research/open_questions.md`
+- a handoff note that says whether the blocker belongs to implementation, experiment design, or missing evidence
 
 ## Do This
 
@@ -23,9 +24,11 @@ description: Review whether a result is reproducible enough for sharing by check
 3. Check whether artifacts are sufficient for another person to reproduce the result.
 4. Assign a risk level and list the missing pieces.
 5. Refuse to certify reproducibility when critical evidence is absent.
+6. Leave the exact blocker and next owner, not a general caution.
 
 ## Guardrails
 
 - Do not ignore leakage risks.
 - Do not treat a one-off successful run as reproducible by default.
 - Do not close the review until blockers are recorded clearly.
+- Do not soften a failed reproducibility review into a vague warning.

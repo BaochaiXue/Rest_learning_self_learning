@@ -55,6 +55,7 @@ Use the queues to drive explicit parallel work:
 3. Require each agent to write results back to the queue target file.
 4. Wait for all critical rows to finish before synthesizing conclusions.
 5. Update queue status immediately after the result is logged.
+6. Update `docs/handoffs/latest_handoff.md` when the batch crosses a phase boundary.
 
 ## Safe Operating Rules
 
@@ -62,3 +63,4 @@ Use the queues to drive explicit parallel work:
 - Do not let parallel agents write to the same output section without a merge plan.
 - Do not call a queue item done until its result is logged in `research/findings.md` or the designated output file.
 - If automatic batching is added later, keep these CSV schemas stable so the runner can remain thin.
+- If a batch produces a recurring docs issue, record it in `docs/generated/repo_hygiene_report.md` and `docs/quality/` rather than leaving it in chat.

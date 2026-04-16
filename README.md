@@ -1,25 +1,35 @@
 # Multi-Agent Vibe Research OS
 
-This repository now serves two roles:
+This repository has two layers:
 
-1. A reusable root-level research operating system for Codex-driven work.
+1. A root research operating system for Codex-driven work.
 2. An existing child project at `nested_learning_textbook/` with its own canonical docs and build flow.
 
-The root is for planning, skills, custom agents, durable research state, and batch workflows.
-The textbook subtree remains the canonical workspace for the inference-time learning book.
+The root layer is the coordination and documentation system.
+The child subtree remains the canonical workspace for the inference-time learning book.
 
-## What Lives Here
+## Root Map
 
 ```text
 .
-├── AGENTS.md                      # Repo-wide operating contract
-├── PLANS.md                       # Reusable planning template
-├── .codex/                        # Repo-local Codex config and custom agents
-├── .agents/skills/                # Repo-scoped skills
-├── docs/                          # Root-level usage and batch workflow docs
-├── research/                      # Durable state for active and future topics
-├── templates/                     # Reusable note templates
-└── nested_learning_textbook/      # Existing child project with its own rules
+├── AGENTS.md
+├── PLANS.md
+├── README.md
+├── ARCHITECTURE.md
+├── docs/
+│   ├── index.md
+│   ├── design-docs/
+│   ├── exec-plans/
+│   ├── handoffs/
+│   ├── quality/
+│   ├── references/
+│   ├── generated/
+│   ├── reliability.md
+│   ├── USAGE.md
+│   └── BATCH_WORKFLOWS.md
+├── research/
+├── templates/
+└── nested_learning_textbook/
 ```
 
 ## Default Workflow
@@ -31,34 +41,21 @@ Use the same loop for most research tasks:
 Practical implications:
 
 - Start non-trivial work by creating or updating a plan.
-- Keep evidence in files under `research/`, not only in chat.
+- Read `docs/index.md` before you decide where an artifact belongs.
+- Keep evidence in files under `research/` and in the relevant root docs page, not only in chat.
 - Update `research/findings.md` after substantive experiments or code changes.
 - Mark claims as `verified` or `uncertain`.
 
-## Root-Level Skills
+## Skills And Agents
 
-The repo ships with six repo-scoped skills:
+Repo-scoped skills live under `.agents/skills/`.
+Custom agents live under `.codex/agents/`.
+Use them explicitly when you want clear responsibility boundaries.
 
-- `problem-framing`: turn a fuzzy idea into a scoped research plan
-- `literature-triangulation`: compare sources and register evidence-backed claims
-- `experiment-loop`: move from hypothesis to a minimal executed loop
-- `claim-audit`: inspect whether a draft claim is actually supported
-- `paper-drafting`: draft prose from verified artifacts only
-- `repro-check`: review reproducibility before sharing results
-
-Skill definitions live under `.agents/skills/`.
-If a task clearly matches a skill, explicitly invoke it in your prompt, for example:
+Examples:
 
 ```text
 Use $problem-framing and create `research/research_plan.md` from the template.
-```
-
-## Custom Agents
-
-Repo-local agents live under `.codex/agents/`.
-Use them explicitly when you want clear responsibility boundaries, for example:
-
-```text
 Spawn `research_architect`, `literature_scout`, and `novelty_auditor` in parallel.
 Wait for all three before synthesizing the answer.
 ```
@@ -71,7 +68,7 @@ Fresh threads are safer after creating or editing custom agent files because som
 
 ## Start A New Research Topic
 
-1. Read `AGENTS.md`, `PLANS.md`, `research/README.md`, and the relevant skill files.
+1. Read `AGENTS.md`, `docs/index.md`, `PLANS.md`, `research/README.md`, and the relevant skill files.
 2. Copy `research/research_plan.template.md` to `research/research_plan.md`.
 3. Run a first pass with `problem-framing`.
 4. Spawn `research_architect`, `literature_scout`, and `novelty_auditor` in parallel if the topic is still ambiguous.
@@ -81,7 +78,8 @@ Fresh threads are safer after creating or editing custom agent files because som
    - `research/claims_registry.md`
    - `research/open_questions.md`
    - `research/decision_log.md`
-6. Only then move into `experiment-loop`, implementation, drafting, or reproducibility review.
+6. Use `docs/handoffs/latest_handoff.md` whenever a phase boundary needs a durable checkpoint.
+7. Only then move into `experiment-loop`, implementation, drafting, or reproducibility review.
 
 ## Working With `nested_learning_textbook/`
 

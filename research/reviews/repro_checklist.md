@@ -1,5 +1,7 @@
 # Reproducibility Checklist
 
+Use this checklist before sharing results, writing conclusions, or handing work to another agent.
+
 ## Environment
 
 - [ ] Runtime and OS captured
@@ -24,6 +26,8 @@
 - [ ] Exact config or script path recorded
 - [ ] Output artifact path recorded
 - [ ] Findings log points to the relevant artifacts
+- [ ] Claim registry reflects the current support level
+- [ ] If a sprint contract was used, the acceptance checks were actually exercised
 
 ## Decision
 

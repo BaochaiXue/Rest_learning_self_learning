@@ -16,6 +16,7 @@ description: Draft paper-style sections from verified findings, explicit source 
 - structured draft text in the requested destination
 - explicit citation placeholders where sources are known but not yet inserted
 - optional updates to `research/open_questions.md` when drafting exposes evidence gaps
+- a short handoff note if the draft exposed a missing claim or repro issue
 
 ## Do This
 
@@ -24,9 +25,11 @@ description: Draft paper-style sections from verified findings, explicit source 
 3. Keep related-work comparisons calibrated.
 4. Add citation placeholders rather than inventing references.
 5. Call out unresolved evidence gaps instead of smoothing over them.
+6. Route unsupported statements back to claim audit instead of drafting them as facts.
 
 ## Guardrails
 
 - Do not fabricate citations, results, setups, or baselines.
 - Do not present uncertain claims as conclusions.
 - Do not trigger this skill before claim audit unless the user explicitly wants an early rough draft.
+- Do not let prose outrun the artifact chain.

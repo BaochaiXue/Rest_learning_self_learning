@@ -1,2 +1,4 @@
-id,title_or_query,source_hint,priority,status,assigned_agent,depends_on,output_path,notes
-paper-000,[replace-with-paper-or-query],,P2,queued,literature_scout,,research/literature_map.md,template row
+id,query_or_citation,source_type,priority,status,owner,depends_on,write_back,artifact_path,review_gate,last_updated,notes
+paper-20260415-001,A cross-species neural foundation model for end-to-end speech decoding,paper,P2,queued,literature_scout,,research/literature_map.md,research/library/a_cross_species_neural_foundation_model_for_end_to_end_speech_decoding/paper_note.md,verify relevance to the next active topic,2026-04-15,user-added arXiv paper 2511.21740; local PDF downloaded
+paper-20260415-002,Latent Collaboration in Multi-Agent Systems,paper,P1,queued,literature_scout,,research/literature_map.md,research/library/latent_collaboration_in_multi_agent_systems/paper_note.md,verify baseline and harness relevance before synthesis,2026-04-15,user-added arXiv paper 2511.20639; local PDF downloaded
+paper-000,[replace-with-paper-or-query],paper / doc / benchmark / repo,P2,queued,literature_scout,,research/literature_map.md,repo-relative-path-or-url,verify source type and relevance,2026-04-15,template row

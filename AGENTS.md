@@ -1,18 +1,21 @@
-# AGENTS.md — Research OS Contract
+# AGENTS.md — Root Research OS Contract
 
 ## Repo Purpose
 
-This repository is a reusable multi-agent research operating system layered over an existing child project.
-Treat the repo root as the durable orchestration layer.
-Treat `nested_learning_textbook/` as an active child workspace with its own stricter local rules.
+The repository root is a reusable research operating system for vibe-research work.
+Treat `docs/` as the root system of record for maps, policy, execution structure, handoffs, quality, reliability, and generated audits.
+Treat `research/` as the durable work state for active topics.
+Treat `nested_learning_textbook/` as a child project with its own canonical docs and manuscript rules.
 
 ## Read Order
 
 1. Read this file.
-2. Read `README.md`.
-3. Read `PLANS.md`.
-4. Read `research/README.md`.
-5. If a task touches `nested_learning_textbook/`, also read:
+2. Read `docs/index.md`.
+3. Read `README.md`.
+4. Read `PLANS.md`.
+5. Read `research/README.md`.
+6. If the task uses any root docs artifact, read the relevant page under `docs/`.
+7. If the task touches `nested_learning_textbook/`, also read:
    - `nested_learning_textbook/AGENTS.md`
    - `nested_learning_textbook/docs/index.md`
    - `nested_learning_textbook/docs/project_state/current_repo_audit.md`
@@ -43,6 +46,7 @@ Do not jump from a vague idea straight into implementation.
 - Record claim status in `research/claims_registry.md`.
 - Record decisions and reversals in `research/decision_log.md`.
 - Record unresolved blockers in `research/open_questions.md`.
+- Use `docs/handoffs/latest_handoff.md` at phase boundaries for root-level work.
 
 ## Claim Discipline
 
@@ -50,6 +54,7 @@ Do not jump from a vague idea straight into implementation.
 - Mark claims as `verified` or `uncertain`.
 - Do not fabricate citations, baselines, datasets, benchmarks, settings, or results.
 - Do not write conclusions that cannot be traced back to evidence.
+- If the claim is part of root-level docs or research output, also follow `docs/quality/claim_honesty_policy.md`.
 - If work touches the textbook subtree, also follow `nested_learning_textbook/docs/quality/claim_honesty_policy.md`.
 
 ## Subagent Rules
@@ -72,7 +77,7 @@ Keep roles narrow; do not create a general-purpose "do everything" agent.
 - Use repo-relative paths in files.
 - Do not let important state hide in temporary notes or shell history.
 - Do not overwrite `nested_learning_textbook/manuscript/*.md`.
-- New root-level docs should orchestrate work; they must not replace `nested_learning_textbook/docs/` as the textbook source of truth.
+- Root docs orchestrate work; they do not replace `nested_learning_textbook/docs/` as the textbook source of truth.
 
 ## Done-When
 
@@ -82,6 +87,7 @@ Work is done only when:
 - verification has been run or an explicit blocker is recorded
 - `research/findings.md` reflects substantive work
 - conclusions are traceable to evidence
+- the relevant root docs page is updated if the task changed policy, map, or handoff state
 - if `nested_learning_textbook/` changed, `nested_learning_textbook/docs/handoffs/latest_handoff.md` is updated
 - if `nested_learning_textbook/` changed, run `make check`
 - if LaTeX content changed, also run `make book`

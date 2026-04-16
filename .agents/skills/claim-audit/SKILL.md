@@ -15,6 +15,7 @@ description: Audit whether draft claims, novelty statements, and result summarie
 
 - updated `research/claims_registry.md`
 - a short risk list in `research/open_questions.md` or the working draft
+- a handoff note that tells the next agent whether more evidence or repro work is needed
 
 ## Do This
 
@@ -23,9 +24,11 @@ description: Audit whether draft claims, novelty statements, and result summarie
 3. Identify missing citations, missing runs, or missing controls.
 4. Point to the exact evidence gap that blocks a safe claim.
 5. Require follow-up verification before the claim appears in a final draft.
+6. Leave a skeptical verdict and the next owner for each unresolved claim.
 
 ## Guardrails
 
 - Do not leave unsupported claims in final prose.
 - Do not let interpretive framing masquerade as consensus.
 - Do not assume chat summaries count as evidence.
+- Do not upgrade a claim's status without a traceable artifact chain.

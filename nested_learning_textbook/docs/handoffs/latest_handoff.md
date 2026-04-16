@@ -1,19 +1,21 @@
-# Latest Handoff — Session 2026-04-15 (Root Research OS Bootstrap)
-**Timestamp**: 2026-04-15T22:48:00-04:00
+# Latest Handoff — Session 2026-04-15 (Root Harness Research OS Refactor)
+**Timestamp**: 2026-04-15T23:05:00-04:00
 
 ---
 
 ## What Was Done This Session
 
-Initialized a repo-level multi-agent research operating system at the root without changing canonical textbook content inside `nested_learning_textbook/book/`.
+Refined the repo-level research operating system into a more explicit harness-style structure at the root without changing canonical textbook content inside `nested_learning_textbook/book/`.
 
 ### New Root-Level Infrastructure
 
 - Governance: `AGENTS.md`, `PLANS.md`, refreshed `README.md`, refreshed `ARCHITECTURE.md`
 - Codex config: `.codex/config.toml`, plus 7 project-level custom agents in `.codex/agents/`
 - Repo-scoped skills: 6 skills under `.agents/skills/` with `SKILL.md` and `agents/openai.yaml`
-- Research state: `research/README.md`, `research/findings.md`, `research/literature_map.md`, `research/claims_registry.md`, `research/decision_log.md`, `research/open_questions.md`, queue CSVs, and `research/reviews/repro_checklist.md`
-- Templates and operator docs: `templates/experiment_note.md`, `templates/paper_note.md`, `docs/USAGE.md`, `docs/BATCH_WORKFLOWS.md`
+- Root docs system of record: `docs/index.md`, `docs/design-docs/`, `docs/exec-plans/`, `docs/handoffs/`, `docs/quality/`, `docs/references/`, `docs/generated/`, `docs/reliability.md`
+- Research state: `research/README.md`, `research/research_plan.md`, `research/research_plan.template.md`, `research/findings.md`, `research/literature_map.md`, `research/claims_registry.md`, `research/decision_log.md`, `research/open_questions.md`, queue CSVs, and `research/reviews/repro_checklist.md`
+- Templates and operator docs: `templates/experiment_note.md`, `templates/paper_note.md`, `templates/sprint_contract.md`, `docs/USAGE.md`, `docs/BATCH_WORKFLOWS.md`
+- Root validation: `scripts/research_check.py` and `make research-check`
 
 ### Textbook Subtree Status
 
@@ -31,6 +33,8 @@ Initialized a repo-level multi-agent research operating system at the root witho
 | Repo-level skill YAML parse | ✅ Passed for 6 `agents/openai.yaml` files |
 | Repo-level skill frontmatter presence | ✅ Passed for 6 `SKILL.md` files |
 | Root research OS absolute-path scan | ✅ No `/Users/` or `/home/` hits in new root-layer files |
+| `python3 scripts/research_check.py` | ✅ Passed |
+| `make research-check` | ✅ Passed |
 | `python3 scripts/validate_manifest.py` | ✅ Passed |
 | `python3 scripts/check_book_structure.py` | ✅ No structural errors, warnings only |
 | `python3 scripts/check_absolute_paths.py` | ❌ Failed on 24 pre-existing absolute-path hits |
@@ -51,7 +55,7 @@ This means the current `check_absolute_paths.py` behavior is stricter than the o
 
 ## Current Working Interpretation
 
-- The root research OS scaffold is ready for use.
+- The root research OS scaffold is ready for use and now includes explicit docs maps, handoffs, execution-contract templates, and a root-only validation path.
 - A fresh thread is recommended before using the new `.codex/agents/*.toml` files, because custom-agent hot-loading may be unstable in the same conversation.
 - If the next task touches textbook content, start from this handoff plus the prior 2026-04-03 content-completion baseline.
 
@@ -59,6 +63,6 @@ This means the current `check_absolute_paths.py` behavior is stricter than the o
 
 ## Remaining Work
 
-1. Start the first concrete research topic by creating `research/research_plan.md` from `research/research_plan.template.md`.
+1. Start the first concrete research topic by filling `research/research_plan.md` and creating a bounded contract from `templates/sprint_contract.md`.
 2. Decide whether to treat the 24 absolute-path hits in `nested_learning_textbook/` as permanent exemptions or clean them up in a dedicated hygiene pass.
 3. Continue the textbook roadmap from the existing child-project plans when content work resumes.

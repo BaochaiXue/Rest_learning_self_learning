@@ -1,14 +1,14 @@
 # Repo-local defaults for research work in this repository.
-# Keep the base model at GPT-5.4 and reserve stronger reasoning for the
-# planning and review agents that actually need it.
+# Treat AGENTS.md as the map: use explicit decomposition, not recursive fan-out.
 model = "gpt-5.4"
 model_reasoning_effort = "high"
 sandbox_mode = "danger-full-access"
 
-# Long enough for literature sweeps, synthesis, and moderate experiment loops.
+# Long enough for literature sweeps, synthesis, and long-running research loops.
 job_max_runtime_seconds = 14400
 
-# If your Codex surface supports plan-specific overrides, prefer xhigh there.
+# Planning and reviewer agents should override reasoning upward when they are
+# building contracts, decompositions, or skeptical evaluations.
 # Example:
 # [plan_mode]
 # model_reasoning_effort = "xhigh"
@@ -17,8 +17,8 @@ job_max_runtime_seconds = 14400
 multi_agent = true
 
 [agents]
-# Research work often benefits from independent scouts and reviewers.
+# Research work benefits from independent scouts and reviewers.
 max_threads = 8
 
-# Keep fan-out shallow; the main agent should coordinate, not recurse.
+# Keep fan-out shallow; the main agent coordinates handoffs, not recursion.
 max_depth = 1

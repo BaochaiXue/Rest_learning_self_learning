@@ -1,7 +1,7 @@
 interface:
   display_name: "Claim Audit"
-  short_description: "Check whether claims are actually supported."
-  default_prompt: "Use $claim-audit to review these draft claims against `research/claims_registry.md`, findings, and source pointers before they go into a summary or paper section."
+  short_description: "Check whether claims are actually supported and what is still missing."
+  default_prompt: "Use $claim-audit to review these draft claims against `research/claims_registry.md`, findings, and source pointers, then leave a skeptical verdict and next owner before they go into a summary or paper section."
 
 policy:
-  allow_implicit_invocation: true
+  allow_implicit_invocation: false

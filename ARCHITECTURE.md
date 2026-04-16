@@ -6,34 +6,39 @@ This repository is intentionally split into two layers:
 
 ```text
 Rest_learning/
-├── root research OS               # planning, skills, agents, durable state
+├── root docs + research OS        # maps, policies, plans, handoffs, durable state
 └── nested_learning_textbook/      # active child project and canonical manuscript
 ```
 
-The root layer exists to standardize how Codex plans, decomposes, verifies, logs, and resumes research work.
+The root layer standardizes how Codex plans, decomposes, verifies, logs, and resumes research work.
 The child project keeps its own domain-specific docs and build rules.
 
-## Root Research OS
+## Root Documentation System Of Record
 
 ```text
-.
-├── AGENTS.md
-├── PLANS.md
-├── .codex/
-├── .agents/skills/
-├── docs/
-├── research/
-└── templates/
+docs/
+├── index.md
+├── design-docs/
+├── exec-plans/
+├── handoffs/
+├── quality/
+├── references/
+├── generated/
+├── reliability.md
+├── USAGE.md
+└── BATCH_WORKFLOWS.md
 ```
 
 Responsibilities:
 
-- repo-wide operating rules
-- repo-local custom agents
-- repo-scoped skills
-- durable research state
-- reusable templates
-- batch workflow conventions
+- `docs/index.md`: root map and read order
+- `docs/design-docs/`: durable beliefs and architecture rationale
+- `docs/exec-plans/`: phase plans and operational plans
+- `docs/handoffs/`: checkpoint summaries and phase transitions
+- `docs/quality/`: claim honesty and QA rubric
+- `docs/reliability.md`: reproducibility and operating safeguards
+- `docs/references/`: source inventory and external anchors
+- `docs/generated/`: machine-produced audits and reports
 
 ## Child Project: `nested_learning_textbook/`
 

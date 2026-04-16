@@ -16,6 +16,7 @@ description: Gather and compare papers, official documentation, benchmark source
 - updated `research/literature_map.md`
 - updated `research/claims_registry.md`
 - optional updates to `research/open_questions.md` when evidence is still missing
+- a short handoff note that identifies what should go to `novelty_auditor` or `experiment_designer` next
 
 ## Do This
 
@@ -25,9 +26,12 @@ description: Gather and compare papers, official documentation, benchmark source
 4. Mark each extracted claim as `verified` or `uncertain`.
 5. Note missing comparisons, unknown setup details, and baseline gaps.
 6. Update the claim registry with evidence pointers instead of prose-only summaries.
+7. Stop once the evidence is sufficient for a novelty pass or experiment contract.
+8. Leave a handoff note for the next reviewer instead of continuing to mine sources indefinitely.
 
 ## Guardrails
 
 - Do not make strong conclusions from abstracts alone.
 - Do not mix primary and secondary evidence without labeling them.
 - Do not claim novelty here; hand novelty judgments to `novelty_auditor`.
+- Do not keep scouting after the next decision point is already clear.
