@@ -1,0 +1,2 @@
+id,hypothesis_slice,priority,status,assigned_agent,depends_on,artifact_path,verification_gate,next_action
+exp-000,[replace-with-experiment-slice],P2,queued,experiment_designer,,research/findings.md,[define metric and stop condition],template row

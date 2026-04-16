@@ -1,94 +1,96 @@
-# Inference-Time Learning: From TTT to Nested Learning
+# Multi-Agent Vibe Research OS
 
-**A harness-managed LaTeX textbook for CS undergraduates.**
+This repository now serves two roles:
 
-## What This Is
+1. A reusable root-level research operating system for Codex-driven work.
+2. An existing child project at `nested_learning_textbook/` with its own canonical docs and build flow.
 
-This repository hosts a structured undergraduate textbook tracing the evolution of  
-**inference-time / test-time learning** — from Test-Time Training (2020) through  
-meta-learning, fast weights, attention, ICL, TTT layers, Titans, and Nested Learning.
+The root is for planning, skills, custom agents, durable research state, and batch workflows.
+The textbook subtree remains the canonical workspace for the inference-time learning book.
 
-Canonical book source: `nested_learning_textbook/book/` (LaTeX)  
-Literature corpus: `nested_learning_textbook/papers/` (22 papers with merged TeX)
+## What Lives Here
 
----
-
-## Current Status
-
-| Component | State |
-|---|---|
-| Literature corpus | 22 papers with `merged_paper.tex`, 2 PDF-only |
-| v0 Markdown drafts | 14 chapters in `manuscript/` (source material) |
-| LaTeX book scaffold | `book/` structure created, chapters scaffolded |
-| Bibliography | `book/bibliography/library.bib` generated |
-| Harness docs | `docs/` system of record established |
-
-See `nested_learning_textbook/docs/project_state/current_repo_audit.md` for details.
-
----
-
-## Quick Start
-
-### 1. Re-build the literature corpus
-
-```bash
-cd nested_learning_textbook
-python3 scripts/corpus_pipeline.py
+```text
+.
+├── AGENTS.md                      # Repo-wide operating contract
+├── PLANS.md                       # Reusable planning template
+├── .codex/                        # Repo-local Codex config and custom agents
+├── .agents/skills/                # Repo-scoped skills
+├── docs/                          # Root-level usage and batch workflow docs
+├── research/                      # Durable state for active and future topics
+├── templates/                     # Reusable note templates
+└── nested_learning_textbook/      # Existing child project with its own rules
 ```
 
-### 2. Compile the book
+## Default Workflow
 
-```bash
-cd nested_learning_textbook/book
-latexmk -xelatex main.tex
-# or from repo root:
-make book
+Use the same loop for most research tasks:
+
+`plan -> gather evidence -> implement / run -> verify -> log -> synthesize`
+
+Practical implications:
+
+- Start non-trivial work by creating or updating a plan.
+- Keep evidence in files under `research/`, not only in chat.
+- Update `research/findings.md` after substantive experiments or code changes.
+- Mark claims as `verified` or `uncertain`.
+
+## Root-Level Skills
+
+The repo ships with six repo-scoped skills:
+
+- `problem-framing`: turn a fuzzy idea into a scoped research plan
+- `literature-triangulation`: compare sources and register evidence-backed claims
+- `experiment-loop`: move from hypothesis to a minimal executed loop
+- `claim-audit`: inspect whether a draft claim is actually supported
+- `paper-drafting`: draft prose from verified artifacts only
+- `repro-check`: review reproducibility before sharing results
+
+Skill definitions live under `.agents/skills/`.
+If a task clearly matches a skill, explicitly invoke it in your prompt, for example:
+
+```text
+Use $problem-framing and create `research/research_plan.md` from the template.
 ```
 
-### 3. Run all checks
+## Custom Agents
 
-```bash
-make check
+Repo-local agents live under `.codex/agents/`.
+Use them explicitly when you want clear responsibility boundaries, for example:
+
+```text
+Spawn `research_architect`, `literature_scout`, and `novelty_auditor` in parallel.
+Wait for all three before synthesizing the answer.
 ```
 
----
+Recommended handoff chain:
 
-## Navigation
+`research_architect -> literature_scout / novelty_auditor -> experiment_designer -> implementer -> repro_reviewer -> writer`
 
-| What | Where |
-|---|---|
-| Agent nav map | `AGENTS.md` |
-| Repo architecture | `ARCHITECTURE.md` |
-| Current state | `nested_learning_textbook/docs/project_state/current_repo_audit.md` |
-| Latest handoff | `nested_learning_textbook/docs/handoffs/latest_handoff.md` |
-| Active plans | `nested_learning_textbook/docs/exec-plans/active/` |
-| Quality rubric | `nested_learning_textbook/docs/quality/qa_rubric.md` |
-| Paper manifest | `nested_learning_textbook/manifests/papers_manifest.csv` |
+Fresh threads are safer after creating or editing custom agent files because some Codex surfaces do not hot-load them reliably in the same conversation.
 
----
+## Start A New Research Topic
 
-## Prerequisites
+1. Read `AGENTS.md`, `PLANS.md`, `research/README.md`, and the relevant skill files.
+2. Copy `research/research_plan.template.md` to `research/research_plan.md`.
+3. Run a first pass with `problem-framing`.
+4. Spawn `research_architect`, `literature_scout`, and `novelty_auditor` in parallel if the topic is still ambiguous.
+5. Write outputs back to:
+   - `research/research_plan.md`
+   - `research/literature_map.md`
+   - `research/claims_registry.md`
+   - `research/open_questions.md`
+   - `research/decision_log.md`
+6. Only then move into `experiment-loop`, implementation, drafting, or reproducibility review.
 
-- XeLaTeX (TeX Live 2022+)
-- Python 3.9+
-- `latexmk`
-- System CJK fonts (macOS: built-in Songti/Heiti; Linux: install `fonts-noto-cjk`)
+## Working With `nested_learning_textbook/`
 
-## Textbook Narrative Thread
+If the task touches `nested_learning_textbook/`, also follow that subtree's operating rules:
 
-```
-Test-Time Training 2020 (distribution shift)
-→ Bilevel optimization / meta-learning (MAML)
-→ Fast weights / external memory
-→ Attention = associative memory / linear attention = fast weights
-→ In-Context Learning as implicit gradient descent
-→ Learning to (Learn at Test Time) — the bridge
-→ TTT Layers: hidden state as learner
-→ Titans: multi-timescale memory
-→ Test-time regression / associative memory (unifying view)
-→ Nested Learning (final synthesis)
-```
+- read `nested_learning_textbook/AGENTS.md`
+- use `nested_learning_textbook/docs/` as the textbook source of truth
+- do not overwrite `nested_learning_textbook/manuscript/*.md`
+- update `nested_learning_textbook/docs/handoffs/latest_handoff.md` after substantial work
+- run `make check` before calling a phase done
 
-**Important**: This book distinguishes two lines of TTT research:
-1. *TTT 2020*: update network weights at test time via self-supervised auxiliary tasks
-2. *TTT Layers 2024*: hidden state as a learner; no external backprop needed
+See `docs/USAGE.md` for prompt examples and `docs/BATCH_WORKFLOWS.md` for queue-driven parallel workflows.

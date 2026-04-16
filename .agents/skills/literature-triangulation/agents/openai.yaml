@@ -1,0 +1,7 @@
+interface:
+  display_name: "Literature Triangulation"
+  short_description: "Compare sources and register evidence-backed claims."
+  default_prompt: "Use $literature-triangulation to update `research/literature_map.md` and `research/claims_registry.md` with primary vs secondary sources and verified vs uncertain claims."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Problem Framing"
+  short_description: "Scope a vague idea into a runnable plan."
+  default_prompt: "Use $problem-framing to turn this rough research idea into `research/research_plan.md` with scope, success criteria, risks, and a minimal validation path."
+
+policy:
+  allow_implicit_invocation: true

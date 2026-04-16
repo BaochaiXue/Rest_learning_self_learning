@@ -1,0 +1,7 @@
+interface:
+  display_name: "Experiment Loop"
+  short_description: "Execute, verify, log, and decide the next step."
+  default_prompt: "Use $experiment-loop to run the smallest useful experiment, update `research/findings.md`, and refresh `research/experiment_queue.csv`."
+
+policy:
+  allow_implicit_invocation: true

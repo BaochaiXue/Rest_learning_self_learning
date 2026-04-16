@@ -1,0 +1,2 @@
+id,title_or_query,source_hint,priority,status,assigned_agent,depends_on,output_path,notes
+paper-000,[replace-with-paper-or-query],,P2,queued,literature_scout,,research/literature_map.md,template row

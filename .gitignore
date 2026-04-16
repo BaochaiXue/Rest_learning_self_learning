@@ -36,3 +36,10 @@ nested_learning_textbook/downloads/*.tgz
 
 # Keep PDFs in downloads (they represent fallback sources)
 !nested_learning_textbook/downloads/*.pdf
+
+# Research OS scratch space
+research/tmp/
+research/cache/
+research/runs/
+research/**/*.local.md
+research/**/*.local.csv

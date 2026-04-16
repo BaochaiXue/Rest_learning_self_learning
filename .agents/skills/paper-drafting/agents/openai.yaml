@@ -1,0 +1,7 @@
+interface:
+  display_name: "Paper Drafting"
+  short_description: "Draft prose from verified artifacts only."
+  default_prompt: "Use $paper-drafting to turn verified findings and the claims registry into a cautious draft with citation placeholders and explicit evidence gaps."
+
+policy:
+  allow_implicit_invocation: false

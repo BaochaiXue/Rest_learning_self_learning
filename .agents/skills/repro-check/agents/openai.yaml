@@ -1,0 +1,7 @@
+interface:
+  display_name: "Repro Check"
+  short_description: "Review reproducibility before sharing results."
+  default_prompt: "Use $repro-check to update `research/reviews/repro_checklist.md` and list any blockers before these results are shared or written up."
+
+policy:
+  allow_implicit_invocation: true
